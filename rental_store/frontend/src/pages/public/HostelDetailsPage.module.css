@@ -5,6 +5,7 @@
   padding: var(--space-6);
   max-width: var(--content-max);
   margin: 0 auto;
+  width: 100%;
 }
 .gallery {
   display: flex;
@@ -110,6 +111,9 @@
     padding: var(--space-4);
   }
   .infoGrid {
+    grid-template-columns: 1fr;
+  }
+  .roomGrid {
     grid-template-columns: 1fr;
   }
 }

@@ -62,4 +62,12 @@
   .grid {
     grid-template-columns: 1fr;
   }
+  .photoGrid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .tenantGrid {
+    grid-template-columns: 1fr;
+  }
 }
