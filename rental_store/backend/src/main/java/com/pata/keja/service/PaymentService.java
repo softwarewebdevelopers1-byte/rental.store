@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable;
 
 import com.pata.keja.dto.payment.LandlordPaymentStatsResponse;
 import com.pata.keja.dto.payment.PaymentCreateRequest;
+import com.pata.keja.dto.payment.PaymentReminderRequest;
 import com.pata.keja.dto.payment.PaymentResponse;
 import com.pata.keja.dto.payment.PaymentSummaryResponse;
 import com.pata.keja.dto.payment.StudentPaymentSummaryResponse;
@@ -25,6 +26,8 @@ public interface PaymentService {
     LandlordPaymentStatsResponse statsForHostel(String hostelId);
 
     void sendReminders(String landlordId, PaymentCreateRequest req);
+
+    void sendReminders(String landlordId, PaymentReminderRequest req);
 
     /** Enum used only by the service-layer filter. */
     enum PaymentStatusFilter {

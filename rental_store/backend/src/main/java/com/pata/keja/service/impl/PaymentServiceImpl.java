@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.pata.keja.dto.payment.PaymentCreateRequest;
+import com.pata.keja.dto.payment.PaymentReminderRequest;
 import com.pata.keja.dto.payment.PaymentResponse;
 import com.pata.keja.dto.payment.LandlordPaymentStatsResponse;
 import com.pata.keja.dto.payment.PaymentSummaryResponse;
@@ -142,5 +143,14 @@ public class PaymentServiceImpl implements PaymentService {
     public void sendReminders(String landlordId, PaymentCreateRequest req) {
         // Validate that the landlord owns all the students' hostels…
         // Then emit notifications (next slice) — for now, just log.
+    }
+
+    @Override
+    public void sendReminders(String landlordId, PaymentReminderRequest req) {
+        // Validate that the landlord owns all the students' hostels…
+        // Then emit notifications (next slice) — for now, just log.
+        req.studentIds().forEach(id -> {
+            // notificationService.notify(id, NotificationKind.PAYMENT_DUE, ...);
+        });
     }
 }
