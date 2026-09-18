@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import type { NavItem } from "../../constants/routes";
 import { useAuth } from "../../hooks/useAuth";
@@ -8,22 +9,39 @@ interface SidebarProps {
   items: NavItem[];
   title?: string;
   onNavigate?: () => void;
+  collapsible?: boolean;
+  defaultCollapsed?: boolean;
 }
 
 export function Sidebar({
   items,
   title = "HostelHub",
   onNavigate,
+  collapsible = false,
+  defaultCollapsed = false,
 }: SidebarProps) {
   const { user, logout } = useAuth();
+  const [collapsed, setCollapsed] = useState(defaultCollapsed);
 
   return (
-    <aside className={styles.sidebar} aria-label="Primary">
+    <aside
+      className={`${styles.sidebar} ${collapsed ? styles.collapsed : ""}`}
+      aria-label="Primary"
+    >
       <div className={styles.brand}>
         <span className={styles.logo} aria-hidden>
           🏠
         </span>
-        <span className={styles.brandName}>{title}</span>
+        {!collapsed && <span className={styles.brandName}>{title}</span>}
+        {collapsible && (
+          <button
+            className={styles.toggle}
+            onClick={() => setCollapsed((v) => !v)}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {collapsed ? "»" : "«"}
+          </button>
+        )}
       </div>
       <nav className={styles.nav}>
         {items.map((item) => (
@@ -35,8 +53,12 @@ export function Sidebar({
               `${styles.link} ${isActive ? styles.active : ""}`
             }
             onClick={onNavigate}
+            title={collapsed ? item.label : undefined}
           >
-            {item.label}
+            <span className={styles.icon} aria-hidden>
+              {item.label.charAt(0)}
+            </span>
+            {!collapsed && <span className={styles.label}>{item.label}</span>}
           </NavLink>
         ))}
       </nav>
@@ -44,10 +66,17 @@ export function Sidebar({
         <div className={styles.footer}>
           <div className={styles.userInfo}>
             <span className={styles.userName}>{user.name}</span>
-            <span className={styles.userRole}>{ROLE_LABELS[user.role]}</span>
+            {!collapsed && (
+              <span className={styles.userRole}>
+                {ROLE_LABELS[user.role]}
+              </span>
+            )}
           </div>
-          <button className={styles.logout} onClick={() => void logout()}>
-            Sign out
+          <button
+            className={styles.logout}
+            onClick={() => void logout()}
+          >
+            {collapsed ? "↙" : "Sign out"}
           </button>
         </div>
       )}
