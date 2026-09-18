@@ -12,6 +12,21 @@ export interface StudentPaymentSummary {
   history: Payment[];
 }
 
+export interface StkPushInput {
+  phone: string;
+  amount: number;
+}
+
+export interface StkPushResult {
+  checkoutRequestId: string;
+  merchantRequestId: string;
+  amount: number;
+  phone: string;
+  status: "PENDING" | "SUCCESS" | "FAILED";
+  description: string;
+  receivedAt?: string;
+}
+
 export const paymentService = {
   async listForStudent(studentId: string): Promise<Payment[]> {
     return delay(
@@ -39,7 +54,9 @@ export const paymentService = {
     });
   },
 
-  async createPayment(input: Omit<Payment, "id" | "paidAt">): Promise<Payment> {
+  async createPayment(
+    input: Omit<Payment, "id" | "paidAt">,
+  ): Promise<Payment> {
     const payment: Payment = {
       ...input,
       id: generateId("p"),
@@ -50,8 +67,21 @@ export const paymentService = {
   },
 
   async sendReminder(studentId: string): Promise<void> {
-    // In a real backend this would POST to /payments/reminders.
     void studentId;
     await delay(undefined, 200);
+  },
+
+  async stkPush(input: StkPushInput): Promise<StkPushResult> {
+    await delay(undefined, 1800);
+    const ok = Math.random() > 0.15;
+    return {
+      checkoutRequestId: `ws_CO_${Date.now().toString(36)}`,
+      merchantRequestId: `mr-${Date.now().toString(36)}`,
+      amount: input.amount,
+      phone: input.phone,
+      status: ok ? "SUCCESS" : "FAILED",
+      description: `Rent payment — KES ${input.amount}`,
+      receivedAt: ok ? new Date().toISOString() : undefined,
+    };
   },
 };

@@ -22,6 +22,7 @@ export function PaymentTable({ payments }: PaymentTableProps) {
             <th>Due</th>
             <th>Paid</th>
             <th>Method</th>
+            <th>M-Pesa</th>
           </tr>
         </thead>
         <tbody>
@@ -36,6 +37,15 @@ export function PaymentTable({ payments }: PaymentTableProps) {
               <td>{formatDate(p.dueDate)}</td>
               <td>{p.paidAt ? formatDate(p.paidAt) : "—"}</td>
               <td>{p.method ?? "—"}</td>
+              <td className={styles.mono}>
+                {p.mpesaCode ? (
+                  <span title={p.mpesaPhone}>
+                    {p.mpesaCode}
+                  </span>
+                ) : (
+                  "—"
+                )}
+              </td>
             </tr>
           ))}
         </tbody>

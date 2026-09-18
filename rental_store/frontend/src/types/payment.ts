@@ -1,4 +1,5 @@
 export type PaymentStatus = "PAID" | "PENDING" | "OVERDUE";
+export type PaymentMethod = "MPESA" | "CASH" | "BANK";
 
 export interface Payment {
   id: string;
@@ -9,5 +10,7 @@ export interface Payment {
   status: PaymentStatus;
   dueDate: string;
   paidAt?: string;
-  method?: "MPESA" | "CASH" | "BANK";
+  method?: PaymentMethod;
+  mpesaPhone?: string;
+  mpesaCode?: string;
 }

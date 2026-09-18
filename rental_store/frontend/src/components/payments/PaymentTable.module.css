@@ -6,7 +6,7 @@
 }
 .table {
   width: 100%;
-  min-width: 560px;
+  min-width: 680px;
 }
 .table th,
 .table td {
@@ -28,6 +28,15 @@
 }
 .table tbody tr:hover {
   background: var(--color-surface-alt);
+}
+.mono {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .empty {
   padding: var(--space-6);

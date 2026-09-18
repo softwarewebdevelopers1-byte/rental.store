@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { useStudentPayments } from "../../hooks/usePayments";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -6,9 +7,15 @@ import { PaymentTable } from "../../components/payments/PaymentTable";
 import { Skeleton } from "../../components/common/Skeleton";
 import { ErrorState } from "../../components/common/ErrorState";
 import { Button } from "../../components/common/Button";
+import { MpesaPaymentModal } from "../../components/payments/MpesaPaymentModal";
 import { useToast } from "../../hooks/useToast";
 import { paymentService } from "../../services/paymentService";
 import styles from "./StudentPaymentsPage.module.css";
+
+interface MpesaInput {
+  phone: string;
+  mpesaCode: string;
+}
 
 export default function StudentPaymentsPage() {
   const { user } = useAuth();
@@ -17,27 +24,40 @@ export default function StudentPaymentsPage() {
     user?.id ?? "",
   );
 
-  async function simulatePayment() {
-    if (!user) return;
-    const next = summary?.history.find((p) => p.status !== "PAID");
-    if (!next) {
-      show("No outstanding payment", "info");
-      return;
+  const [modalOpen, setModalOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  const outstanding = summary?.history.find((p) => p.status !== "PAID") ?? null;
+
+  async function handleMpesaConfirm({ phone, mpesaCode }: MpesaInput) {
+    if (!outstanding || !user) return;
+    setSubmitting(true);
+    try {
+      await paymentService.createPayment({
+        ...outstanding,
+        status: "PAID",
+        method: "MPESA",
+        mpesaPhone: phone,
+        mpesaCode,
+      });
+      show(`M-Pesa payment confirmed — ${mpesaCode}`, "success");
+      await reload();
+      setModalOpen(false);
+    } catch (e) {
+      show(
+        e instanceof Error ? e.message : "Payment failed",
+        "error",
+      );
+    } finally {
+      setSubmitting(false);
     }
-    await paymentService.createPayment({
-      ...next,
-      status: "PAID",
-      method: "MPESA",
-    });
-    show("Payment recorded (mock).", "success");
-    await reload();
   }
 
   return (
     <div className={styles.wrap}>
       <PageHeader
         title="Payments"
-        subtitle="Your rent, dues, and payment history."
+        subtitle="Pay your rent and dues via M-Pesa."
       />
       {loading ? (
         <div className={styles.skeletons}>
@@ -53,19 +73,32 @@ export default function StudentPaymentsPage() {
             <PaymentCard label="Current rent" amount={summary.currentRent} />
             <PaymentCard
               label="Current payment"
-              amount={summary.history.find((p) => p.status !== "PAID")?.amount}
-              status={summary.status}
-              dueDate={summary.nextDueDate}
+              amount={outstanding?.amount}
+              status={outstanding?.status ?? summary.status}
+              dueDate={outstanding?.dueDate ?? summary.nextDueDate}
             />
           </div>
           <div className={styles.actions}>
-            <Button onClick={() => void simulatePayment()}>
-              Pay next rent (mock)
+            <Button
+              onClick={() => setModalOpen(true)}
+              disabled={!outstanding || submitting}
+            >
+              Pay via M-Pesa (mock)
             </Button>
           </div>
           <PaymentTable payments={summary.history} />
         </>
       ) : null}
+
+      <MpesaPaymentModal
+        open={modalOpen}
+        amount={outstanding?.amount ?? 0}
+        phone={user?.phone}
+        onClose={() => {
+          if (!submitting) setModalOpen(false);
+        }}
+        onConfirm={handleMpesaConfirm}
+      />
     </div>
   );
 }
