@@ -3,10 +3,6 @@
   grid-template-columns: var(--sidebar-width) 1fr;
   min-height: 100vh;
   background: var(--color-bg);
-  transition: grid-template-columns 200ms ease;
-}
-.shell.collapsed {
-  grid-template-columns: var(--sidebar-width-collapsed) 1fr;
 }
 .sidebarWrap {
   position: sticky;

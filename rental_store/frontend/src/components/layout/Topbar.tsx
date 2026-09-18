@@ -7,18 +7,14 @@ import styles from "./Topbar.module.css";
 
 interface TopbarProps {
   onMenuClick?: () => void;
-  onToggle?: () => void;
   showMenuButton?: boolean;
   title?: string;
-  collapsed?: boolean;
 }
 
 export function Topbar({
   onMenuClick,
-  onToggle,
   showMenuButton = false,
   title,
-  collapsed = false,
 }: TopbarProps) {
   const { user } = useAuth();
   const { count } = useCart();
@@ -31,13 +27,10 @@ export function Topbar({
         {showMenuButton && (
           <button
             className={styles.menuBtn}
-            onClick={() => (onToggle ? onToggle() : onMenuClick?.())}
-            aria-label={
-              collapsed ? "Expand sidebar" : "Collapse sidebar"
-            }
-            aria-expanded={!collapsed}
+            onClick={onMenuClick}
+            aria-label="Open menu"
           >
-            {collapsed ? "»" : "«"}
+            ☰
           </button>
         )}
         {title && <h2 className={styles.title}>{title}</h2>}

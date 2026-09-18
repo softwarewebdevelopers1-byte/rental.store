@@ -7,35 +7,21 @@ import styles from "./LandlordLayout.module.css";
 
 export function LandlordLayout() {
   const [open, setOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <div
-      className={`${styles.shell} ${collapsed ? styles.collapsed : ""}`}
-    >
-      <div
-        className={`${styles.sidebarWrap} ${open ? styles.open : ""} ${
-          collapsed ? styles.collapsed : ""
-        }`}
-      >
+    <div className={styles.shell}>
+      <div className={`${styles.sidebarWrap} ${open ? styles.open : ""}`}>
         <Sidebar
           items={landlordNav}
           title="HostelHub"
           onNavigate={() => setOpen(false)}
-          collapsible
-          defaultCollapsed={collapsed}
         />
       </div>
       {open && (
         <div className={styles.backdrop} onClick={() => setOpen(false)} />
       )}
       <div className={styles.main}>
-        <Topbar
-          showMenuButton
-          onMenuClick={() => setOpen(true)}
-          onToggle={() => setCollapsed((v) => !v)}
-          collapsed={collapsed}
-        />
+        <Topbar showMenuButton onMenuClick={() => setOpen(true)} />
         <main className={styles.content}>
           <Outlet />
         </main>

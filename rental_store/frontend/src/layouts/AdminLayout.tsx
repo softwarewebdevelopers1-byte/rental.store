@@ -7,21 +7,14 @@ import styles from "./AdminLayout.module.css";
 
 export function AdminLayout() {
   const [open, setOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <div className={`${styles.shell} ${collapsed ? styles.collapsed : ""}`}>
-      <div
-        className={`${styles.sidebarWrap} ${open ? styles.open : ""} ${
-          collapsed ? styles.collapsed : ""
-        }`}
-      >
+    <div className={styles.shell}>
+      <div className={`${styles.sidebarWrap} ${open ? styles.open : ""}`}>
         <Sidebar
           items={adminNav}
           title="HostelHub Admin"
           onNavigate={() => setOpen(false)}
-          collapsible
-          defaultCollapsed={collapsed}
         />
       </div>
       {open && (
@@ -31,8 +24,6 @@ export function AdminLayout() {
         <Topbar
           showMenuButton
           onMenuClick={() => setOpen(true)}
-          onToggle={() => setCollapsed((v) => !v)}
-          collapsed={collapsed}
           title="Admin"
         />
         <main className={styles.content}>
