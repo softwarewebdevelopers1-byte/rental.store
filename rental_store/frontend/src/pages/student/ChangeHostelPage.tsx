@@ -16,6 +16,7 @@ export default function ChangeHostelPage() {
   const { show } = useToast();
   const navigate = useNavigate();
   const student = mockStudents.find((item) => item.id === user?.id);
+  const isLinking = !student?.hostelId;
   const [code, setCode] = useState("");
   const [hostelName, setHostelName] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -35,7 +36,12 @@ export default function ChangeHostelPage() {
       if (!hostel) return;
       student.requestedHostelId = hostel.id;
       student.membershipStatus = "PENDING";
-      show("Your hostel change request was submitted.", "success");
+      show(
+        isLinking
+          ? "Your hostel link request was submitted."
+          : "Your hostel change request was submitted.",
+        "success",
+      );
       navigate("/student/dashboard");
     } finally {
       setSubmitting(false);
@@ -48,11 +54,18 @@ export default function ChangeHostelPage() {
 
   return (
     <div className={styles.wrap}>
-      <PageHeader title="Change hostel" subtitle="Enter the invitation code for your new hostel." />
+      <PageHeader
+        title={isLinking ? "Link a hostel" : "Change hostel"}
+        subtitle={
+          isLinking
+            ? "Enter the linking code shared by your hostel."
+            : "Enter the invitation code for your new hostel."
+        }
+      />
       <Card>
         <form className={styles.form} onSubmit={onSubmit}>
           <Input
-            label="Hostel code"
+            label="Hostel linking code"
             value={code}
             onChange={(event) => { setCode(event.target.value.toUpperCase()); setHostelName(null); }}
             hint="Ask the landlord for the hostel code."
@@ -64,7 +77,9 @@ export default function ChangeHostelPage() {
               <span className={styles.icon} aria-hidden>✓</span>
               <h3>{hostelName}</h3>
               <p>Submit the request and wait for the landlord&apos;s approval.</p>
-              <Button type="submit" loading={submitting}>Request change</Button>
+              <Button type="submit" loading={submitting}>
+                {isLinking ? "Link hostel" : "Request change"}
+              </Button>
             </div>
           )}
         </form>

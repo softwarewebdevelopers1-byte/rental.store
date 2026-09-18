@@ -42,3 +42,7 @@ export const storage = {
       .forEach((key) => localStorage.removeItem(key));
   },
 };
+
+export function saveLastRoute(route: string): void {
+  storage.set("last.route", route);
+}

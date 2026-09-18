@@ -1,5 +1,5 @@
 import { mockUsers } from "../data/users";
-import type { AuthSession, User, UserRole } from "../types/user";
+import type { AuthSession, Student, UserRole } from "../types/user";
 import { delay } from "../utils/delay";
 
 export interface LoginInput {
@@ -11,7 +11,7 @@ export interface RegisterStudentInput {
   name: string;
   email: string;
   password: string;
-  hostelCode: string;
+  hostelCode?: string;
 }
 
 // Demo password for all mock users.
@@ -44,18 +44,26 @@ export const authService = {
   },
 
   async registerStudent(input: RegisterStudentInput): Promise<AuthSession> {
-    const { hostelService } = await import("./hostelService");
-    const hostel = await hostelService.findByCode(input.hostelCode);
-    if (!hostel) throw new Error("Invalid hostel code");
+    let hostelId: string | undefined;
+    if (input.hostelCode) {
+      const { hostelService } = await import("./hostelService");
+      const hostel = await hostelService.findByCode(input.hostelCode);
+      if (!hostel) throw new Error("Invalid hostel code");
+      hostelId = hostel.id;
+    }
 
-    const user: User = {
+    const user: Student = {
       id: `u-stu-${Date.now()}`,
       name: input.name,
       email: input.email,
       role: "STUDENT",
       active: true,
       createdAt: new Date().toISOString(),
+      membershipStatus: hostelId ? "PENDING" : "INACTIVE",
+      ...(hostelId ? { requestedHostelId: hostelId } : {}),
     };
+    const { mockStudents } = await import("../data/users");
+    mockStudents.push(user);
     mockUsers.push(user);
     return delay({ user, token: `mock-token-${user.id}` });
   },

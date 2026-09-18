@@ -31,11 +31,7 @@ export default function StudentRegisterPage() {
   // Validate hostel code (debounced inside effect).
   useEffect(() => {
     const trimmed = hostelCode.trim();
-    if (!trimmed) {
-      setCodeState("idle");
-      return;
-    }
-    setCodeState("checking");
+    if (!trimmed) return;
     const handle = window.setTimeout(async () => {
       const ok = await authService.validateHostelCode(normalizeCode(trimmed));
       setCodeState(ok ? "valid" : "invalid");
@@ -47,7 +43,7 @@ export default function StudentRegisterPage() {
     isNonEmpty(name) &&
     isEmail(email) &&
     isStrongEnough(password) &&
-    codeState === "valid";
+    (hostelCode.trim() === "" || codeState === "valid");
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -59,10 +55,20 @@ export default function StudentRegisterPage() {
         name: name.trim(),
         email: email.trim(),
         password,
-        hostelCode: normalizeCode(hostelCode),
+        hostelCode: hostelCode.trim()
+          ? normalizeCode(hostelCode)
+          : undefined,
       });
-      show("Account created. Awaiting landlord approval.", "success");
-      navigate("/pending-approval", { replace: true });
+      const hasHostelCode = hostelCode.trim() !== "";
+      show(
+        hasHostelCode
+          ? "Account created. Awaiting landlord approval."
+          : "Account created. You can link a hostel whenever you're ready.",
+        "success",
+      );
+      navigate(hasHostelCode ? "/pending-approval" : "/student/dashboard", {
+        replace: true,
+      });
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Registration failed";
@@ -82,13 +88,13 @@ export default function StudentRegisterPage() {
       ? "Checking code..."
       : codeState === "valid"
         ? "Hostel code verified."
-        : "Enter the code your landlord shared with you.";
+        : "Optional — you can link a hostel later with its code.";
 
   return (
     <div className={styles.wrap}>
       <h1 className={styles.title}>Create a student account</h1>
       <p className={styles.subtitle}>
-        You'll be added to the hostel once your landlord approves.
+        Create your account first, then link a hostel whenever you&apos;re ready.
       </p>
 
       <form onSubmit={onSubmit} className={styles.form} noValidate>
@@ -117,12 +123,15 @@ export default function StudentRegisterPage() {
           required
         />
         <Input
-          label="Hostel code"
+          label="Hostel code (optional)"
           value={hostelCode}
-          onChange={(e) => setHostelCode(e.target.value)}
+          onChange={(e) => {
+            const value = e.target.value;
+            setHostelCode(value);
+            setCodeState(value.trim() ? "checking" : "idle");
+          }}
           hint={codeHint}
           error={codeError}
-          required
         />
 
         {error && <p className={styles.formError}>{error}</p>}
