@@ -10,20 +10,18 @@ import com.pata.keja.dto.student.StudentRegistrationRequest;
 import com.pata.keja.dto.student.StudentResponse;
 import com.pata.keja.enums.MembershipStatus;
 import com.pata.keja.enums.UserRoles;
+import com.pata.keja.exception.ConflictException;
 import com.pata.keja.mapper.StudentMapper;
 import com.pata.keja.models.Hostel;
 import com.pata.keja.models.Student;
 import com.pata.keja.repository.HostelRepository;
 import com.pata.keja.repository.StudentRepository;
+import jakarta.validation.ValidationException;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Service
-@AllArgsConstructor
-@NoArgsConstructor
 @Getter
 @Setter
 public class StudentRegistrationService {
@@ -33,7 +31,15 @@ public class StudentRegistrationService {
     private final PasswordEncoder passwordEncoder;
     private final StudentMapper studentMapper;
 
-    // constructor injection …
+    public StudentRegistrationService(StudentRepository studentRepo,
+            HostelRepository hostelRepo,
+            PasswordEncoder passwordEncoder,
+            StudentMapper studentMapper) {
+        this.studentRepo = studentRepo;
+        this.hostelRepo = hostelRepo;
+        this.passwordEncoder = passwordEncoder;
+        this.studentMapper = studentMapper;
+    }
 
     @Transactional
     public StudentResponse register(StudentRegistrationRequest req) {

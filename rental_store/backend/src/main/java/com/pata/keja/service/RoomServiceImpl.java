@@ -1,5 +1,4 @@
 package com.pata.keja.service;
-package com.pata.keja.service;
 
 import com.pata.keja.enums.RoomStatus;
 import com.pata.keja.dto.room.RoomCreateRequest;

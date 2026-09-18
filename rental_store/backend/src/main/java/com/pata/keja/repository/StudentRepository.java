@@ -31,14 +31,14 @@ public interface StudentRepository extends JpaRepository<Student, String> {
     @Query("""
                 select s from Student s
                 where s.requestedHostel.id = :hostelId
-                  and s.membershipStatus = com.yourorg.hostelhub.domain.enums.MembershipStatus.PENDING
+                  and s.membershipStatus = com.pata.keja.enums.MembershipStatus.PENDING
             """)
     List<Student> findPendingRequestsForHostel(@Param("hostelId") String hostelId);
 
     @Query("""
                 select s from Student s
                 where s.hostel.id = :hostelId
-                  and s.membershipStatus = com.yourorg.hostelhub.domain.enums.MembershipStatus.ACTIVE
+                  and s.membershipStatus = com.pata.keja.enums.MembershipStatus.ACTIVE
             """)
     List<Student> findActiveTenantsForHostel(@Param("hostelId") String hostelId);
 }

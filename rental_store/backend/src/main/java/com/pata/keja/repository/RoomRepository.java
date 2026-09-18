@@ -28,7 +28,7 @@ public interface RoomRepository extends JpaRepository<Room, String> {
     @Query("""
                 select r from Room r
                 where r.hostel.id = :hostelId
-                  and r.status = com.yourorg.hostelhub.domain.enums.RoomStatus.VACANT
+                  and r.status = com.pata.keja.enums.RoomStatus.VACANT
                 order by r.number
             """)
     List<Room> findVacantByHostel(@Param("hostelId") String hostelId);

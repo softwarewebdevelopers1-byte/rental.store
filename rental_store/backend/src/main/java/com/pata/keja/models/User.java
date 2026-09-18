@@ -11,7 +11,9 @@ import java.util.Objects;
 
 import com.pata.keja.enums.UserRoles;
 
-@MappedSuperclass
+@Entity
+@Table(name = "users")
+@Inheritance(strategy = InheritanceType.JOINED)
 public abstract class User {
 
     @Id

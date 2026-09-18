@@ -10,7 +10,11 @@ import com.pata.keja.enums.RoomStatus;
 import com.pata.keja.mapper.StudentMapper;
 import com.pata.keja.models.Room;
 import com.pata.keja.repository.StudentRepository;
+import com.pata.keja.repository.RoomRepository;
 import com.pata.keja.models.Student;
+import com.pata.keja.exception.AccessDeniedException;
+import com.pata.keja.exception.ConflictException;
+import com.pata.keja.exception.NotFoundException;
 
 @Service
 public class LandlordRequestService {
@@ -19,7 +23,13 @@ public class LandlordRequestService {
     private final RoomRepository roomRepo;
     private final StudentMapper studentMapper;
 
-    // constructor injection …
+    public LandlordRequestService(StudentRepository studentRepo,
+            RoomRepository roomRepo,
+            StudentMapper studentMapper) {
+        this.studentRepo = studentRepo;
+        this.roomRepo = roomRepo;
+        this.studentMapper = studentMapper;
+    }
 
     @Transactional
     public void accept(String landlordId, String studentId) {
@@ -31,8 +41,9 @@ public class LandlordRequestService {
             throw new AccessDeniedException("Not your request");
         }
 
-        Room vacant = roomRepo.findFirstByHostelIdAndStatus(
-                s.getRequestedHostel().getId(), RoomStatus.VACANT)
+        Room vacant = roomRepo.findByHostelAndStatusOrderByNumber(
+                s.getRequestedHostel().getId(), RoomStatus.VACANT).stream()
+                .findFirst()
                 .orElseThrow(() -> new ConflictException("No vacant rooms"));
 
         s.setHostel(s.getRequestedHostel());

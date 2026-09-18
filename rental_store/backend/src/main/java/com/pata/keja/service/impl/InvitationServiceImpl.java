@@ -129,18 +129,18 @@ public class InvitationServiceImpl implements InvitationService {
         User created = switch (inv.getKind()) {
             case LANDLORD -> {
                 Landlord l = new Landlord();
-                l.setRole(UserRole.LANDLORD);
+                l.setRole(UserRoles.LANDLORD);
                 yield l;
             }
             case MARKET_AGENT -> {
                 MarketAgent a = new MarketAgent();
-                a.setRole(UserRole.MARKET_AGENT);
+                a.setRole(UserRoles.MARKET_AGENT);
                 a.setBusinessName(businessName);
                 yield a;
             }
             case CARETAKER -> {
                 Caretaker c = new Caretaker();
-                c.setRole(UserRole.CARETAKER);
+                c.setRole(UserRoles.CARETAKER);
                 yield c;
             }
         };

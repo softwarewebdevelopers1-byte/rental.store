@@ -3,13 +3,20 @@ package com.pata.keja.service.impl;
 import java.time.Instant;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.pata.keja.dto.payment.PaymentCreateRequest;
 import com.pata.keja.dto.payment.PaymentResponse;
+import com.pata.keja.dto.payment.LandlordPaymentStatsResponse;
+import com.pata.keja.dto.payment.PaymentSummaryResponse;
 import com.pata.keja.dto.payment.StudentPaymentSummaryResponse;
+import com.pata.keja.enums.PaymentMethod;
 import com.pata.keja.enums.PaymentStatus;
+import com.pata.keja.exception.ConflictException;
+import com.pata.keja.exception.NotFoundException;
 import com.pata.keja.mapper.PaymentMapper;
 import com.pata.keja.models.Payment;
 import com.pata.keja.models.Student;
@@ -17,6 +24,8 @@ import com.pata.keja.repository.HostelRepository;
 import com.pata.keja.repository.PaymentRepository;
 import com.pata.keja.repository.RoomRepository;
 import com.pata.keja.repository.StudentRepository;
+import com.pata.keja.service.NotificationService;
+import com.pata.keja.service.PaymentService;
 
 @Service
 @Transactional
@@ -27,9 +36,21 @@ public class PaymentServiceImpl implements PaymentService {
     private final HostelRepository hostelRepo;
     private final RoomRepository roomRepo;
     private final PaymentMapper paymentMapper;
-    private final notificationService notificationService; // your next slice
+    private final NotificationService notificationService; // your next slice
 
-    // constructor injection …
+    public PaymentServiceImpl(PaymentRepository paymentRepo,
+            StudentRepository studentRepo,
+            HostelRepository hostelRepo,
+            RoomRepository roomRepo,
+            PaymentMapper paymentMapper,
+            NotificationService notificationService) {
+        this.paymentRepo = paymentRepo;
+        this.studentRepo = studentRepo;
+        this.hostelRepo = hostelRepo;
+        this.roomRepo = roomRepo;
+        this.paymentMapper = paymentMapper;
+        this.notificationService = notificationService;
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -72,6 +93,40 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
+    public PaymentResponse markPaid(String paymentId,
+            PaymentMethodInput method,
+            String reference) {
+        Payment payment = paymentRepo.findByIdWithAssociations(paymentId)
+                .orElseThrow(() -> new NotFoundException("Payment not found"));
+        payment.setStatus(PaymentStatus.PAID);
+        payment.setPaidAt(Instant.now());
+        if (method != null && method.method() != null) {
+            payment.setMethod(PaymentMethod.valueOf(method.method()));
+        }
+        payment.setReference(reference);
+        return paymentMapper.toResponse(payment);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<PaymentSummaryResponse> listForHostel(String hostelId,
+            PaymentStatusFilter filter,
+            Pageable pageable) {
+        if (filter == null || filter == PaymentStatusFilter.ALL) {
+            return paymentRepo.findAllByHostelId(hostelId, pageable)
+                    .map(paymentMapper::toSummary);
+        }
+        PaymentStatus status = switch (filter) {
+            case PAID -> PaymentStatus.PAID;
+            case PENDING -> PaymentStatus.PENDING;
+            case OVERDUE -> PaymentStatus.OVERDUE;
+            case ALL -> null;
+        };
+        return paymentRepo.findAllByHostelIdAndStatus(hostelId, status, pageable)
+                .map(paymentMapper::toSummary);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public LandlordPaymentStatsResponse statsForHostel(String hostelId) {
         long paid = paymentRepo.countByHostelIdAndStatus(hostelId, PaymentStatus.PAID);
@@ -84,11 +139,8 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public void sendReminders(String landlordId, PaymentReminderRequest req) {
+    public void sendReminders(String landlordId, PaymentCreateRequest req) {
         // Validate that the landlord owns all the students' hostels…
         // Then emit notifications (next slice) — for now, just log.
-        req.studentIds().forEach(id -> {
-            // notificationService.notify(id, NotificationKind.PAYMENT_DUE, ...);
-        });
     }
 }

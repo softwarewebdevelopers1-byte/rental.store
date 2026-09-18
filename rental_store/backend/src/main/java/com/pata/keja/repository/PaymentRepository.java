@@ -50,7 +50,7 @@ public interface PaymentRepository extends JpaRepository<Payment, String> {
     /** For scheduled job: flip PENDING to OVERDUE when past due. */
     @Query("""
                 select p from Payment p
-                where p.status = com.yourorg.hostelhub.domain.enums.PaymentStatus.PENDING
+                where p.status = com.pata.keja.enums.PaymentStatus.PENDING
                   and p.dueDate < :today
             """)
     List<Payment> findOverdueCandidates(@Param("today") LocalDate today);
@@ -60,8 +60,8 @@ public interface PaymentRepository extends JpaRepository<Payment, String> {
                 select distinct p.student.id from Payment p
                 where p.hostel.id = :hostelId
                   and p.status in (
-                    com.yourorg.hostelhub.domain.enums.PaymentStatus.PENDING,
-                    com.yourorg.hostelhub.domain.enums.PaymentStatus.OVERDUE
+                    com.pata.keja.enums.PaymentStatus.PENDING,
+                    com.pata.keja.enums.PaymentStatus.OVERDUE
                   )
             """)
     List<String> findStudentIdsWithOutstandingPayments(@Param("hostelId") String hostelId);
