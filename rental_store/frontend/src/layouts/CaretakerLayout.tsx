@@ -13,7 +13,6 @@ export function CaretakerLayout() {
       <div className={`${styles.sidebarWrap} ${open ? styles.open : ""}`}>
         <Sidebar
           items={caretakerNav}
-          title="HostelHub"
           onNavigate={() => setOpen(false)}
         />
       </div>

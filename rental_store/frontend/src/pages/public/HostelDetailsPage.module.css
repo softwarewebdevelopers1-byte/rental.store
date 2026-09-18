@@ -7,6 +7,14 @@
   margin: 0 auto;
   width: 100%;
 }
+.back {
+  align-self: flex-start;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+.back:hover {
+  color: var(--color-primary);
+}
 .gallery {
   display: flex;
   flex-direction: column;

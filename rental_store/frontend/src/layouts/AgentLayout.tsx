@@ -12,7 +12,6 @@ export function AgentLayout() {
       <div className={`${styles.sidebarWrap} ${open ? styles.open : ""}`}>
         <Sidebar
           items={agentNav}
-          title="HostelHub"
           onNavigate={() => setOpen(false)}
         />
       </div>

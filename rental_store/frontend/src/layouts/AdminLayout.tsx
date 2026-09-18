@@ -13,7 +13,6 @@ export function AdminLayout() {
       <div className={`${styles.sidebarWrap} ${open ? styles.open : ""}`}>
         <Sidebar
           items={adminNav}
-          title="HostelHub Admin"
           onNavigate={() => setOpen(false)}
         />
       </div>

@@ -13,7 +13,6 @@ export function LandlordLayout() {
       <div className={`${styles.sidebarWrap} ${open ? styles.open : ""}`}>
         <Sidebar
           items={landlordNav}
-          title="HostelHub"
           onNavigate={() => setOpen(false)}
         />
       </div>

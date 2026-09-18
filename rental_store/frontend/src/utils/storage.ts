@@ -1,9 +1,23 @@
-const PREFIX = "hostelhub.";
+const PREFIX = "hostelix.";
+const LEGACY_PREFIX = "hostel" + "hub.";
+
+function migrateLegacyValue(key: string): string | null {
+  const currentKey = PREFIX + key;
+  const legacyKey = LEGACY_PREFIX + key;
+  const raw = localStorage.getItem(currentKey) ?? localStorage.getItem(legacyKey);
+
+  if (raw !== null && raw !== localStorage.getItem(currentKey)) {
+    localStorage.setItem(currentKey, raw);
+    localStorage.removeItem(legacyKey);
+  }
+
+  return raw;
+}
 
 export const storage = {
   get<T>(key: string): T | null {
     try {
-      const raw = localStorage.getItem(PREFIX + key);
+      const raw = migrateLegacyValue(key);
       return raw ? (JSON.parse(raw) as T) : null;
     } catch {
       return null;
@@ -18,10 +32,13 @@ export const storage = {
   },
   remove(key: string): void {
     localStorage.removeItem(PREFIX + key);
+    localStorage.removeItem(LEGACY_PREFIX + key);
   },
   clear(): void {
     Object.keys(localStorage)
-      .filter((k) => k.startsWith(PREFIX))
-      .forEach((k) => localStorage.removeItem(k));
+      .filter(
+        (key) => key.startsWith(PREFIX) || key.startsWith(LEGACY_PREFIX),
+      )
+      .forEach((key) => localStorage.removeItem(key));
   },
 };

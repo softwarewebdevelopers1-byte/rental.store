@@ -13,7 +13,6 @@ export function StudentLayout() {
       <div className={`${styles.sidebarWrap} ${open ? styles.open : ""}`}>
         <Sidebar
           items={studentNav}
-          title="HostelHub"
           onNavigate={() => setOpen(false)}
         />
       </div>

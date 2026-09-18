@@ -1,29 +1,22 @@
 import { NavLink } from "react-router-dom";
 import type { NavItem } from "../../constants/routes";
+import { APP_LOGO, APP_NAME } from "../../constants/config";
 import { useAuth } from "../../hooks/useAuth";
 import { ROLE_LABELS } from "../../constants/roles";
 import styles from "./Sidebar.module.css";
 
 interface SidebarProps {
   items: NavItem[];
-  title?: string;
   onNavigate?: () => void;
 }
 
-export function Sidebar({
-  items,
-  title = "HostelHub",
-  onNavigate,
-}: SidebarProps) {
+export function Sidebar({ items, onNavigate }: SidebarProps) {
   const { user, logout } = useAuth();
 
   return (
     <aside className={styles.sidebar} aria-label="Primary">
       <div className={styles.brand}>
-        <span className={styles.logo} aria-hidden>
-          🏠
-        </span>
-        <span className={styles.brandName}>{title}</span>
+        <img src={APP_LOGO} alt={APP_NAME} className={styles.logo} />
       </div>
       <nav className={styles.nav}>
         {items.map((item) => (

@@ -3,6 +3,7 @@ import { publicNav } from "../constants/routes";
 import { useAuth } from "../hooks/useAuth";
 import { ROLE_HOME } from "../constants/roles";
 import { useMediaQuery } from "../hooks/useMediaQuery";
+import { APP_LOGO, APP_NAME } from "../constants/config";
 import styles from "./PublicLayout.module.css";
 
 export function PublicLayout() {
@@ -13,7 +14,7 @@ export function PublicLayout() {
     <div className={styles.shell}>
       <header className={styles.header}>
         <Link to="/" className={styles.brand}>
-          <span aria-hidden>🏠</span> HostelHub
+          <img src={APP_LOGO} alt={APP_NAME} className={styles.logo} />
         </Link>
         <nav className={styles.nav}>
           {publicNav.map((item) => (
@@ -87,7 +88,7 @@ export function PublicLayout() {
         </nav>
       )}
       <footer className={styles.footer}>
-        <span>© {new Date().getFullYear()} HostelHub. Frontend prototype.</span>
+        <span>© {new Date().getFullYear()} {APP_NAME}. Frontend prototype.</span>
       </footer>
     </div>
   );

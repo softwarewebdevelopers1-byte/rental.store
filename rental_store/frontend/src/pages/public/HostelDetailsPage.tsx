@@ -140,6 +140,9 @@ export default function HostelDetailsPage() {
 
   return (
     <div className={styles.wrap}>
+      <Link to="/hostels" className={styles.back}>
+        ← Back to hostels
+      </Link>
       <PageHeader
         title={hostel.name}
         subtitle={hostel.location}
