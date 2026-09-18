@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useProducts } from "../../hooks/useMarketplace";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { SearchBar } from "../../components/common/SearchBar";
+import { Button } from "../../components/common/Button";
 import { ProductCard } from "../../components/marketplace/ProductCard";
 import { Skeleton } from "../../components/common/Skeleton";
 import { EmptyState } from "../../components/common/EmptyState";
@@ -14,7 +16,15 @@ export default function ProductsPage() {
 
   return (
     <div className={styles.wrap}>
-      <PageHeader title="Products" subtitle="Browse all hostel essentials." />
+      <PageHeader
+        title="Products"
+        subtitle="Browse all hostel essentials."
+        actions={
+          <Link to="/marketplace/packs">
+            <Button variant="secondary">Browse packs</Button>
+          </Link>
+        }
+      />
       <div style={{ maxWidth: 420 }}>
         <SearchBar value={q} onChange={setQ} placeholder="Search products" />
       </div>

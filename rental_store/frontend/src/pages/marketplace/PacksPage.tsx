@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { usePacks, useProducts } from "../../hooks/useMarketplace";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { SearchBar } from "../../components/common/SearchBar";
+import { Button } from "../../components/common/Button";
 import { PackCard } from "../../components/marketplace/PackCard";
 import { Skeleton } from "../../components/common/Skeleton";
 import { EmptyState } from "../../components/common/EmptyState";
@@ -19,6 +21,11 @@ export default function PacksPage() {
       <PageHeader
         title="Packs"
         subtitle="Bundles of essentials at a discount."
+        actions={
+          <Link to="/marketplace/products">
+            <Button variant="secondary">Browse products</Button>
+          </Link>
+        }
       />
       <div style={{ maxWidth: 420 }}>
         <SearchBar value={q} onChange={setQ} placeholder="Search packs" />
