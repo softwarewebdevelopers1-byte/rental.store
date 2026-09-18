@@ -1,0 +1,58 @@
+.wrap {
+  overflow-x: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+.table {
+  width: 100%;
+  min-width: 520px;
+}
+.table th,
+.table td {
+  text-align: left;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--text-sm);
+}
+.table th {
+  background: var(--color-surface-alt);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-text-muted);
+  font-weight: var(--weight-medium);
+}
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+.roomNumber {
+  font-weight: var(--weight-medium);
+}
+.muted {
+  color: var(--color-text-muted);
+}
+.actionsCell {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: flex-end;
+}
+.link {
+  color: var(--color-primary);
+  font-size: var(--text-xs);
+}
+.link:hover {
+  text-decoration: underline;
+}
+.danger {
+  color: var(--color-danger);
+}
+.empty {
+  background: var(--color-surface);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}

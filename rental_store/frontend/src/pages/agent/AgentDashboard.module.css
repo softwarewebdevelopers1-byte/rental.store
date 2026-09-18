@@ -1,0 +1,44 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-3);
+}
+.twoCol {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: var(--space-6);
+}
+.sectionTitle {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  margin-bottom: var(--space-3);
+}
+.miniGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+.ordersGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--space-3);
+}
+.conflictLink {
+  display: inline-block;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+@media (max-width: 900px) {
+  .twoCol {
+    grid-template-columns: 1fr;
+  }
+}

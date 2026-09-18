@@ -1,0 +1,29 @@
+.wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: #f59e0b;
+}
+.sm {
+  font-size: var(--text-sm);
+}
+.md {
+  font-size: var(--text-base);
+}
+.full {
+  color: #f59e0b;
+}
+.empty {
+  color: var(--color-border-strong);
+}
+.value {
+  margin-left: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--color-text);
+  font-weight: var(--weight-medium);
+}
+.count {
+  margin-left: 2px;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}

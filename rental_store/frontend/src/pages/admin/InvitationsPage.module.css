@@ -1,0 +1,12 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.token {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  background: var(--color-surface-alt);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}

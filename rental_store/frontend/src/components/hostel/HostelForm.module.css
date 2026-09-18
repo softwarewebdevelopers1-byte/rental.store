@@ -1,0 +1,38 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-width: 640px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+.textarea {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
+}
+.textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-soft);
+}
+.hint {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+.actions {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}

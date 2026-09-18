@@ -1,0 +1,53 @@
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--weight-semibold);
+}
+.info {
+  flex: 1;
+  min-width: 0;
+}
+.name {
+  font-weight: var(--weight-medium);
+  font-size: var(--text-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.email {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.meta {
+  display: flex;
+  gap: var(--space-4);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+.actions {
+  display: flex;
+  gap: var(--space-2);
+}

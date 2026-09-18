@@ -1,0 +1,185 @@
+import { useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import {
+  hostelService,
+  type HostelSummary,
+} from "../../services/hostelService";
+import { PageHeader } from "../../components/layout/PageHeader";
+import { Badge } from "../../components/common/Badge";
+import { RatingStars } from "../../components/common/RatingStars";
+import { PriceDisplay } from "../../components/common/PriceDisplay";
+import { Button } from "../../components/common/Button";
+import { Skeleton } from "../../components/common/Skeleton";
+import { EmptyState } from "../../components/common/EmptyState";
+import { ErrorState } from "../../components/common/ErrorState";
+import type { Room } from "../../types/room";
+import styles from "./HostelDetailsPage.module.css";
+
+export default function HostelDetailsPage() {
+  const { hostelId = "" } = useParams<{ hostelId: string }>();
+  const [hostel, setHostel] = useState<HostelSummary | null>(null);
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [activeImage, setActiveImage] = useState(0);
+
+  async function load() {
+    setLoading(true);
+    setError(null);
+    try {
+      const [h, r] = await Promise.all([
+        hostelService.getById(hostelId),
+        hostelService.getRooms(hostelId),
+      ]);
+      setHostel(h);
+      setRooms(r);
+      setActiveImage(0);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load hostel");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void load();
+  }, [hostelId]);
+
+  if (loading) {
+    return (
+      <div className={styles.wrap}>
+        <Skeleton height={280} radius="var(--radius-lg)" />
+        <Skeleton height={32} width="50%" />
+        <Skeleton height={20} width="30%" />
+        <Skeleton height={200} radius="var(--radius-lg)" />
+      </div>
+    );
+  }
+  if (error)
+    return (
+      <div className={styles.wrap}>
+        <ErrorState description={error} onRetry={load} />
+      </div>
+    );
+  if (!hostel)
+    return (
+      <div className={styles.wrap}>
+        <EmptyState
+          title="Hostel not found"
+          description="It may have been removed."
+        />
+      </div>
+    );
+
+  const vacantRooms = rooms.filter((r) => r.status === "VACANT");
+
+  return (
+    <div className={styles.wrap}>
+      <PageHeader
+        title={hostel.name}
+        subtitle={hostel.location}
+        actions={
+          hostel.landlordVerified ? (
+            <Badge tone="success">Verified landlord</Badge>
+          ) : undefined
+        }
+      />
+
+      <section className={styles.gallery}>
+        <div className={styles.hero}>
+          <img
+            src={hostel.images[activeImage]}
+            alt={`${hostel.name} photo ${activeImage + 1}`}
+          />
+        </div>
+        <div className={styles.thumbs}>
+          {hostel.images.map((src, i) => (
+            <button
+              key={src}
+              className={`${styles.thumb} ${i === activeImage ? styles.thumbActive : ""}`}
+              onClick={() => setActiveImage(i)}
+              aria-label={`Photo ${i + 1}`}
+            >
+              <img src={src} alt="" />
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className={styles.infoGrid}>
+        <div className={styles.infoBlock}>
+          <h2>About this hostel</h2>
+          <p>{hostel.description || "No description provided."}</p>
+        </div>
+        <div className={styles.sideCard}>
+          <div className={styles.ratingRow}>
+            <RatingStars
+              value={hostel.rating}
+              count={hostel.reviewCount}
+              size="md"
+            />
+          </div>
+          <div className={styles.stat}>
+            <span>Vacant rooms</span>
+            <strong>{vacantRooms.length}</strong>
+          </div>
+          <div className={styles.stat}>
+            <span>Price range</span>
+            <strong>
+              {hostel.priceRange ? (
+                <>
+                  <PriceDisplay amount={hostel.priceRange[0]} size="sm" /> –{" "}
+                  <PriceDisplay amount={hostel.priceRange[1]} size="sm" />
+                </>
+              ) : (
+                "—"
+              )}
+            </strong>
+          </div>
+          <Link to="/register/student">
+            <Button fullWidth size="lg">
+              Join this hostel
+            </Button>
+          </Link>
+        </div>
+      </section>
+
+      <section className={styles.rooms}>
+        <h2>Available rooms</h2>
+        {rooms.length === 0 ? (
+          <EmptyState
+            title="No rooms listed"
+            description="This hostel hasn't published any rooms yet."
+          />
+        ) : (
+          <div className={styles.roomGrid}>
+            {rooms.map((r) => {
+              const bookable = r.status === "VACANT";
+              return (
+                <div
+                  key={r.id}
+                  className={`${styles.roomCard} ${bookable ? "" : styles.roomDisabled}`}
+                >
+                  <div className={styles.roomTop}>
+                    <span className={styles.roomNumber}>Room {r.number}</span>
+                    <Badge tone={bookable ? "success" : "info"}>
+                      {r.status}
+                    </Badge>
+                  </div>
+                  <PriceDisplay amount={r.price} suffix="/mo" />
+                  <Button
+                    size="sm"
+                    variant={bookable ? "primary" : "secondary"}
+                    disabled={!bookable}
+                  >
+                    {bookable ? "Request room" : "Occupied"}
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}

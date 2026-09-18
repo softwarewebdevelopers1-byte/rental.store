@@ -1,0 +1,65 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+.grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--space-5);
+}
+.description {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.summary > div {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-sm);
+}
+.summary span {
+  color: var(--color-text-muted);
+}
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+.tenantGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-3);
+}
+.ratingList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.ratingTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+.photoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--space-3);
+}
+.photo {
+  aspect-ratio: 4/3;
+  width: 100%;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+}
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

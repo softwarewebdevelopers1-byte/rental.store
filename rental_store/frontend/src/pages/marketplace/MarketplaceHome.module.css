@@ -1,0 +1,24 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: var(--space-3);
+}
+.title {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+}
+.seeAll {
+  font-size: var(--text-sm);
+  color: var(--color-primary);
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--space-4);
+}

@@ -1,0 +1,11 @@
+.link {
+  color: var(--color-primary);
+}
+.link:hover {
+  text-decoration: underline;
+}
+.actions {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}

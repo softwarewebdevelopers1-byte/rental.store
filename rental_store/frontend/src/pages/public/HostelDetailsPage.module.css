@@ -1,0 +1,115 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: var(--space-6);
+  max-width: var(--content-max);
+  margin: 0 auto;
+}
+.gallery {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.hero {
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--color-surface-alt);
+}
+.hero img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.thumbs {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+}
+.thumb {
+  width: 84px;
+  height: 60px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 2px solid transparent;
+}
+.thumbActive {
+  border-color: var(--color-primary);
+}
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.infoGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--space-5);
+}
+.infoBlock h2 {
+  font-size: var(--text-xl);
+  margin-bottom: var(--space-2);
+}
+.infoBlock p {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+.sideCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.ratingRow {
+  display: flex;
+  justify-content: space-between;
+}
+.stat {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-sm);
+}
+.stat span {
+  color: var(--color-text-muted);
+}
+.rooms h2 {
+  font-size: var(--text-xl);
+  margin-bottom: var(--space-3);
+}
+.roomGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-3);
+}
+.roomCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.roomDisabled {
+  opacity: 0.65;
+}
+.roomTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.roomNumber {
+  font-weight: var(--weight-medium);
+}
+@media (max-width: 900px) {
+  .wrap {
+    padding: var(--space-4);
+  }
+  .infoGrid {
+    grid-template-columns: 1fr;
+  }
+}

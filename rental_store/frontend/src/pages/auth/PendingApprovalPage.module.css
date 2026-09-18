@@ -1,0 +1,24 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-4);
+}
+.icon {
+  font-size: 3rem;
+}
+.title {
+  font-size: var(--text-2xl);
+}
+.description {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  max-width: 420px;
+}
+.actions {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  justify-content: center;
+}
