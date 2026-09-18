@@ -114,6 +114,32 @@ export const hostelService = {
     return delay(mockRooms.filter((r) => r.hostelId === hostelId));
   },
 
+  async bookRoom(
+    roomId: string,
+    hostelId: string,
+    tenantId: string,
+    tenantName: string,
+  ): Promise<Room | null> {
+    const room = mockRooms.find(
+      (item) => item.id === roomId && item.hostelId === hostelId,
+    );
+    if (!room || room.status !== "VACANT") return delay(null);
+
+    room.status = "BOOKED";
+    room.tenantId = tenantId;
+    room.tenantName = tenantName;
+
+    const student = mockStudents.find((item) => item.id === tenantId);
+    if (student) {
+      student.hostelId = room.hostelId;
+      student.roomId = room.id;
+      student.membershipStatus = "ACTIVE";
+      student.requestedHostelId = undefined;
+    }
+
+    return delay(room);
+  },
+
   async findByCode(code: string): Promise<Hostel | null> {
     const hostel = mockHostels.find(
       (h) => h.code.toUpperCase() === code.trim().toUpperCase() && h.active,

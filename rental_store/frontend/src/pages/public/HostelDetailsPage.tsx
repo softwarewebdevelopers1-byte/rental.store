@@ -4,6 +4,7 @@ import {
   hostelService,
   type HostelSummary,
 } from "../../services/hostelService";
+import { paymentService } from "../../services/paymentService";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Badge } from "../../components/common/Badge";
 import { RatingStars } from "../../components/common/RatingStars";
@@ -12,16 +13,24 @@ import { Button } from "../../components/common/Button";
 import { Skeleton } from "../../components/common/Skeleton";
 import { EmptyState } from "../../components/common/EmptyState";
 import { ErrorState } from "../../components/common/ErrorState";
+import { MpesaPaymentModal } from "../../components/payments/MpesaPaymentModal";
+import { useAuth } from "../../hooks/useAuth";
+import { useToast } from "../../hooks/useToast";
 import type { Room } from "../../types/room";
 import styles from "./HostelDetailsPage.module.css";
 
 export default function HostelDetailsPage() {
   const { hostelId = "" } = useParams<{ hostelId: string }>();
+  const { user } = useAuth();
+  const { show } = useToast();
   const [hostel, setHostel] = useState<HostelSummary | null>(null);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeImage, setActiveImage] = useState(0);
+  const [paymentOpen, setPaymentOpen] = useState(false);
+  const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -38,6 +47,62 @@ export default function HostelDetailsPage() {
       setError(e instanceof Error ? e.message : "Failed to load hostel");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function openRoomPayment(room: Room) {
+    if (!user || user.role !== "STUDENT") {
+      show("Sign in as a student to request a room.", "error");
+      return;
+    }
+    setSelectedRoom(room);
+    setPaymentOpen(true);
+  }
+
+  async function handleMpesaConfirm({
+    phone,
+    mpesaCode,
+  }: {
+    phone: string;
+    mpesaCode: string;
+  }) {
+    if (!user || user.role !== "STUDENT" || !hostel || !selectedRoom) return;
+
+    setSubmitting(true);
+    try {
+      await paymentService.createPayment({
+        studentId: user.id,
+        hostelId: hostel.id,
+        roomId: selectedRoom.id,
+        amount: selectedRoom.price,
+        status: "PAID",
+        dueDate: new Date(
+          Date.now() + 30 * 24 * 60 * 60 * 1000,
+        ).toISOString(),
+        method: "MPESA",
+        mpesaPhone: phone,
+        mpesaCode,
+      });
+      const bookedRoom = await hostelService.bookRoom(
+        selectedRoom.id,
+        hostel.id,
+        user.id,
+        user.name,
+      );
+      if (!bookedRoom) throw new Error("This room is no longer available.");
+
+      setRooms((current) =>
+        current.map((room) => (room.id === bookedRoom.id ? bookedRoom : room)),
+      );
+      show(`M-Pesa payment confirmed — ${mpesaCode}`, "success");
+      setPaymentOpen(false);
+    } catch (e) {
+      show(
+        e instanceof Error ? e.message : "Room request payment failed",
+        "error",
+      );
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -170,7 +235,8 @@ export default function HostelDetailsPage() {
                   <Button
                     size="sm"
                     variant={bookable ? "primary" : "secondary"}
-                    disabled={!bookable}
+                    disabled={!bookable || submitting}
+                    onClick={() => void openRoomPayment(r)}
                   >
                     {bookable ? "Request room" : "Occupied"}
                   </Button>
@@ -180,6 +246,18 @@ export default function HostelDetailsPage() {
           </div>
         )}
       </section>
+      <MpesaPaymentModal
+        open={paymentOpen}
+        amount={selectedRoom?.price ?? 0}
+        phone={user?.role === "STUDENT" ? user.phone : undefined}
+        onClose={() => {
+          if (!submitting) {
+            setPaymentOpen(false);
+            setSelectedRoom(null);
+          }
+        }}
+        onConfirm={handleMpesaConfirm}
+      />
     </div>
   );
 }
