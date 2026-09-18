@@ -33,7 +33,11 @@ export default function HostelDiscoveryPage() {
 
   return (
     <div className={styles.wrap}>
-      <aside className={styles.filters}>
+      <details className={styles.filters} open>
+        <summary className={styles.summary}>
+          <span>Search &amp; filters</span>
+          <span className={styles.summaryToggle} aria-hidden>›</span>
+        </summary>
         <h1>Find a hostel</h1>
         <SearchBar value={query} onChange={setQuery} placeholder="Search hostels" />
         <Input label="Location" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Town or campus" />
@@ -55,7 +59,7 @@ export default function HostelDiscoveryPage() {
           <input type="checkbox" checked={vacantOnly} onChange={(e) => setVacantOnly(e.target.checked)} />
           Show vacant rooms only
         </label>
-      </aside>
+      </details>
       <main className={styles.results}>
         <div className={styles.grid}>
           {loading ? Array.from({ length: 6 }).map((_, index) => (
