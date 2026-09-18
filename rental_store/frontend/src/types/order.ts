@@ -28,4 +28,6 @@ export interface Order {
   createdAt: string;
   updatedAt: string;
   timeline: { status: OrderStatus; at: string }[];
+  mpesaPhone?: string;
+  mpesaCode?: string;
 }

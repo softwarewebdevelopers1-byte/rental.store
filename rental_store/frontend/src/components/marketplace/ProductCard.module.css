@@ -5,6 +5,8 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  width: 100%;
   transition: box-shadow 150ms ease;
 }
 .card:hover {
@@ -26,10 +28,12 @@
   flex-direction: column;
   gap: var(--space-2);
   flex: 1;
+  min-width: 0;
 }
 .name {
   font-size: var(--text-base);
   font-weight: var(--weight-semibold);
+  word-break: break-word;
 }
 .description {
   font-size: var(--text-xs);
@@ -42,8 +46,28 @@
 }
 .footer {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   gap: var(--space-2);
   margin-top: var(--space-2);
+  flex-wrap: wrap;
+}
+.actions {
+  display: flex;
+  gap: var(--space-2);
+  flex: 1;
+  min-width: 0;
+}
+.actions .btn {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+@media (max-width: 480px) {
+  .footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .actions {
+    flex-direction: column;
+  }
 }

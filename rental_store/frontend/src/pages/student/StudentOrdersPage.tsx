@@ -21,9 +21,14 @@ export default function StudentOrdersPage() {
         title="My orders"
         subtitle="Track your marketplace purchases."
         actions={
-          <Link to="/marketplace">
-            <Button>Browse Marketplace</Button>
-          </Link>
+          <>
+            <Link to="/marketplace/cart">
+              <Button variant="secondary">View cart</Button>
+            </Link>
+            <Link to="/marketplace">
+              <Button>Browse Marketplace</Button>
+            </Link>
+          </>
         }
       />
 

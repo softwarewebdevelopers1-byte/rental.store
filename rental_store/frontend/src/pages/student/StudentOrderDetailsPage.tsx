@@ -15,6 +15,7 @@ import { PriceDisplay } from "../../components/common/PriceDisplay";
 import { OrderTimeline } from "../../components/marketplace/OrderTimeline";
 import { Skeleton } from "../../components/common/Skeleton";
 import { EmptyState } from "../../components/common/EmptyState";
+import { MpesaPaymentModal } from "../../components/payments/MpesaPaymentModal";
 import type { ConflictIssue } from "../../types/conflict";
 import styles from "./StudentOrderDetailsPage.module.css";
 
@@ -36,6 +37,8 @@ export default function StudentOrderDetailsPage() {
   const [issue, setIssue] = useState<ConflictIssue>("DAMAGED_ITEM");
   const [description, setDescription] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [payOpen, setPayOpen] = useState(false);
+  const [paying, setPaying] = useState(false);
 
   if (loading) return <Skeleton height={400} radius="var(--radius-lg)" />;
   if (!order) return <EmptyState title="Order not found" />;
@@ -68,6 +71,23 @@ export default function StudentOrderDetailsPage() {
     }
   }
 
+  async function handleMpesaConfirm({ phone, mpesaCode }: { phone: string; mpesaCode: string }) {
+    setPaying(true);
+    try {
+      await orderService.payOrder(order!.id, { phone, mpesaCode });
+      show(`M-Pesa payment confirmed — ${mpesaCode}`, "success");
+      setPayOpen(false);
+      await reload();
+    } catch (e) {
+      show(
+        e instanceof Error ? e.message : "Payment failed",
+        "error",
+      );
+    } finally {
+      setPaying(false);
+    }
+  }
+
   return (
     <div className={styles.wrap}>
       <PageHeader
@@ -83,6 +103,12 @@ export default function StudentOrderDetailsPage() {
       <div className={styles.grid}>
         <Card title="Status">
           <StatusBadge status={order.status} />
+          {order.mpesaCode && (
+            <div className={styles.mpesaRow}>
+              <span className={styles.mpesaLabel}>M-Pesa code</span>
+              <span className={styles.mpesaCode}>{order.mpesaCode}</span>
+            </div>
+          )}
           <div style={{ marginTop: "var(--space-4)" }}>
             <OrderTimeline order={order} />
           </div>
@@ -107,6 +133,11 @@ export default function StudentOrderDetailsPage() {
       </div>
 
       <div className={styles.actions}>
+        {order.status === "PENDING_PAYMENT" && (
+          <Button onClick={() => setPayOpen(true)} loading={paying}>
+            Pay with M-Pesa
+          </Button>
+        )}
         {order.status === "DELIVERED" && (
           <Button variant="success" onClick={confirmReceived}>
             Confirm received
@@ -118,6 +149,16 @@ export default function StudentOrderDetailsPage() {
           </Button>
         )}
       </div>
+
+      <MpesaPaymentModal
+        open={payOpen}
+        amount={order.total}
+        phone={user?.phone}
+        onClose={() => {
+          if (!paying) setPayOpen(false);
+        }}
+        onConfirm={handleMpesaConfirm}
+      />
 
       <Modal
         open={reportOpen}

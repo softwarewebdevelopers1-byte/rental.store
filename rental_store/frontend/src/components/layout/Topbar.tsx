@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { useNotifications } from "../../hooks/useNotifications";
+import { useCart } from "../../hooks/useCart";
 import { useState } from "react";
 import styles from "./Topbar.module.css";
 
@@ -16,6 +17,7 @@ export function Topbar({
   title,
 }: TopbarProps) {
   const { user } = useAuth();
+  const { count } = useCart();
   const { items, unreadCount, markAllRead } = useNotifications();
   const [open, setOpen] = useState(false);
 
@@ -34,6 +36,14 @@ export function Topbar({
         {title && <h2 className={styles.title}>{title}</h2>}
       </div>
       <div className={styles.right}>
+        <Link
+          to="/marketplace/cart"
+          className={styles.cartBtn}
+          aria-label={`Cart (${count})`}
+        >
+          🛒
+          {count > 0 && <span className={styles.badge}>{count}</span>}
+        </Link>
         <div className={styles.bellWrap}>
           <button
             className={styles.bell}

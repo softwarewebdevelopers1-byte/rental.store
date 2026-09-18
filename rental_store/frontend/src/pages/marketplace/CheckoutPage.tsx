@@ -10,8 +10,18 @@ import { Card } from "../../components/common/Card";
 import { Button } from "../../components/common/Button";
 import { PriceDisplay } from "../../components/common/PriceDisplay";
 import { EmptyState } from "../../components/common/EmptyState";
+import { MpesaPaymentModal } from "../../components/payments/MpesaPaymentModal";
 import type { OrderItem } from "../../types/order";
 import styles from "./CartPage.module.css";
+
+function generateMpesaCode(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let out = "";
+  for (let i = 0; i < 8; i++) {
+    out += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return out;
+}
 
 export default function CheckoutPage() {
   const { user } = useAuth();
@@ -21,6 +31,7 @@ export default function CheckoutPage() {
   const { data: products } = useProducts();
   const { data: packs } = usePacks();
   const [placing, setPlacing] = useState(false);
+  const [open, setOpen] = useState(false);
 
   const productsById = Object.fromEntries(products.map((p) => [p.id, p]));
   const packsById = Object.fromEntries(packs.map((p) => [p.id, p]));
@@ -67,23 +78,28 @@ export default function CheckoutPage() {
     packsById[orderItems[0].refId]?.agentId ??
     "";
 
-  async function placeOrder() {
-    if (!user) return;
+  async function handleMpesaConfirm({ phone }: { phone: string; mpesaCode: string }) {
     setPlacing(true);
     try {
+      const code = generateMpesaCode();
       const order = await orderService.create({
-        studentId: user.id,
+        studentId: user!.id,
         agentId,
         items: orderItems,
         total,
       });
+      await orderService.payOrder(order.id, { phone, mpesaCode: code });
       clear();
-      show("Order placed successfully.", "success");
+      show(`M-Pesa payment confirmed — ${code}`, "success");
       navigate(`/student/orders/${order.id}`);
     } catch (e) {
-      show(e instanceof Error ? e.message : "Order failed", "error");
+      show(
+        e instanceof Error ? e.message : "Order failed",
+        "error",
+      );
     } finally {
       setPlacing(false);
+      setOpen(false);
     }
   }
 
@@ -125,13 +141,27 @@ export default function CheckoutPage() {
               color: "var(--color-text-muted)",
             }}
           >
-            Prototype: no payment provider. Order is created as PAID.
+            You will receive an M-Pesa STK push to authorise the payment.
           </p>
-          <Button fullWidth size="lg" onClick={placeOrder} loading={placing}>
-            Place order
+          <Button
+            fullWidth
+            size="lg"
+            onClick={() => setOpen(true)}
+            loading={placing}
+          >
+            Pay with M-Pesa
           </Button>
         </aside>
       </div>
+      <MpesaPaymentModal
+        open={open}
+        amount={total}
+        phone={user.phone}
+        onClose={() => {
+          if (!placing) setOpen(false);
+        }}
+        onConfirm={handleMpesaConfirm}
+      />
     </div>
   );
 }

@@ -10,6 +10,11 @@ export interface CreateOrderInput {
   total: number;
 }
 
+export interface PayOrderInput {
+  phone: string;
+  mpesaCode: string;
+}
+
 export const orderService = {
   async listForStudent(studentId: string): Promise<Order[]> {
     return delay(
@@ -39,15 +44,27 @@ export const orderService = {
       agentId: input.agentId,
       items: input.items,
       total: input.total,
-      status: "PAID", // prototype: assume payment is confirmed at checkout
+      status: "PENDING_PAYMENT",
       createdAt: now,
       updatedAt: now,
-      timeline: [
-        { status: "PENDING_PAYMENT", at: now },
-        { status: "PAID", at: now },
-      ],
+      timeline: [{ status: "PENDING_PAYMENT", at: now }],
     };
     mockOrders.push(order);
+    return delay(order);
+  },
+
+  async payOrder(
+    orderId: string,
+    input: PayOrderInput,
+  ): Promise<Order | null> {
+    const order = mockOrders.find((o) => o.id === orderId);
+    if (!order) return delay(null);
+    const now = new Date().toISOString();
+    order.status = "PAID";
+    order.mpesaPhone = input.phone;
+    order.mpesaCode = input.mpesaCode;
+    order.updatedAt = now;
+    order.timeline.push({ status: "PAID", at: now });
     return delay(order);
   },
 

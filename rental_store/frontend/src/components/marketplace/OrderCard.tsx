@@ -27,6 +27,12 @@ export function OrderCard({ order, to }: OrderCardProps) {
           <span className={styles.item}>+{order.items.length - 3} more</span>
         )}
       </div>
+      {order.mpesaCode && (
+        <div className={styles.mpesa}>
+          <span className={styles.mpesaLabel}>M-Pesa</span>
+          <span className={styles.mpesaCode}>{order.mpesaCode}</span>
+        </div>
+      )}
       <div className={styles.footer}>
         <span className={styles.date}>{formatDate(order.createdAt)}</span>
         <PriceDisplay amount={order.total} size="sm" />
