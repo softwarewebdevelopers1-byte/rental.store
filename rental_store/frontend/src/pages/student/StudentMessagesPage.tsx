@@ -7,16 +7,40 @@ import { ChatWindow } from "../../components/messaging/ChatWindow";
 import { Skeleton } from "../../components/common/Skeleton";
 import { EmptyState } from "../../components/common/EmptyState";
 import { userService } from "../../services/userService";
+import { studentService } from "../../services/studentService";
+import { hostelService, type HostelSummary } from "../../services/hostelService";
+import { messageService } from "../../services/messageService";
+import { useToast } from "../../hooks/useToast";
+import { Button } from "../../components/common/Button";
 import styles from "./StudentMessagesPage.module.css";
 
 export default function StudentMessagesPage() {
   const { user } = useAuth();
-  const { data: conversations, loading: loadingConvs } = useConversations(
+  const { show } = useToast();
+  const {
+    data: conversations,
+    loading: loadingConvs,
+    reload: reloadConversations,
+  } = useConversations(
     user?.id ?? "",
   );
+  const [hostel, setHostel] = useState<HostelSummary | null>(null);
+  const [startingWith, setStartingWith] = useState<string | null>(null);
   const [users, setUsers] = useState<Record<string, { name: string }>>({});
   const [activeId, setActiveId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    void studentService.getSelf().then(async (student) => {
+      if (!student?.hostelId) return;
+      const currentHostel = await hostelService.getById(student.hostelId);
+      if (!cancelled) setHostel(currentHostel);
+    }).catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const ids = [...new Set(conversations.flatMap((conversation) => conversation.participants))];
@@ -65,6 +89,36 @@ export default function StudentMessagesPage() {
       : "";
   };
 
+  const contacts = hostel
+    ? [
+        { id: hostel.landlordId, name: hostel.landlordName, role: "Landlord" },
+        ...(hostel.caretakers ?? []).map((caretaker) => ({
+          id: caretaker.id,
+          name: caretaker.name,
+          role: "Caretaker",
+        })),
+      ]
+    : [];
+
+  async function startConversation(userId: string) {
+    setStartingWith(userId);
+    try {
+      const conversation = await messageService.getOrCreateDirect(userId);
+      await reloadConversations();
+      setActiveId(conversation.id);
+      show("Conversation started.", "success");
+    } catch (error) {
+      show(
+        error instanceof Error
+          ? error.message
+          : "Unable to start the conversation.",
+        "error",
+      );
+    } finally {
+      setStartingWith(null);
+    }
+  }
+
   return (
     <div className={styles.wrap}>
       <PageHeader
@@ -74,10 +128,26 @@ export default function StudentMessagesPage() {
       {loadingConvs ? (
         <Skeleton height={480} radius="var(--radius-lg)" />
       ) : conversations.length === 0 ? (
-        <EmptyState
-          title="No conversations yet"
-          description="Once you join a hostel you can chat with the landlord and caretaker."
-        />
+        <div>
+          <EmptyState
+            title="No conversations yet"
+            description="Start a conversation with your landlord or caretaker."
+          />
+          {contacts.length > 0 && (
+            <div>
+              {contacts.map((contact) => (
+                <Button
+                  key={contact.id}
+                  variant="secondary"
+                  onClick={() => void startConversation(contact.id)}
+                  loading={startingWith === contact.id}
+                >
+                  Message {contact.role} · {contact.name}
+                </Button>
+              ))}
+            </div>
+          )}
+        </div>
       ) : (
         <div className={styles.grid}>
           <ConversationList

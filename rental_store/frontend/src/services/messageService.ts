@@ -30,6 +30,10 @@ function toMessage(raw: MessageResponse): Message {
 }
 
 export const messageService = {
+  async getOrCreateDirect(userId: string): Promise<ConversationResponse> {
+    return http.post<ConversationResponse>(`/messages/direct/${userId}`);
+  },
+
   async listConversations(userId: string): Promise<Conversation[]> {
     const conversations = await http.get<ConversationSummaryResponse[]>(
       "/messages/conversations",

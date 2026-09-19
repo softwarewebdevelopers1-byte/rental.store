@@ -54,6 +54,11 @@ export default function StudentRatingsPage() {
       setComment("");
       show("Rating submitted.", "success");
       await reload();
+    } catch (error) {
+      show(
+        error instanceof Error ? error.message : "Unable to submit rating.",
+        "error",
+      );
     } finally {
       setSubmitting(false);
     }

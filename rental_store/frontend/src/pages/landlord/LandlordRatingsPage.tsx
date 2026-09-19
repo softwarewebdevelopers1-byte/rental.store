@@ -5,6 +5,7 @@ import { Card } from "../../components/common/Card";
 import { RatingStars } from "../../components/common/RatingStars";
 import { Skeleton } from "../../components/common/Skeleton";
 import { EmptyState } from "../../components/common/EmptyState";
+import { ErrorState } from "../../components/common/ErrorState";
 import { hostelService } from "../../services/hostelService";
 import { ratingService } from "../../services/ratingService";
 import type { Rating } from "../../types/rating";
@@ -13,23 +14,31 @@ export default function LandlordRatingsPage() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [ratings, setRatings] = useState<Rating[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
+  async function loadRatings() {
+    setLoading(true);
+    setError(null);
+    try {
       const hostels = await hostelService.listByLandlord(user?.id ?? "");
       const results = await Promise.all(
         hostels.map((hostel) => ratingService.listForHostel(hostel.id)),
       );
       const rs = results.flat().sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-      if (!cancelled) {
-        setRatings(rs);
-        setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+      setRatings(rs);
+    } catch (loadError) {
+      setError(
+        loadError instanceof Error
+          ? loadError.message
+          : "Unable to load hostel ratings.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void loadRatings();
   }, [user?.id]);
 
   return (
@@ -46,6 +55,8 @@ export default function LandlordRatingsPage() {
       />
       {loading ? (
         <Skeleton height={200} radius="var(--radius-lg)" />
+      ) : error ? (
+        <ErrorState description={error} onRetry={() => void loadRatings()} />
       ) : ratings.length === 0 ? (
         <EmptyState
           title="No ratings yet"

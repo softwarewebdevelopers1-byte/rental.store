@@ -17,6 +17,7 @@ export interface HostelSummary extends Hostel {
   vacantRooms: number;
   priceRange: [number, number] | null;
   landlordVerified: boolean;
+  landlordName?: string;
   caretakers?: Caretaker[];
 }
 
@@ -135,6 +136,7 @@ function toHostelSummary(raw: HostelSummaryResponse): HostelSummary {
         ? [raw.minPrice, raw.maxPrice]
         : null,
     landlordVerified: raw.landlordVerified,
+    landlordName: raw.landlordName,
   };
 }
 
