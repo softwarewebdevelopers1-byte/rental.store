@@ -6,7 +6,7 @@
 .statsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: var(--space-3);
+  gap: var(--space-4);
 }
 .sectionHead {
   display: flex;
@@ -25,10 +25,10 @@
 .hostelGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: var(--space-3);
+  gap: var(--space-4);
 }
 .maintenanceGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: var(--space-3);
+  gap: var(--space-4);
 }

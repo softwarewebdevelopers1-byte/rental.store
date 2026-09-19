@@ -8,6 +8,8 @@ export interface ApiClient {
   delete<T>(path: string): Promise<T>;
 }
 
+import { getAuthToken } from "./authToken";
+
 export class ApiError extends Error {
   readonly status: number;
 
@@ -22,9 +24,14 @@ export class ApiError extends Error {
 }
 
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+  const token = getAuthToken();
+  const headers: HeadersInit = {
+    ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
   const response = await fetch(`${API_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`, {
     method,
-    headers: body === undefined ? undefined : { "Content-Type": "application/json" },
+    headers,
     body: body === undefined ? undefined : JSON.stringify(body),
   });
 

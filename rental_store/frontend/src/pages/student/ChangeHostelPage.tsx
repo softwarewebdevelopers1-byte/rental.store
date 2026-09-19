@@ -1,30 +1,60 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Card } from "../../components/common/Card";
 import { Button } from "../../components/common/Button";
 import { Input } from "../../components/common/Input";
 import { EmptyState } from "../../components/common/EmptyState";
-import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../../hooks/useToast";
 import { hostelService } from "../../services/hostelService";
-import { mockStudents } from "../../data/users";
+import { studentService } from "../../services/studentService";
+import type { Student } from "../../types/user";
 import styles from "./ChangeHostelPage.module.css";
 
 export default function ChangeHostelPage() {
-  const { user } = useAuth();
   const { show } = useToast();
   const navigate = useNavigate();
-  const student = mockStudents.find((item) => item.id === user?.id);
+  const [student, setStudent] = useState<Student | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void studentService
+      .getSelf()
+      .then((profile) => {
+        if (!cancelled) setStudent(profile);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const isLinking = !student?.hostelId;
   const [code, setCode] = useState("");
   const [hostelName, setHostelName] = useState<string | null>(null);
+  const [checking, setChecking] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   async function findHostel() {
-    const hostel = await hostelService.findByCode(code);
-    setHostelName(hostel?.name ?? null);
-    if (!hostel) show("That hostel code is not valid.", "error");
+    setChecking(true);
+    setHostelName(null);
+    try {
+      const hostel = await hostelService.findByCode(code);
+      if (!hostel) {
+        show("That hostel code is not valid.", "error");
+        return;
+      }
+      setHostelName(hostel.name);
+      show(`Hostel code verified for ${hostel.name}.`, "success");
+    } catch (error) {
+      show(
+        error instanceof Error && error.message
+          ? error.message
+          : "Unable to check the hostel code. Please try again.",
+        "error",
+      );
+    } finally {
+      setChecking(false);
+    }
   }
 
   async function onSubmit(event: FormEvent) {
@@ -71,7 +101,15 @@ export default function ChangeHostelPage() {
             hint="Ask the landlord for the hostel code."
             required
           />
-          <Button type="button" variant="secondary" onClick={() => void findHostel()} disabled={!code.trim()}>Check code</Button>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => void findHostel()}
+            disabled={!code.trim()}
+            loading={checking}
+          >
+            Check code
+          </Button>
           {hostelName && (
             <div className={styles.success}>
               <span className={styles.icon} aria-hidden>✓</span>

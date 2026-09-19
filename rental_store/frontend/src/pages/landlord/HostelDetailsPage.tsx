@@ -15,6 +15,7 @@ import { RatingStars } from "../../components/common/RatingStars";
 import { Skeleton } from "../../components/common/Skeleton";
 import { EmptyState } from "../../components/common/EmptyState";
 import { ConfirmDialog } from "../../components/common/ConfirmDialog";
+import { FileUpload } from "../../components/common/FileUpload";
 import { RoomTable } from "../../components/hostel/RoomTable";
 import { RoomFormModal } from "../../components/hostel/RoomFormModal";
 import { TenantCard } from "../../components/hostel/TenantCard";
@@ -40,6 +41,8 @@ export default function LandlordHostelDetailsPage() {
   const [hostel, setHostel] = useState<HostelSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<TabId>("overview");
+  const [photoDraft, setPhotoDraft] = useState<string[]>([]);
+  const [savingPhotos, setSavingPhotos] = useState(false);
 
   const [roomModalOpen, setRoomModalOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
@@ -53,6 +56,7 @@ export default function LandlordHostelDetailsPage() {
       const h = await hostelService.getById(hostelId);
       if (!cancelled) {
         setHostel(h);
+        setPhotoDraft(h?.images ?? []);
         setLoading(false);
       }
     })();
@@ -118,6 +122,20 @@ export default function LandlordHostelDetailsPage() {
     const next = room.status === "VACANT" ? "BOOKED" : "VACANT";
     await roomService.setStatus(room.id, next);
     await reloadRooms();
+  }
+
+  async function handleSavePhotos() {
+    if (!hostel) return;
+    setSavingPhotos(true);
+    try {
+      await hostelService.update(hostelId, { images: photoDraft });
+      setHostel({ ...hostel, images: photoDraft });
+      show("Photos updated.", "success");
+    } catch (e) {
+      show(e instanceof Error ? e.message : "Failed to update photos", "error");
+    } finally {
+      setSavingPhotos(false);
+    }
   }
 
   return (
@@ -291,19 +309,31 @@ export default function LandlordHostelDetailsPage() {
           </div>
         ))}
 
-      {tab === "photos" &&
-        (hostel.images.length === 0 ? (
-          <EmptyState
-            title="No photos"
-            description="Edit the hostel to add image URLs."
-          />
-        ) : (
-          <div className={styles.photoGrid}>
-            {hostel.images.map((src) => (
-              <img key={src} src={src} alt="" className={styles.photo} />
-            ))}
+      {tab === "photos" && (
+        <Card title="Photos" subtitle="Add new photos or remove existing ones.">
+          <div className={styles.photoEditor}>
+            <FileUpload
+              folder="hostels"
+              multiple
+              label="Hostel images"
+              value={photoDraft}
+              onChange={setPhotoDraft}
+            />
+            <div className={styles.photoActions}>
+              <Button
+                onClick={() => void handleSavePhotos()}
+                disabled={
+                  savingPhotos ||
+                  JSON.stringify(photoDraft) === JSON.stringify(hostel.images)
+                }
+                loading={savingPhotos}
+              >
+                Save photos
+              </Button>
+            </div>
           </div>
-        ))}
+        </Card>
+      )}
 
       <RoomFormModal
         open={roomModalOpen}

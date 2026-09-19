@@ -11,6 +11,7 @@ import { MaintenanceCard } from "../../components/maintenance/MaintenanceCard";
 import { Skeleton } from "../../components/common/Skeleton";
 import { EmptyState } from "../../components/common/EmptyState";
 import { ErrorState } from "../../components/common/ErrorState";
+import { FileUpload } from "../../components/common/FileUpload";
 import type { MaintenanceCategory } from "../../types/maintenance";
 import styles from "./StudentMaintenancePage.module.css";
 
@@ -34,6 +35,7 @@ export default function StudentMaintenancePage() {
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState<MaintenanceCategory>("PLUMBING");
   const [submitting, setSubmitting] = useState(false);
+  const [attachments, setAttachments] = useState<string[]>([]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -50,10 +52,11 @@ export default function StudentMaintenancePage() {
         title,
         description,
         category,
-        attachments: [],
+        attachments,
       });
       setTitle("");
       setDescription("");
+      setAttachments([]);
       show("Maintenance request submitted.", "success");
     } finally {
       setSubmitting(false);
@@ -91,6 +94,14 @@ export default function StudentMaintenancePage() {
               required
             />
           </div>
+          <FileUpload
+            folder="maintenance"
+            label="Attachments (optional)"
+            accept="image/*,application/pdf"
+            multiple
+            value={attachments}
+            onChange={setAttachments}
+          />
           <Button
             type="submit"
             disabled={!title || !description}

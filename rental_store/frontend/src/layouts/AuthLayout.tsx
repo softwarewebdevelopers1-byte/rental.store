@@ -6,7 +6,7 @@ export function AuthLayout() {
   return (
     <div className={styles.shell}>
       <div className={styles.panel}>
-        <Link to="/" className={styles.brand}>
+        <Link to="/" className={styles.brand} aria-label="Hostelix">
           <img src={APP_LOGO} alt={APP_NAME} className={styles.logo} />
         </Link>
         <div className={styles.card}>

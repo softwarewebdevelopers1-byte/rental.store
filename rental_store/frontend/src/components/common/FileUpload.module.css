@@ -1,0 +1,14 @@
+.wrap { display: flex; flex-direction: column; gap: var(--space-2); }
+.label { color: var(--color-text); font-size: 13px; font-weight: var(--weight-medium); }
+.zone { display: flex; align-items: center; justify-content: center; min-height: 112px; padding: var(--space-4); border: 1px dashed var(--color-border-strong); border-radius: var(--radius-lg); background: var(--color-surface-alt); cursor: pointer; transition: border-color 140ms ease, background-color 140ms ease; }
+.zone:hover, .zoneDragging { border-color: var(--color-primary); background: var(--color-primary-soft); }
+.zoneDisabled { cursor: not-allowed; opacity: 0.6; }
+.input { display: none; }
+.button { color: var(--color-primary); font-size: 14px; font-weight: var(--weight-medium); }
+.progress { color: var(--color-text-muted); font-size: 12px; }
+.list { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: var(--space-2); }
+.item { position: relative; min-height: 56px; overflow: hidden; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+.thumb { width: 100%; height: 84px; object-fit: cover; }
+.link { display: block; padding: var(--space-2); overflow: hidden; color: var(--color-primary); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.remove { position: absolute; top: 4px; right: 4px; display: grid; width: 24px; height: 24px; place-items: center; border-radius: var(--radius-full); background: rgba(17, 24, 39, 0.72); color: #fff; font-size: 16px; line-height: 1; }
+.remove:hover { background: var(--color-danger); }

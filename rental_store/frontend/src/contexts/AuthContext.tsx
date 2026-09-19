@@ -31,8 +31,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   useEffect(() => {
-    if (session) storage.set("auth.session", session);
-    else storage.remove("auth.session");
+    if (session) {
+      storage.set("auth.session", session);
+      localStorage.setItem("auth.token", session.token);
+    } else {
+      storage.remove("auth.session");
+      localStorage.removeItem("auth.token");
+    }
   }, [session]);
 
   const login = useCallback(async (email: string, password: string) => {

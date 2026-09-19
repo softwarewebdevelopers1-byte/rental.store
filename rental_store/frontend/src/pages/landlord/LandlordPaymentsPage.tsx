@@ -4,8 +4,8 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { StatCard } from "../../components/admin/StatCard";
 import { PaymentTable } from "../../components/payments/PaymentTable";
 import { Skeleton } from "../../components/common/Skeleton";
-import { mockHostels } from "../../data/hostels";
-import { mockPayments } from "../../data/payments";
+import { hostelService } from "../../services/hostelService";
+import { paymentService } from "../../services/paymentService";
 import type { Payment } from "../../types/payment";
 
 export default function LandlordPaymentsPage() {
@@ -16,14 +16,18 @@ export default function LandlordPaymentsPage() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      await new Promise((r) => setTimeout(r, 200));
-      const hostelIds = new Set(
-        mockHostels.filter((h) => h.landlordId === user?.id).map((h) => h.id),
-      );
-      const filtered = mockPayments.filter((p) => hostelIds.has(p.hostelId));
-      if (!cancelled) {
-        setPayments(filtered);
-        setLoading(false);
+      try {
+        const hostels = await hostelService.listByLandlord(user?.id ?? "");
+        const perHostel = await Promise.all(
+          hostels.map((h) => paymentService.listForHostel(h.id)),
+        );
+        if (!cancelled) {
+          setPayments(perHostel.flat());
+        }
+      } catch {
+        if (!cancelled) setPayments([]);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     })();
     return () => {

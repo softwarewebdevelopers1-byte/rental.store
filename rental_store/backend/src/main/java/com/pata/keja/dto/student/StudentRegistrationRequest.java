@@ -12,5 +12,5 @@ public record StudentRegistrationRequest(
 
         @NotBlank @Size(min = 8, max = 72) String password,
 
-        @NotBlank @Size(max = 32) String hostelCode) {
+        @Size(max = 32) String hostelCode) {
 }

@@ -39,17 +39,6 @@ function toUser(user: BackendUser): User {
   return { ...user };
 }
 
-function toStudent(response: StudentResponse): Student {
-  return {
-    ...toUser(response),
-    role: "STUDENT",
-    membershipStatus: response.membershipStatus,
-    ...(response.hostelId ? { hostelId: response.hostelId } : {}),
-    ...(response.roomId ? { roomId: response.roomId } : {}),
-    ...(response.requestedHostelId ? { requestedHostelId: response.requestedHostelId } : {}),
-  };
-}
-
 const demoEmails: Record<UserRole, string> = {
   STUDENT: "student@example.com",
   LANDLORD: "landlord@example.com",
@@ -76,11 +65,11 @@ export const authService = {
   },
 
   async registerStudent(input: RegisterStudentInput): Promise<AuthSession> {
-    const response = await http.post<StudentResponse>("/auth/register/student", {
+    await http.post<StudentResponse>("/auth/register/student", {
       ...input,
       hostelCode: input.hostelCode ?? "",
     });
-    return { user: toStudent(response), token: "" };
+    return this.login({ email: input.email, password: input.password });
   },
 
   async logout(): Promise<void> {

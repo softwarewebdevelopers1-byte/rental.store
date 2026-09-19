@@ -1,7 +1,11 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { useStudentPayments } from "../../hooks/usePayments";
 import { useStudentMaintenance } from "../../hooks/useMaintenance";
+import { studentService } from "../../services/studentService";
+import { hostelService, type HostelSummary } from "../../services/hostelService";
+import type { Room } from "../../types/room";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Card } from "../../components/common/Card";
 import { Button } from "../../components/common/Button";
@@ -9,26 +13,37 @@ import { PaymentCard } from "../../components/payments/PaymentCard";
 import { MaintenanceCard } from "../../components/maintenance/MaintenanceCard";
 import { Skeleton } from "../../components/common/Skeleton";
 import { EmptyState } from "../../components/common/EmptyState";
-import { mockHostels } from "../../data/hostels";
-import { mockRooms } from "../../data/rooms";
-import { mockStudents } from "../../data/users";
 import styles from "./StudentDashboard.module.css";
 
 export default function StudentDashboard() {
   const { user } = useAuth();
-  const student = mockStudents.find((s) => s.id === user?.id);
-  const hostel = student?.hostelId
-    ? mockHostels.find((h) => h.id === student.hostelId)
-    : null;
-  const room = student?.roomId
-    ? mockRooms.find((r) => r.id === student.roomId)
-    : null;
 
   const { summary, loading: loadingPayments } = useStudentPayments(
     user?.id ?? "",
   );
   const { data: maintenance, loading: loadingMaintenance } =
     useStudentMaintenance(user?.id ?? "");
+  const [hostel, setHostel] = useState<HostelSummary | null>(null);
+  const [room, setRoom] = useState<Room | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const profile = await studentService.getSelf();
+      if (cancelled || !profile?.hostelId) return;
+      const h = await hostelService.getById(profile.hostelId);
+      if (cancelled) return;
+      setHostel(h);
+      if (profile.roomId) {
+        const rooms = await hostelService.getRooms(profile.hostelId);
+        const r = rooms.find((rm) => rm.id === profile.roomId) ?? null;
+        if (!cancelled) setRoom(r);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const quickActions = [
     { label: "Find Hostel", to: "/hostels" },

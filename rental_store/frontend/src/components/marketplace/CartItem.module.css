@@ -3,7 +3,7 @@
   grid-template-columns: 64px 1fr auto auto auto;
   gap: var(--space-3);
   align-items: center;
-  padding: var(--space-3);
+  padding: var(--space-4);
   border-bottom: 1px solid var(--color-border);
 }
 .row:last-child {
@@ -42,8 +42,8 @@
   gap: var(--space-1);
 }
 .qtyBtn {
-  width: 26px;
-  height: 26px;
+  width: 32px;
+  height: 32px;
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border-strong);
   background: var(--color-surface);

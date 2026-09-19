@@ -14,7 +14,7 @@ export function Sidebar({ items, onNavigate }: SidebarProps) {
   const { user, logout } = useAuth();
 
   return (
-    <aside className={styles.sidebar} aria-label="Primary">
+    <aside className={styles.sidebar} aria-label="Hostelix primary navigation">
       <div className={styles.brand}>
         <img src={APP_LOGO} alt={APP_NAME} className={styles.logo} />
       </div>

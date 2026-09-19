@@ -1,74 +1,14 @@
-.sidebar {
-  width: var(--sidebar-width);
-  background: var(--color-surface);
-  border-right: 1px solid var(--color-border);
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  position: sticky;
-  top: 0;
-}
-.brand {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-4) var(--space-5);
-  border-bottom: 1px solid var(--color-border);
-}
-.logo {
-  width: 112px;
-  height: auto;
-  display: block;
-  object-fit: contain;
-}
-.nav {
-  padding: var(--space-3);
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex: 1;
-  overflow-y: auto;
-}
-.link {
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-md);
-  color: var(--color-text-muted);
-  font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
-}
-.link:hover {
-  background: var(--color-surface-alt);
-  color: var(--color-text);
-}
-.active {
-  background: var(--color-primary-soft);
-  color: var(--color-primary);
-}
-.footer {
-  border-top: 1px solid var(--color-border);
-  padding: var(--space-3) var(--space-4);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-.userInfo {
-  display: flex;
-  flex-direction: column;
-}
-.userName {
-  font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
-}
-.userRole {
-  font-size: var(--text-xs);
-  color: var(--color-text-muted);
-}
-.logout {
-  font-size: var(--text-sm);
-  color: var(--color-danger);
-  text-align: left;
-  padding: var(--space-1) 0;
-}
-.logout:hover {
-  text-decoration: underline;
-}
+.sidebar { display: flex; flex-direction: column; width: var(--sidebar-width); height: 100vh; overflow: hidden; border-right: 1px solid var(--color-border); background: var(--color-surface); }
+.brand { display: flex; align-items: center; min-height: var(--topbar-height); padding: 0 var(--space-6); border-bottom: 1px solid var(--color-border); }
+.logo { display: block; width: 116px; height: auto; max-height: 38px; object-fit: contain; }
+.nav { display: flex; flex: 1; flex-direction: column; gap: 2px; padding: var(--space-4) var(--space-3); overflow-y: auto; }
+.link { display: flex; align-items: center; min-height: 36px; padding: 0 var(--space-3); border-radius: var(--radius-md); color: var(--color-text-muted); font-size: 14px; font-weight: var(--weight-medium); }
+.link:hover { background: var(--color-surface-alt); color: var(--color-text); }
+.active { background: var(--color-primary-soft); color: var(--color-primary); font-weight: var(--weight-medium); }
+.footer { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4); border-top: 1px solid var(--color-border); }
+.userInfo { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
+.userName { overflow: hidden; color: var(--color-text); font-size: 14px; font-weight: var(--weight-medium); text-overflow: ellipsis; white-space: nowrap; }
+.userRole { color: var(--color-text-muted); font-size: 12px; }
+.logout { align-self: flex-start; padding: 0; color: var(--color-danger); font-size: 13px; text-align: left; }
+.logout:hover { text-decoration: underline; }
+@media (max-width: 900px) { .sidebar { box-shadow: var(--shadow-lg); } }

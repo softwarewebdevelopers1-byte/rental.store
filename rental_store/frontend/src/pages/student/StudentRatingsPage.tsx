@@ -1,25 +1,37 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../../hooks/useToast";
 import { useHostelRatings } from "../../hooks/useRatings";
 import { ratingService } from "../../services/ratingService";
+import { studentService } from "../../services/studentService";
+import { hostelService, type HostelSummary } from "../../services/hostelService";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Card } from "../../components/common/Card";
 import { Button } from "../../components/common/Button";
 import { Input } from "../../components/common/Input";
 import { RatingStars } from "../../components/common/RatingStars";
 import { EmptyState } from "../../components/common/EmptyState";
-import { mockStudents } from "../../data/users";
-import { mockHostels } from "../../data/hostels";
 import styles from "./StudentRatingsPage.module.css";
 
 export default function StudentRatingsPage() {
   const { user } = useAuth();
   const { show } = useToast();
-  const student = mockStudents.find((s) => s.id === user?.id);
-  const hostel = student?.hostelId
-    ? mockHostels.find((h) => h.id === student.hostelId)
-    : null;
+  const [hostel, setHostel] = useState<HostelSummary | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const profile = await studentService.getSelf();
+      if (cancelled) return;
+      if (profile?.hostelId) {
+        const h = await hostelService.getById(profile.hostelId);
+        if (!cancelled) setHostel(h);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const { data: ratings, reload } = useHostelRatings(hostel?.id ?? "");
 

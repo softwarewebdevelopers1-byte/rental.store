@@ -8,6 +8,7 @@ import { Card } from "../../components/common/Card";
 import { Button } from "../../components/common/Button";
 import { Modal } from "../../components/common/Modal";
 import { Input } from "../../components/common/Input";
+import { FileUpload } from "../../components/common/FileUpload";
 import { PriceDisplay } from "../../components/common/PriceDisplay";
 import { Skeleton } from "../../components/common/Skeleton";
 import { EmptyState } from "../../components/common/EmptyState";
@@ -29,9 +30,7 @@ export default function AgentPacksPage() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
-  const [imageUrl, setImageUrl] = useState(
-    "https://picsum.photos/seed/newpack/400/300",
-  );
+  const [imageUrl, setImageUrl] = useState("");
   const [items, setItems] = useState<PackItem[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
@@ -157,10 +156,11 @@ export default function AgentPacksPage() {
             onChange={(e) => setPrice(e.target.value)}
             required
           />
-          <Input
-            label="Image URL"
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
+          <FileUpload
+            folder="packs"
+            label="Pack image"
+            value={imageUrl ? [imageUrl] : []}
+            onChange={(urls) => setImageUrl(urls[0] ?? "")}
           />
           <div>
             <div

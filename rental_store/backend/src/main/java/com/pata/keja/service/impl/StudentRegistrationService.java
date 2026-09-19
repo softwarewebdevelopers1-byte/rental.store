@@ -46,9 +46,6 @@ public class StudentRegistrationService {
         if (studentRepo.existsByEmailIgnoreCase(req.email())) {
             throw new ConflictException("Email already in use");
         }
-        Hostel hostel = hostelRepo.findByCodeIgnoreCase(req.hostelCode())
-                .orElseThrow(() -> new ValidationException("Invalid hostel code"));
-
         Student student = new Student();
         student.setName(req.name());
         student.setEmail(req.email().toLowerCase());
@@ -56,10 +53,14 @@ public class StudentRegistrationService {
         student.setRole(UserRoles.STUDENT);
         student.setActive(true);
 
-        student.setRequestedHostel(hostel);
-        student.setRegistrationHostelCode(hostel.getCode());
         student.setMembershipStatus(MembershipStatus.PENDING);
-        student.setRequestedAt(Instant.now());
+        if (req.hostelCode() != null && !req.hostelCode().isBlank()) {
+            Hostel hostel = hostelRepo.findByCodeIgnoreCase(req.hostelCode().trim())
+                    .orElseThrow(() -> new ValidationException("Invalid hostel code"));
+            student.setRequestedHostel(hostel);
+            student.setRegistrationHostelCode(hostel.getCode());
+            student.setRequestedAt(Instant.now());
+        }
 
         studentRepo.save(student);
 

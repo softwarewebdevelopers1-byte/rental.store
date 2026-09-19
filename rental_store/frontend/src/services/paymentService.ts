@@ -62,7 +62,43 @@ function toPayment(raw: PaymentResponse): Payment {
   };
 }
 
+interface PaymentSummaryResponse {
+  id: string;
+  studentId: string;
+  studentName: string;
+  hostelId: string;
+  hostelName: string;
+  roomId: string;
+  roomNumber: string;
+  amount: number;
+  status: Payment["status"];
+  dueDate: string;
+  paidAt: string | null;
+  method: Payment["method"] | null;
+}
+
+function toPaymentFromSummary(raw: PaymentSummaryResponse): Payment {
+  return {
+    id: raw.id,
+    studentId: raw.studentId,
+    hostelId: raw.hostelId,
+    roomId: raw.roomId,
+    amount: raw.amount,
+    status: raw.status,
+    dueDate: raw.dueDate,
+    ...(raw.paidAt ? { paidAt: raw.paidAt } : {}),
+    ...(raw.method ? { method: raw.method } : {}),
+  };
+}
+
 export const paymentService = {
+  async listForHostel(hostelId: string): Promise<Payment[]> {
+    const page = await http.get<Page<PaymentSummaryResponse>>(
+      `/payments/hostel/${hostelId}`,
+    );
+    return page.content.map(toPaymentFromSummary);
+  },
+
   async listForStudent(studentId: string): Promise<Payment[]> {
     const page = await http.get<Page<PaymentResponse>>(
       `/payments/students/${studentId}`,

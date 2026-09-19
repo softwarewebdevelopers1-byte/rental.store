@@ -7,6 +7,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { Card } from "../../components/common/Card";
 import { Button } from "../../components/common/Button";
 import { Input } from "../../components/common/Input";
+import { FileUpload } from "../../components/common/FileUpload";
 import styles from "./AgentProductFormPage.module.css";
 
 export default function AgentProductFormPage() {
@@ -19,9 +20,7 @@ export default function AgentProductFormPage() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
-  const [imageUrl, setImageUrl] = useState(
-    "https://picsum.photos/seed/newproduct/400/300",
-  );
+  const [imageUrl, setImageUrl] = useState("");
   const [loading, setLoading] = useState(isEdit);
   const [submitting, setSubmitting] = useState(false);
 
@@ -100,11 +99,11 @@ export default function AgentProductFormPage() {
             onChange={(e) => setPrice(e.target.value)}
             required
           />
-          <Input
-            label="Image URL"
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-            required
+          <FileUpload
+            folder="products"
+            label="Product image"
+            value={imageUrl ? [imageUrl] : []}
+            onChange={(urls) => setImageUrl(urls[0] ?? "")}
           />
           <div className={styles.actions}>
             <Button

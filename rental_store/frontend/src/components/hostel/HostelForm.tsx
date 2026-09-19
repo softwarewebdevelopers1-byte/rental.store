@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Button } from "../common/Button";
 import { Input } from "../common/Input";
+import { FileUpload } from "../common/FileUpload";
 import styles from "./HostelForm.module.css";
 
 export interface HostelFormValues {
@@ -30,9 +31,7 @@ export function HostelForm({
   const [code, setCode] = useState(initial?.code ?? "");
   const [location, setLocation] = useState(initial?.location ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
-  const [images, setImages] = useState<string>(
-    (initial?.images ?? []).join("\n"),
-  );
+  const [images, setImages] = useState<string[]>(initial?.images ?? []);
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -41,10 +40,7 @@ export function HostelForm({
       code: code.trim().toUpperCase(),
       location: location.trim(),
       description: description.trim(),
-      images: images
-        .split("\n")
-        .map((s) => s.trim())
-        .filter(Boolean),
+      images: images.filter(Boolean),
     });
   }
 
@@ -78,19 +74,13 @@ export function HostelForm({
           rows={3}
         />
       </div>
-      <div className={styles.field}>
-        <label className={styles.label}>Image URLs (one per line)</label>
-        <textarea
-          className={styles.textarea}
-          value={images}
-          onChange={(e) => setImages(e.target.value)}
-          rows={3}
-          placeholder="https://..."
-        />
-        <span className={styles.hint}>
-          Upload isn't enabled in the prototype — paste image URLs.
-        </span>
-      </div>
+      <FileUpload
+        folder="hostels"
+        multiple
+        label="Hostel images"
+        value={images}
+        onChange={setImages}
+      />
       <div className={styles.actions}>
         {onCancel && (
           <Button
