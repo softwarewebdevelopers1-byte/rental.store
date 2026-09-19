@@ -25,40 +25,50 @@ interface AuthContextValue {
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
 
+function persistSession(session: AuthSession | null): void {
+  if (session) {
+    storage.set("auth.session", session);
+    localStorage.setItem("auth.token", session.token);
+  } else {
+    storage.remove("auth.session");
+    localStorage.removeItem("auth.token");
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<AuthSession | null>(() =>
     storage.get<AuthSession>("auth.session"),
   );
 
   useEffect(() => {
-    if (session) {
-      storage.set("auth.session", session);
-      localStorage.setItem("auth.token", session.token);
-    } else {
-      storage.remove("auth.session");
-      localStorage.removeItem("auth.token");
-    }
+    persistSession(session);
   }, [session]);
 
   const login = useCallback(async (email: string, password: string) => {
     const s = await authService.login({ email, password });
+    // Persist before the protected dashboard mounts. Its initial requests
+    // must already include the new token.
+    persistSession(s);
     setSession(s);
     return s;
   }, []);
 
   const loginAsRole = useCallback(async (role: UserRole) => {
     const s = await authService.loginAsRole(role);
+    persistSession(s);
     setSession(s);
     return s;
   }, []);
 
   const registerStudent = useCallback(async (input: RegisterStudentInput) => {
     const s = await authService.registerStudent(input);
+    persistSession(s);
     setSession(s);
   }, []);
 
   const logout = useCallback(async () => {
     await authService.logout();
+    persistSession(null);
     setSession(null);
   }, []);
 

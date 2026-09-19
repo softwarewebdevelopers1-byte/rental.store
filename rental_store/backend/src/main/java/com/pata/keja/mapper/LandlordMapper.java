@@ -77,6 +77,7 @@ public class LandlordMapper {
                         .getVerificationStatus() == VerificationStatus.APPROVED,
                 h.getLandlord().getId(),
                 h.getLandlord().getName(),
+                h.isActive(),
                 h.getCreatedAt());
     }
 }

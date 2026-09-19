@@ -6,7 +6,6 @@ import { ConversationList } from "../../components/messaging/ConversationList";
 import { ChatWindow } from "../../components/messaging/ChatWindow";
 import { Skeleton } from "../../components/common/Skeleton";
 import { EmptyState } from "../../components/common/EmptyState";
-import { userService } from "../../services/userService";
 import { studentService } from "../../services/studentService";
 import { hostelService, type HostelSummary } from "../../services/hostelService";
 import { messageService } from "../../services/messageService";
@@ -43,28 +42,29 @@ export default function StudentMessagesPage() {
   }, []);
 
   useEffect(() => {
-    const ids = [...new Set(conversations.flatMap((conversation) => conversation.participants))];
-    if (!ids.length) return;
-    let cancelled = false;
-    void userService.listByIds(ids).then((loaded) => {
-      if (!cancelled) {
-        setUsers(Object.fromEntries(loaded.map((item) => [item.id, { name: item.name }])));
-      }
-    }).catch(() => undefined);
-    return () => {
-      cancelled = true;
-    };
+    const names = conversations.flatMap((conversation) =>
+      Object.entries(conversation.participantNames)
+        .map(([id, name]) => [id, { name }] as const),
+    );
+    setUsers(Object.fromEntries(names));
   }, [conversations]);
 
   const currentConv = activeId ?? conversations[0]?.id ?? null;
   const {
     data: messages,
     loading: loadingMsgs,
+    reload: reloadMessages,
     send,
+    edit,
+    remove,
+    forward,
   } = useMessages(currentConv);
 
   const nameFor = (id: string) =>
-    users[id]?.name ?? (id === user?.id ? user.name : "Unknown");
+    users[id]?.name ??
+    conversations.find((conversation) => conversation.participantNames[id])
+      ?.participantNames[id] ??
+    (id === user?.id ? user.name : "Unknown");
 
   const filtered = useMemo(
     () =>
@@ -124,6 +124,18 @@ export default function StudentMessagesPage() {
       <PageHeader
         title="Messages"
         subtitle="Chat with your landlord and caretaker."
+        actions={
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => {
+              void Promise.all([reloadConversations(), reloadMessages()]);
+            }}
+            loading={loadingConvs || loadingMsgs}
+          >
+            Refresh
+          </Button>
+        }
       />
       {loadingConvs ? (
         <Skeleton height={480} radius="var(--radius-lg)" />
@@ -184,6 +196,14 @@ export default function StudentMessagesPage() {
                 currentUserId={user?.id ?? ""}
                 nameFor={nameFor}
                 onSend={(body) => send(user?.id ?? "", body)}
+                forwardTargets={conversations
+                  .flatMap((conversation) => conversation.participants)
+                  .filter((id) => id !== user?.id)
+                  .filter((id, index, all) => all.indexOf(id) === index)
+                  .map((id) => ({ id, name: nameFor(id) }))}
+                onEdit={edit}
+                onDelete={remove}
+                onForward={forward}
               />
             )}
           </div>

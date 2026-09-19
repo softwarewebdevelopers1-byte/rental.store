@@ -24,6 +24,7 @@ import LoginPage from "../pages/auth/LoginPage";
 import StudentRegisterPage from "../pages/auth/StudentRegisterPage";
 import LandlordRegisterPage from "../pages/auth/LandlordRegisterPage";
 import MarketAgentRegisterPage from "../pages/auth/MarketAgentRegisterPage";
+import InvitationRegistrationPage from "../pages/auth/InvitationRegistrationPage";
 import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
 import PendingApprovalPage from "../pages/auth/PendingApprovalPage";
 
@@ -103,6 +104,7 @@ export function AppRoutes() {
         <Route path="/register/student" element={<StudentRegisterPage />} />
         <Route path="/register/landlord" element={<LandlordRegisterPage />} />
         <Route path="/register/market-agent" element={<MarketAgentRegisterPage />} />
+        <Route path="/register/invitation/:token" element={<InvitationRegistrationPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/pending-approval" element={<PendingApprovalPage />} />
       </Route>

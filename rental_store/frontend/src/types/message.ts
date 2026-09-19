@@ -1,6 +1,7 @@
 export interface Conversation {
   id: string;
   participants: string[];
+  participantNames: Record<string, string>;
   subject: "GENERAL" | "MAINTENANCE" | "PAYMENT";
   lastMessageAt: string;
   unreadCount: number;
@@ -13,4 +14,9 @@ export interface Message {
   body: string;
   createdAt: string;
   read: boolean;
+}
+
+export interface MessageTarget {
+  id: string;
+  name: string;
 }

@@ -23,7 +23,7 @@ public class SecurityConfig {
                 .cors(cors -> {})
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/error").permitAll()
+                        .requestMatchers("/api/auth/**", "/api/invitations/token/**", "/error").permitAll()
                         .requestMatchers("/api/hostels", "/api/hostels/*", "/api/hostels/*/rooms",
                                 "/api/hostels/code/*", "/api/rooms/hostel/*", "/api/marketplace/**",
                                 "/api/ratings/hostel/**").permitAll()

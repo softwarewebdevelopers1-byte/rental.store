@@ -27,6 +27,7 @@ public class InvitationServiceImpl implements InvitationService {
 
     private static final int DEFAULT_EXPIRY_DAYS = 30;
     private static final int MAX_EXPIRY_DAYS = 365;
+    private static final int MAX_EXPIRY_HOURS = MAX_EXPIRY_DAYS * 24;
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private final InvitationRepository invitationRepo;
@@ -85,17 +86,25 @@ public class InvitationServiceImpl implements InvitationService {
         Admin admin = adminRepo.findById(adminId)
                 .orElseThrow(() -> new NotFoundException("Admin not found"));
 
-        int days = req.expiresInDays() != null
-                ? Math.min(Math.max(req.expiresInDays(), 1), MAX_EXPIRY_DAYS)
-                : DEFAULT_EXPIRY_DAYS;
-
         Invitation inv = new Invitation();
         inv.setToken(generateToken());
         inv.setKind(req.kind());
         inv.setEmail(req.email() != null ? req.email().toLowerCase() : null);
         inv.setStatus(InvitationStatus.ACTIVE);
         inv.setCreatedBy(admin);
-        inv.setExpiresAt(Instant.now().plus(days, ChronoUnit.DAYS));
+        long expiryAmount;
+        ChronoUnit expiryUnit;
+        if (req.expiresInHours() != null) {
+            expiryAmount = Math.min(Math.max(req.expiresInHours(), 1), MAX_EXPIRY_HOURS);
+            expiryUnit = ChronoUnit.HOURS;
+        } else {
+            int days = req.expiresInDays() != null
+                    ? Math.min(Math.max(req.expiresInDays(), 1), MAX_EXPIRY_DAYS)
+                    : DEFAULT_EXPIRY_DAYS;
+            expiryAmount = days;
+            expiryUnit = ChronoUnit.DAYS;
+        }
+        inv.setExpiresAt(Instant.now().plus(expiryAmount, expiryUnit));
 
         invitationRepo.save(inv);
         return invitationMapper.toResponse(inv);
@@ -115,14 +124,18 @@ public class InvitationServiceImpl implements InvitationService {
     }
 
     @Override
-    public String redeem(String token, String name, String password, String businessName) {
+    public String redeem(String token, String name, String email, String password, String businessName) {
         Invitation inv = invitationRepo.findByToken(token)
                 .orElseThrow(() -> new NotFoundException("Invitation not found"));
 
         if (!inv.isRedeemable(Instant.now())) {
             throw new ConflictException("This invitation is no longer valid");
         }
-        if (userRepo.existsByEmailIgnoreCase(inv.getEmail() == null ? "" : inv.getEmail())) {
+        String accountEmail = inv.getEmail() != null ? inv.getEmail() : email;
+        if (accountEmail == null || accountEmail.isBlank()) {
+            throw new ConflictException("An email address is required to redeem this invitation");
+        }
+        if (userRepo.existsByEmailIgnoreCase(accountEmail)) {
             throw new ConflictException("An account with this email already exists");
         }
 
@@ -146,7 +159,7 @@ public class InvitationServiceImpl implements InvitationService {
         };
 
         created.setName(name);
-        created.setEmail(inv.getEmail() != null ? inv.getEmail() : name.toLowerCase() + "@placeholder.local");
+        created.setEmail(accountEmail.toLowerCase());
         created.setPasswordHash(passwordEncoder.encode(password));
         created.setActive(true);
 

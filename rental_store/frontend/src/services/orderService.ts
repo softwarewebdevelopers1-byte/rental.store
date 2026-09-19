@@ -88,8 +88,9 @@ export const orderService = {
     return page.content.map(toSummary);
   },
 
-  async getById(id: string): Promise<Order | null> {
-    return toOrder(await http.get<OrderResponse>(`/orders/me/${id}`));
+  async getById(id: string, viewer: "student" | "agent" = "student"): Promise<Order | null> {
+    const path = viewer === "agent" ? `/orders/agent/${id}` : `/orders/me/${id}`;
+    return toOrder(await http.get<OrderResponse>(path));
   },
 
   async create(input: CreateOrderInput): Promise<Order> {
@@ -126,6 +127,6 @@ export const orderService = {
       description: "Order marked as conflicted",
       attachments: [],
     });
-    return this.getById(id);
+    return this.getById(id, "student");
   },
 };

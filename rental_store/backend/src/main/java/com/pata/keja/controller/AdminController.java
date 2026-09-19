@@ -3,7 +3,9 @@ package com.pata.keja.controller;
 import jakarta.validation.Valid;
 
 import com.pata.keja.dto.admin.PlatformStatsResponse;
+import com.pata.keja.dto.admin.AdminUserUpdateRequest;
 import com.pata.keja.dto.admin.UserSummaryResponse;
+import com.pata.keja.dto.hostel.HostelSummaryResponse;
 import com.pata.keja.dto.landlord.LandlordResponse;
 import com.pata.keja.dto.landlord.LandlordSummaryResponse;
 import com.pata.keja.dto.landlord.VerificationDecisionRequest;
@@ -65,6 +67,12 @@ public class AdminController {
         return adminService.stats();
     }
 
+    @GetMapping("/hostels")
+    public Page<HostelSummaryResponse> listHostels(
+            @PageableDefault(size = 20, sort = "createdAt", direction = DESC) Pageable pageable) {
+        return adminService.listHostels(pageable);
+    }
+
     @GetMapping("/landlords/verifications")
     public Page<LandlordSummaryResponse> listVerificationRequests(
             @PageableDefault(size = 20, sort = "createdAt", direction = DESC) Pageable pageable) {
@@ -83,6 +91,20 @@ public class AdminController {
             @PathVariable("id") String id,
             @RequestParam boolean active) {
         adminService.setActive(id, active);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/users/{id}")
+    public UserSummaryResponse updateUser(
+            @PathVariable("id") String id,
+            @Valid @RequestBody AdminUserUpdateRequest request) {
+        return adminService.updateUser(id, request);
+    }
+
+    /** Deactivation is the safe delete operation because users own linked records. */
+    @org.springframework.web.bind.annotation.DeleteMapping("/users/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable("id") String id) {
+        adminService.setActive(id, false);
         return ResponseEntity.noContent().build();
     }
 }

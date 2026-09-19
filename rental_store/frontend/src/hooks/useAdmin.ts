@@ -251,7 +251,8 @@ export function useInvitations() {
     async (input: {
       kind: InvitationKind;
       email?: string;
-      expiresAt: string;
+      expiresInDays?: number;
+      expiresInHours?: number;
     }) => {
       const inv = await adminService.createInvitation(input);
       await reload();

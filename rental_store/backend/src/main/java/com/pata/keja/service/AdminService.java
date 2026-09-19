@@ -3,8 +3,10 @@ package com.pata.keja.service;
 import com.pata.keja.dto.admin.AdminCreateRequest;
 import com.pata.keja.dto.admin.AdminResponse;
 import com.pata.keja.dto.admin.AdminSummaryResponse;
+import com.pata.keja.dto.admin.AdminUserUpdateRequest;
 import com.pata.keja.dto.admin.PlatformStatsResponse;
 import com.pata.keja.dto.admin.UserSummaryResponse;
+import com.pata.keja.dto.hostel.HostelSummaryResponse;
 import com.pata.keja.dto.landlord.LandlordResponse;
 import com.pata.keja.dto.landlord.LandlordSummaryResponse;
 import com.pata.keja.dto.landlord.VerificationDecisionRequest;
@@ -34,5 +36,9 @@ public interface AdminService {
 
     Page<UserSummaryResponse> listUsersByIds(List<String> ids, Pageable pageable);
 
+    Page<HostelSummaryResponse> listHostels(Pageable pageable);
+
     UserSummaryResponse getUser(String userId);
+
+    UserSummaryResponse updateUser(String userId, AdminUserUpdateRequest req);
 }

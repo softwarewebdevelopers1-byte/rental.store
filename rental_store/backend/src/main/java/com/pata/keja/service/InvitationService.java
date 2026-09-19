@@ -29,7 +29,7 @@ public interface InvitationService {
      * as USED, and returns the new user's id (as a plain string so we don't
      * leak entity classes through the service interface).
      */
-    String redeem(String token, String name, String password, String businessName);
+    String redeem(String token, String name, String email, String password, String businessName);
 
     int expireOverdueInvitations();
 }

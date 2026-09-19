@@ -16,7 +16,7 @@ import styles from "./AgentOrderDetailsPage.module.css";
 export default function AgentOrderDetailsPage() {
   const { orderId = "" } = useParams<{ orderId: string }>();
   const { show } = useToast();
-  const { data: order, loading, reload } = useOrder(orderId);
+  const { data: order, loading, reload } = useOrder(orderId, "agent");
 
   if (loading) return <Skeleton height={400} radius="var(--radius-lg)" />;
   if (!order) return <EmptyState title="Order not found" />;

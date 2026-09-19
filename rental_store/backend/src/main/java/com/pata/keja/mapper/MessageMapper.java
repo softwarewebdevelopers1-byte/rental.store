@@ -4,6 +4,8 @@ import com.pata.keja.dto.messaging.MessageResponse;
 import com.pata.keja.models.Message;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class MessageMapper {
 
@@ -15,14 +17,7 @@ public class MessageMapper {
                 m.getSender().getName(),
                 m.getSender().getRole().name(),
                 m.getBody(),
-                List.copyOf(m.getAttachments()),
+                m.getAttachments() == null ? List.of() : List.copyOf(m.getAttachments()),
                 m.getCreatedAt());
-    }
-
-    // Import java.util.List at the top; kept inline for brevity here.
-    private static final class List {
-        static <T> java.util.List<T> copyOf(java.util.Collection<T> c) {
-            return java.util.List.copyOf(c);
-        }
     }
 }

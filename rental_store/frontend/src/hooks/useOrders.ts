@@ -59,7 +59,7 @@ export function useAgentOrders(agentId: string) {
   return { data, loading, error, reload, advance };
 }
 
-export function useOrder(id: string) {
+export function useOrder(id: string, viewer: "student" | "agent" = "student") {
   const [data, setData] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -69,13 +69,13 @@ export function useOrder(id: string) {
     setLoading(true);
     setError(null);
     try {
-      setData(await orderService.getById(id));
+      setData(await orderService.getById(id, viewer));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load order");
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, viewer]);
 
   useEffect(() => {
     void reload();

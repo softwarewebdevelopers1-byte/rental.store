@@ -41,6 +41,10 @@ public interface HostelRepository extends JpaRepository<Hostel, String> {
 
     long countByActiveTrue();
 
+    @EntityGraph(attributePaths = { "rooms", "images", "landlord" })
+    @Query("select h from Hostel h")
+    Page<Hostel> findAllForAdmin(Pageable pageable);
+
     /**
      * Discovery query. Filters and sorts at the DB level.
      * Not using @EntityGraph here because dynamic filters + pagination

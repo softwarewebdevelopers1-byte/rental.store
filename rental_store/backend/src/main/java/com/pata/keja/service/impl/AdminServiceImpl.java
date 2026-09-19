@@ -8,8 +8,10 @@ import com.pata.keja.enums.VerificationStatus;
 import com.pata.keja.dto.admin.AdminCreateRequest;
 import com.pata.keja.dto.admin.AdminResponse;
 import com.pata.keja.dto.admin.AdminSummaryResponse;
+import com.pata.keja.dto.admin.AdminUserUpdateRequest;
 import com.pata.keja.dto.admin.PlatformStatsResponse;
 import com.pata.keja.dto.admin.UserSummaryResponse;
+import com.pata.keja.dto.hostel.HostelSummaryResponse;
 import com.pata.keja.dto.landlord.LandlordResponse;
 import com.pata.keja.dto.landlord.LandlordSummaryResponse;
 import com.pata.keja.dto.landlord.VerificationDecisionRequest;
@@ -18,6 +20,7 @@ import com.pata.keja.models.User;
 import com.pata.keja.exception.ConflictException;
 import com.pata.keja.exception.NotFoundException;
 import com.pata.keja.mapper.AdminMapper;
+import com.pata.keja.mapper.HostelMapper;
 import com.pata.keja.mapper.LandlordMapper;
 import com.pata.keja.repository.AdminRepository;
 import com.pata.keja.repository.CaretakerRepository;
@@ -56,6 +59,7 @@ public class AdminServiceImpl implements AdminService {
     private final OrderRepository orderRepo;
     private final ConflictRepository conflictRepo;
     private final LandlordMapper landlordMapper;
+    private final HostelMapper hostelMapper;
 
     public AdminServiceImpl(AdminRepository adminRepo,
             UserRepository userRepo,
@@ -69,7 +73,8 @@ public class AdminServiceImpl implements AdminService {
             RoomRepository roomRepo,
             OrderRepository orderRepo,
             ConflictRepository conflictRepo,
-            LandlordMapper landlordMapper) {
+            LandlordMapper landlordMapper,
+            HostelMapper hostelMapper) {
         this.adminRepo = adminRepo;
         this.userRepo = userRepo;
         this.passwordEncoder = passwordEncoder;
@@ -83,6 +88,7 @@ public class AdminServiceImpl implements AdminService {
         this.orderRepo = orderRepo;
         this.conflictRepo = conflictRepo;
         this.landlordMapper = landlordMapper;
+        this.hostelMapper = hostelMapper;
     }
 
     @Override
@@ -179,10 +185,30 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     @Transactional(readOnly = true)
+    public Page<HostelSummaryResponse> listHostels(Pageable pageable) {
+        return hostelRepo.findAllForAdmin(pageable).map(hostelMapper::toSummary);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public UserSummaryResponse getUser(String userId) {
         return userRepo.findById(userId)
                 .map(this::toUserSummary)
                 .orElseThrow(() -> new NotFoundException("User not found"));
+    }
+
+    @Override
+    public UserSummaryResponse updateUser(String userId, AdminUserUpdateRequest req) {
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+        if (req.email() != null && !req.email().equalsIgnoreCase(user.getEmail())
+                && userRepo.existsByEmailIgnoreCase(req.email())) {
+            throw new ConflictException("Email already in use");
+        }
+        if (req.name() != null) user.setName(req.name());
+        if (req.email() != null) user.setEmail(req.email().toLowerCase());
+        if (req.active() != null) user.setActive(req.active());
+        return toUserSummary(user);
     }
 
     private UserSummaryResponse toUserSummary(User user) {

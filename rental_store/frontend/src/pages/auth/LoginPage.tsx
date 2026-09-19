@@ -28,8 +28,18 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const redirectFor = (role: UserRole): string =>
-    location.state?.from?.pathname ?? ROLE_HOME[role];
+  const redirectFor = (role: UserRole): string => {
+    const from = location.state?.from?.pathname;
+    if (!from) return ROLE_HOME[role];
+
+    // A login may have been triggered by a protected URL. Only restore it
+    // when it belongs to the newly authenticated user's role; otherwise the
+    // role guard would correctly show 403 instead of the user's dashboard.
+    const roleRoot = ROLE_HOME[role].slice(0, ROLE_HOME[role].lastIndexOf("/"));
+    return from === roleRoot || from.startsWith(`${roleRoot}/`)
+      ? from
+      : ROLE_HOME[role];
+  };
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();

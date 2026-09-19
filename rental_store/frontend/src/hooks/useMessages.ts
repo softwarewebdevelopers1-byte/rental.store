@@ -74,5 +74,22 @@ export function useMessages(conversationId: string | null) {
     [conversationId],
   );
 
-  return { data, loading, error, reload, send };
+  const edit = useCallback(async (messageId: string, body: string) => {
+    const updated = await messageService.editMessage(messageId, body);
+    setData((prev) => prev.map((message) => message.id === messageId ? updated : message));
+  }, []);
+
+  const remove = useCallback(async (messageId: string) => {
+    await messageService.deleteMessage(messageId);
+    setData((prev) => prev.filter((message) => message.id !== messageId));
+  }, []);
+
+  const forward = useCallback(
+    async (messageId: string, targetUserId: string) => {
+      await messageService.forwardMessage(messageId, targetUserId);
+    },
+    [],
+  );
+
+  return { data, loading, error, reload, send, edit, remove, forward };
 }

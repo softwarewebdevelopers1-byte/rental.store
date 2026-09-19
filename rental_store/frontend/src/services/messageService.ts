@@ -6,6 +6,7 @@ interface ConversationSummaryResponse {
   subject: Conversation["subject"];
   lastMessageAt: string;
   unreadCount: number;
+  otherPartyName: string;
   otherPartyId: string;
 }
 
@@ -34,6 +35,24 @@ export const messageService = {
     return http.post<ConversationResponse>(`/messages/direct/${userId}`);
   },
 
+  async editMessage(messageId: string, body: string): Promise<Message> {
+    return toMessage(
+      await http.patch<MessageResponse>(`/messages/messages/${messageId}`, { body }),
+    );
+  },
+
+  async deleteMessage(messageId: string): Promise<void> {
+    await http.delete<void>(`/messages/messages/${messageId}`);
+  },
+
+  async forwardMessage(messageId: string, targetUserId: string): Promise<Message> {
+    return toMessage(
+      await http.post<MessageResponse>(`/messages/messages/${messageId}/forward`, {
+        targetUserId,
+      }),
+    );
+  },
+
   async listConversations(userId: string): Promise<Conversation[]> {
     const conversations = await http.get<ConversationSummaryResponse[]>(
       "/messages/conversations",
@@ -41,6 +60,9 @@ export const messageService = {
     return conversations.map((conversation) => ({
       id: conversation.id,
       participants: [userId, conversation.otherPartyId],
+      participantNames: {
+        [conversation.otherPartyId]: conversation.otherPartyName,
+      },
       subject: conversation.subject,
       lastMessageAt: conversation.lastMessageAt,
       unreadCount: conversation.unreadCount,

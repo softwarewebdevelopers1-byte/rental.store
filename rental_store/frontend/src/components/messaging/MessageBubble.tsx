@@ -1,11 +1,16 @@
 import { formatRelative } from "../../utils/formatDate";
 import styles from "./MessageBubble.module.css";
+import { Button } from "../common/Button";
 
 interface MessageBubbleProps {
   body: string;
   mine: boolean;
   createdAt: string;
   senderName: string;
+  messageId: string;
+  onEdit?: (messageId: string, body: string) => void;
+  onDelete?: (messageId: string) => void;
+  onForward?: (messageId: string) => void;
 }
 
 export function MessageBubble({
@@ -13,6 +18,10 @@ export function MessageBubble({
   mine,
   createdAt,
   senderName,
+  messageId,
+  onEdit,
+  onDelete,
+  onForward,
 }: MessageBubbleProps) {
   return (
     <div className={`${styles.row} ${mine ? styles.mine : styles.theirs}`}>
@@ -20,6 +29,23 @@ export function MessageBubble({
         {!mine && <div className={styles.sender}>{senderName}</div>}
         <div className={styles.body}>{body}</div>
         <div className={styles.time}>{formatRelative(createdAt)}</div>
+        <div className={styles.actions}>
+          {mine && onEdit && (
+            <Button type="button" size="sm" variant="ghost" onClick={() => onEdit(messageId, body)}>
+              Edit
+            </Button>
+          )}
+          {mine && onDelete && (
+            <Button type="button" size="sm" variant="ghost" onClick={() => onDelete(messageId)}>
+              Delete
+            </Button>
+          )}
+          {onForward && (
+            <Button type="button" size="sm" variant="ghost" onClick={() => onForward(messageId)}>
+              Forward
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );

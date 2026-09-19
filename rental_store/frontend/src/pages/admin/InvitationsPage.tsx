@@ -12,37 +12,85 @@ import { formatDate } from "../../utils/formatDate";
 import type { Invitation, InvitationKind } from "../../types/invitation";
 import styles from "./InvitationsPage.module.css";
 
+type ExpirationUnit = "days" | "hours";
+
+function invitationUrl(token: string): string {
+  return new URL(
+    `/register/invitation/${encodeURIComponent(token)}`,
+    window.location.origin,
+  ).toString();
+}
+
 export default function InvitationsPage() {
   const { show } = useToast();
   const { data, loading, create, revoke } = useInvitations();
   const [open, setOpen] = useState(false);
   const [kind, setKind] = useState<InvitationKind>("LANDLORD");
   const [email, setEmail] = useState("");
-  const [days, setDays] = useState("30");
+  const [expiration, setExpiration] = useState("30");
+  const [expirationUnit, setExpirationUnit] = useState<ExpirationUnit>("days");
   const [submitting, setSubmitting] = useState(false);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    const duration = Number(expiration);
+    if (!Number.isFinite(duration) || duration < 1) {
+      show("Expiration must be at least 1.", "error");
+      return;
+    }
     setSubmitting(true);
     try {
-      const expiresAt = new Date(
-        Date.now() + Number(days) * 86400_000,
-      ).toISOString();
-      const inv = await create({ kind, email: email || undefined, expiresAt });
-      show(`Invitation created: ${inv.token}`, "success");
+      await create({
+        kind,
+        email: email || undefined,
+        ...(expirationUnit === "days"
+          ? { expiresInDays: duration }
+          : { expiresInHours: duration }),
+      });
+      show("Invitation created. Use the copy button to share the link.", "success");
       setOpen(false);
       setEmail("");
+      setExpiration("30");
+      setExpirationUnit("days");
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function copyInvitationUrl(inv: Invitation) {
+    try {
+      await navigator.clipboard.writeText(invitationUrl(inv.token));
+      show("Invitation link copied.", "success");
+    } catch {
+      show("Unable to copy the invitation link.", "error");
     }
   }
 
   const columns: Column<Invitation>[] = [
     { key: "kind", label: "Type", render: (i) => i.kind.replace("_", " ") },
     {
-      key: "token",
-      label: "Token",
-      render: (i) => <code className={styles.token}>{i.token}</code>,
+      key: "link",
+      label: "Invitation link",
+      render: (i) => (
+        <div className={styles.linkCell}>
+          <a
+            className={styles.link}
+            href={invitationUrl(i.token)}
+            target="_blank"
+            rel="noreferrer"
+          >
+            {invitationUrl(i.token)}
+          </a>
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            onClick={() => void copyInvitationUrl(i)}
+          >
+            Copy
+          </Button>
+        </div>
+      ),
     },
     { key: "email", label: "Email", render: (i) => i.email ?? "—" },
     {
@@ -66,7 +114,7 @@ export default function InvitationsPage() {
     <div>
       <PageHeader
         title="Invitations"
-        subtitle="Create invitation links for landlords and market agents."
+        subtitle="Create invitation links for landlords, caretakers, and market agents."
         actions={
           <Button onClick={() => setOpen(true)}>+ New invitation</Button>
         }
@@ -119,6 +167,7 @@ export default function InvitationsPage() {
             options={[
               { value: "LANDLORD", label: "Landlord" },
               { value: "MARKET_AGENT", label: "Market Agent" },
+              { value: "CARETAKER", label: "Caretaker" },
             ]}
           />
           <Input
@@ -129,11 +178,22 @@ export default function InvitationsPage() {
             placeholder="Only for record-keeping"
           />
           <Input
-            label="Expires in (days)"
+            label={`Expires in (${expirationUnit})`}
             type="number"
             min={1}
-            value={days}
-            onChange={(e) => setDays(e.target.value)}
+            max={expirationUnit === "days" ? 365 : 8760}
+            step={1}
+            value={expiration}
+            onChange={(e) => setExpiration(e.target.value)}
+          />
+          <Select
+            label="Expiration unit"
+            value={expirationUnit}
+            onChange={(e) => setExpirationUnit(e.target.value as ExpirationUnit)}
+            options={[
+              { value: "days", label: "Days" },
+              { value: "hours", label: "Hours" },
+            ]}
           />
         </form>
       </Modal>

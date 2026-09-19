@@ -17,5 +17,6 @@ public record HostelSummaryResponse(
         boolean landlordVerified,
         String landlordId,
         String landlordName,
+        boolean active,
         Instant createdAt) {
 }

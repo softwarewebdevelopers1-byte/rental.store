@@ -83,7 +83,7 @@ public class InvitationController {
             @PathVariable String token,
             @Valid @RequestBody RedeemInvitationRequest request) {
         String userId = invitationService.redeem(
-                token, request.name(), request.password(), request.businessName());
+                token, request.name(), request.email(), request.password(), request.businessName());
         return new InvitationRedeemResponse(userId);
     }
 }

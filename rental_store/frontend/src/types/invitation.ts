@@ -1,5 +1,5 @@
 export type InvitationStatus = "ACTIVE" | "USED" | "EXPIRED" | "REVOKED";
-export type InvitationKind = "LANDLORD" | "MARKET_AGENT";
+export type InvitationKind = "LANDLORD" | "MARKET_AGENT" | "CARETAKER";
 
 export interface Invitation {
   id: string;

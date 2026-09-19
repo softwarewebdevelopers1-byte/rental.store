@@ -82,6 +82,7 @@ interface HostelSummaryResponse {
   landlordVerified: boolean;
   landlordId: string;
   landlordName: string;
+  active: boolean;
   createdAt: string;
 }
 
@@ -270,6 +271,17 @@ export const adminService = {
     return this.getUser(id);
   },
 
+  async updateUser(
+    id: string,
+    input: { name?: string; email?: string; active?: boolean },
+  ): Promise<User> {
+    return toUser(await http.patch<UserSummaryResponse>(`/admin/users/${id}`, input));
+  },
+
+  async deleteUser(id: string): Promise<void> {
+    await http.delete<void>(`/admin/users/${id}`);
+  },
+
   async listLandlords(): Promise<Landlord[]> {
     const page = await http.get<Page<LandlordSummaryResponse>>("/landlords");
     return page.content.map(toLandlord);
@@ -291,7 +303,7 @@ export const adminService = {
   },
 
   async listHostels(): Promise<Hostel[]> {
-    const page = await http.get<Page<HostelSummaryResponse>>("/hostels");
+    const page = await http.get<Page<HostelSummaryResponse>>("/admin/hostels");
     return page.content.map(toHostel);
   },
 
@@ -302,6 +314,23 @@ export const adminService = {
   async getHostelRooms(id: string): Promise<Room[]> {
     const rooms = await http.get<RoomResponse[]>(`/hostels/${id}/rooms`);
     return rooms.map(toRoom);
+  },
+
+  async updateHostel(
+    id: string,
+    input: {
+      name?: string;
+      code?: string;
+      location?: string;
+      description?: string;
+      active?: boolean;
+    },
+  ): Promise<Hostel> {
+    return toHostel(await http.patch<HostelResponse>(`/hostels/${id}`, input));
+  },
+
+  async deleteHostel(id: string): Promise<void> {
+    await http.delete<void>(`/hostels/${id}`);
   },
 
   async listVerificationRequests(): Promise<Landlord[]> {
@@ -330,16 +359,18 @@ export const adminService = {
   async createInvitation(input: {
     kind: InvitationKind;
     email?: string;
-    expiresAt: string;
+    expiresInDays?: number;
+    expiresInHours?: number;
   }): Promise<Invitation> {
-    const days = Math.max(
-      1,
-      Math.ceil((new Date(input.expiresAt).getTime() - Date.now()) / 86_400_000),
-    );
     const raw = await http.post<InvitationResponse>("/invitations", {
       kind: input.kind,
       email: input.email,
-      expiresInDays: days,
+      ...(input.expiresInDays !== undefined
+        ? { expiresInDays: input.expiresInDays }
+        : {}),
+      ...(input.expiresInHours !== undefined
+        ? { expiresInHours: input.expiresInHours }
+        : {}),
     });
     return toInvitation(raw);
   },

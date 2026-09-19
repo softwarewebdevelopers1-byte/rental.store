@@ -4,6 +4,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { DataTable, type Column } from "../../components/admin/DataTable";
 import { Button } from "../../components/common/Button";
 import { RatingStars } from "../../components/common/RatingStars";
+import { StatusBadge } from "../../components/common/StatusBadge";
 import type { Hostel } from "../../types/hostel";
 
 export default function AdminHostelsPage() {
@@ -38,6 +39,11 @@ export default function AdminHostelsPage() {
       key: "rating",
       label: "Rating",
       render: (h) => <RatingStars value={h.rating} count={h.reviewCount} />,
+    },
+    {
+      key: "status",
+      label: "Status",
+      render: (h) => <StatusBadge status={h.active ? "ACTIVE" : "INACTIVE"} />,
     },
   ];
 
