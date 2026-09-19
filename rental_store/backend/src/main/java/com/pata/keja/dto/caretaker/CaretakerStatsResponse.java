@@ -5,5 +5,6 @@ public record CaretakerStatsResponse(
         int totalTenants,
         int openRequests,
         int inProgressRequests,
-        int resolvedRequests) {
+        int resolvedRequests,
+        int unreadMessages) {
 }

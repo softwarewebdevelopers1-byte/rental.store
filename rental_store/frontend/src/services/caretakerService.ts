@@ -10,6 +10,7 @@ export interface CaretakerStats {
   openRequests: number;
   inProgressRequests: number;
   resolvedRequests: number;
+  unreadMessages: number;
 }
 
 export interface TenantWithRoom {

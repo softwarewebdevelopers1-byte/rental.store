@@ -22,6 +22,10 @@ export function useConversations(userId: string) {
 
   useEffect(() => {
     void reload();
+    const interval = window.setInterval(() => {
+      void reload();
+    }, 5000);
+    return () => window.clearInterval(interval);
   }, [reload]);
 
   return { data, loading, error, reload };
@@ -51,6 +55,10 @@ export function useMessages(conversationId: string | null) {
 
   useEffect(() => {
     void reload();
+    const interval = window.setInterval(() => {
+      void reload();
+    }, 5000);
+    return () => window.clearInterval(interval);
   }, [reload]);
 
   const send = useCallback(

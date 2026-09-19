@@ -17,6 +17,7 @@ import com.pata.keja.repository.MaintenanceRepository;
 import com.pata.keja.repository.StudentRepository;
 import com.pata.keja.security.CurrentUserProvider;
 import com.pata.keja.service.CaretakerService;
+import com.pata.keja.service.MessageService;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -32,17 +33,20 @@ public class CaretakerServiceImpl implements CaretakerService {
     private final MaintenanceRepository maintenanceRepository;
     private final HostelMapper hostelMapper;
     private final StudentMapper studentMapper;
+    private final MessageService messageService;
 
     public CaretakerServiceImpl(CaretakerRepository caretakerRepository,
             StudentRepository studentRepository,
             MaintenanceRepository maintenanceRepository,
             HostelMapper hostelMapper,
-            StudentMapper studentMapper) {
+            StudentMapper studentMapper,
+            MessageService messageService) {
         this.caretakerRepository = caretakerRepository;
         this.studentRepository = studentRepository;
         this.maintenanceRepository = maintenanceRepository;
         this.hostelMapper = hostelMapper;
         this.studentMapper = studentMapper;
+        this.messageService = messageService;
     }
 
     @Override
@@ -95,7 +99,13 @@ public class CaretakerServiceImpl implements CaretakerService {
             resolved += maintenanceRepository.countByHostelIdAndStatus(hostel.getId(), MaintenanceStatus.RESOLVED);
             resolved += maintenanceRepository.countByHostelIdAndStatus(hostel.getId(), MaintenanceStatus.CLOSED);
         }
-        return new CaretakerStatsResponse(caretaker.getAssignedHostels().size(), totalTenants, open, inProgress, resolved);
+        return new CaretakerStatsResponse(
+                caretaker.getAssignedHostels().size(),
+                totalTenants,
+                open,
+                inProgress,
+                resolved,
+                (int) messageService.unreadCountForUser(caretaker.getId()));
     }
 
     private Caretaker requireCaretaker(String id) {

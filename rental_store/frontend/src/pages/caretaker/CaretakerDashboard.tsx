@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
+import { useToast } from "../../hooks/useToast";
 import {
   useCaretakerHostels,
   useCaretakerStats,
@@ -16,12 +17,22 @@ import styles from "./CaretakerDashboard.module.css";
 
 export default function CaretakerDashboard() {
   const { user } = useAuth();
+  const { show } = useToast();
   const { data: hostels, loading: loadingHostels } = useCaretakerHostels(
     user?.id ?? "",
   );
   const { stats, loading: loadingStats } = useCaretakerStats(user?.id ?? "");
   const { data: maintenance, loading: loadingMaintenance } =
     useCaretakerMaintenance(user?.id ?? "");
+
+  async function copyHostelCode(code: string) {
+    try {
+      await navigator.clipboard.writeText(code);
+      show("Hostel code copied.", "success");
+    } catch {
+      show("Unable to copy the hostel code.", "error");
+    }
+  }
 
   return (
     <div className={styles.wrap}>
@@ -51,6 +62,11 @@ export default function CaretakerDashboard() {
             value={stats.resolvedRequests}
             tone="success"
           />
+          <StatCard
+            label="Unread messages"
+            value={stats.unreadMessages}
+            tone={stats.unreadMessages > 0 ? "warning" : "default"}
+          />
         </section>
       ) : null}
 
@@ -69,11 +85,24 @@ export default function CaretakerDashboard() {
           <div className={styles.hostelGrid}>
             {hostels.map((h) => (
               <Card key={h.id} title={h.name} subtitle={h.location}>
-                <Link to="/caretaker/maintenance">
-                  <Button size="sm" variant="secondary">
-                    View maintenance
+                <div className={styles.hostelActions}>
+                  <span className={styles.hostelCode}>
+                    Hostel code: <strong>{h.code}</strong>
+                  </span>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => void copyHostelCode(h.code)}
+                  >
+                    Copy
                   </Button>
-                </Link>
+                  <Link to="/caretaker/maintenance">
+                    <Button size="sm" variant="secondary">
+                      View maintenance
+                    </Button>
+                  </Link>
+                </div>
               </Card>
             ))}
           </div>

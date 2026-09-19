@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
+import { useToast } from "../../hooks/useToast";
 import {
   useLandlordStats,
   useLandlordHostels,
@@ -16,6 +17,7 @@ import styles from "./LandlordDashboard.module.css";
 
 export default function LandlordDashboard() {
   const { user } = useAuth();
+  const { show } = useToast();
   const { stats, loading: loadingStats } = useLandlordStats(user?.id ?? "");
   const { data: hostels, loading: loadingHostels } = useLandlordHostels(
     user?.id ?? "",
@@ -23,6 +25,15 @@ export default function LandlordDashboard() {
   const { data: requests, loading: loadingRequests } = usePendingRequests(
     user?.id ?? "",
   );
+
+  async function copyHostelCode(code: string) {
+    try {
+      await navigator.clipboard.writeText(code);
+      show("Hostel code copied.", "success");
+    } catch {
+      show("Unable to copy the hostel code.", "error");
+    }
+  }
 
   return (
     <div className={styles.wrap}>
@@ -101,25 +112,35 @@ export default function LandlordDashboard() {
         ) : (
           <div className={styles.hostelGrid}>
             {hostels.map((h) => (
-              <Link
-                key={h.id}
-                to={`/landlord/hostels/${h.id}`}
-                className={styles.hostelCard}
-              >
-                <div className={styles.hostelName}>{h.name}</div>
-                <div className={styles.hostelMeta}>
-                  <span>{h.location}</span>
-                </div>
-                <div className={styles.hostelStats}>
+              <div key={h.id} className={styles.hostelCard}>
+                <Link to={`/landlord/hostels/${h.id}`} className={styles.hostelLink}>
+                  <div className={styles.hostelName}>{h.name}</div>
+                  <div className={styles.hostelMeta}>
+                    <span>{h.location}</span>
+                  </div>
+                  <div className={styles.hostelStats}>
+                    <span>
+                      <strong>{h.vacantRooms}</strong> vacant
+                    </span>
+                    <span>
+                      <strong>{h.reviewCount}</strong> reviews
+                    </span>
+                  </div>
+                </Link>
+                <div className={styles.codeRow}>
                   <span>
-                    <strong>{h.vacantRooms + (h.priceRange ? 0 : 0)}</strong>{" "}
-                    vacant
+                    Hostel code: <strong>{h.code}</strong>
                   </span>
-                  <span>
-                    <strong>{h.reviewCount}</strong> reviews
-                  </span>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => void copyHostelCode(h.code)}
+                  >
+                    Copy
+                  </Button>
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         )}

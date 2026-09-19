@@ -20,6 +20,7 @@ import com.pata.keja.repository.RoomRepository;
 import com.pata.keja.repository.StudentRepository;
 import com.pata.keja.security.CurrentUserProvider;
 import com.pata.keja.service.LandlordService;
+import com.pata.keja.service.MessageService;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -35,17 +36,20 @@ public class LandlordServiceImpl implements LandlordService {
     private final RoomRepository roomRepository;
     private final PaymentRepository paymentRepository;
     private final LandlordMapper landlordMapper;
+    private final MessageService messageService;
 
     public LandlordServiceImpl(LandlordRepository landlordRepository,
             StudentRepository studentRepository,
             RoomRepository roomRepository,
             PaymentRepository paymentRepository,
-            LandlordMapper landlordMapper) {
+            LandlordMapper landlordMapper,
+            MessageService messageService) {
         this.landlordRepository = landlordRepository;
         this.studentRepository = studentRepository;
         this.roomRepository = roomRepository;
         this.paymentRepository = paymentRepository;
         this.landlordMapper = landlordMapper;
+        this.messageService = messageService;
     }
 
     @Override
@@ -122,7 +126,7 @@ public class LandlordServiceImpl implements LandlordService {
                 activeTenants,
                 pendingRequests,
                 outstandingPayments,
-                0);
+                (int) messageService.unreadCountForUser(landlord.getId()));
     }
 
     @Override

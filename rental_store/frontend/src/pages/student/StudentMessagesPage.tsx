@@ -149,26 +149,44 @@ export default function StudentMessagesPage() {
           )}
         </div>
       ) : (
-        <div className={styles.grid}>
-          <ConversationList
-            conversations={filtered}
-            activeId={currentConv}
-            onSelect={setActiveId}
-            titleFor={(c) => titleFor(c.id)}
-            previewFor={(c) => previewFor(c.id)}
-            search={search}
-            onSearchChange={setSearch}
-          />
-          {currentConv && (
-            <ChatWindow
-              title={titleFor(currentConv)}
-              messages={messages}
-              loading={loadingMsgs}
-              currentUserId={user?.id ?? ""}
-              nameFor={nameFor}
-              onSend={(body) => send(user?.id ?? "", body)}
-            />
+        <div>
+          {contacts.length > 0 && (
+            <div className={styles.contactActions}>
+              <span className={styles.contactLabel}>Start a conversation:</span>
+              {contacts.map((contact) => (
+                <Button
+                  key={contact.id}
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => void startConversation(contact.id)}
+                  loading={startingWith === contact.id}
+                >
+                  {contact.role} · {contact.name}
+                </Button>
+              ))}
+            </div>
           )}
+          <div className={styles.grid}>
+            <ConversationList
+              conversations={filtered}
+              activeId={currentConv}
+              onSelect={setActiveId}
+              titleFor={(c) => titleFor(c.id)}
+              previewFor={(c) => previewFor(c.id)}
+              search={search}
+              onSearchChange={setSearch}
+            />
+            {currentConv && (
+              <ChatWindow
+                title={titleFor(currentConv)}
+                messages={messages}
+                loading={loadingMsgs}
+                currentUserId={user?.id ?? ""}
+                nameFor={nameFor}
+                onSend={(body) => send(user?.id ?? "", body)}
+              />
+            )}
+          </div>
         </div>
       )}
     </div>
