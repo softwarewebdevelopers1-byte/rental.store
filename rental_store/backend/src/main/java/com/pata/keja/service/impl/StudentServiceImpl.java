@@ -83,6 +83,19 @@ public class StudentServiceImpl implements StudentService {
     }
 
     @Override
+    public StudentResponse cancelHostelRequest() {
+        Student student = requireStudent(CurrentUserProvider.requireUserId());
+        if (student.getRequestedHostel() == null) {
+            throw new ConflictException("No pending hostel request");
+        }
+        student.setRequestedHostel(null);
+        student.setRequestedAt(null);
+        student.setMembershipStatus(
+                student.getHostel() == null ? MembershipStatus.INACTIVE : MembershipStatus.ACTIVE);
+        return studentMapper.toResponse(student);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public StudentResponse getById(String id) {
         return studentMapper.toResponse(requireStudent(id));

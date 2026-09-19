@@ -247,11 +247,19 @@ export const hostelService = {
 
   async listTenants(landlordId: string, hostelId?: string): Promise<Student[]> {
     void landlordId;
-    if (!hostelId) throw new Error("A hostel id is required to list tenants");
-    const page = await http.get<Page<StudentSummaryResponse>>(
-      `/hostels/${hostelId}/tenants`,
+    if (hostelId) {
+      const page = await http.get<Page<StudentSummaryResponse>>(
+        `/hostels/${hostelId}/tenants`,
+      );
+      return page.content.map(toStudent);
+    }
+    const hostels = await http.get<Page<HostelSummaryResponse>>("/hostels/me");
+    const pages = await Promise.all(
+      hostels.content.map((hostel) =>
+        http.get<Page<StudentSummaryResponse>>(`/hostels/${hostel.id}/tenants`),
+      ),
     );
-    return page.content.map(toStudent);
+    return pages.flatMap((page) => page.content.map(toStudent));
   },
 
   async listPendingRequests(landlordId: string): Promise<PendingStudentRequest[]> {

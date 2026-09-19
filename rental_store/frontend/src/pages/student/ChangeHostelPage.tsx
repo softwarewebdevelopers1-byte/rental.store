@@ -33,6 +33,7 @@ export default function ChangeHostelPage() {
   const [hostelName, setHostelName] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   async function findHostel() {
     setChecking(true);
@@ -62,10 +63,8 @@ export default function ChangeHostelPage() {
     if (!student || !hostelName) return;
     setSubmitting(true);
     try {
-      const hostel = await hostelService.findByCode(code);
-      if (!hostel) return;
-      student.requestedHostelId = hostel.id;
-      student.membershipStatus = "PENDING";
+      const updatedStudent = await studentService.changeHostel(code);
+      setStudent(updatedStudent);
       show(
         isLinking
           ? "Your hostel link request was submitted."
@@ -75,6 +74,21 @@ export default function ChangeHostelPage() {
       navigate("/student/dashboard");
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function cancelRequest() {
+    setCancelling(true);
+    try {
+      setStudent(await studentService.cancelHostelRequest());
+      show("Your hostel request was cancelled.", "success");
+    } catch (error) {
+      show(
+        error instanceof Error ? error.message : "Unable to cancel the request.",
+        "error",
+      );
+    } finally {
+      setCancelling(false);
     }
   }
 
@@ -92,6 +106,28 @@ export default function ChangeHostelPage() {
             : "Enter the invitation code for your new hostel."
         }
       />
+      {student.requestedHostelId && (
+        <Card>
+          <div className={styles.success}>
+            <span className={styles.icon} aria-hidden>✓</span>
+            <h3>Hostel request pending</h3>
+            <p>
+              Your request to join{" "}
+              <strong>{student.requestedHostelName ?? "this hostel"}</strong>{" "}
+              is waiting for landlord approval.
+            </p>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => void cancelRequest()}
+              loading={cancelling}
+            >
+              Cancel request
+            </Button>
+          </div>
+        </Card>
+      )}
+      {!student.requestedHostelId && (
       <Card>
         <form className={styles.form} onSubmit={onSubmit}>
           <Input
@@ -122,6 +158,7 @@ export default function ChangeHostelPage() {
           )}
         </form>
       </Card>
+      )}
     </div>
   );
 }

@@ -1,8 +1,37 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "../../components/common/Button";
+import { useToast } from "../../hooks/useToast";
+import { studentService } from "../../services/studentService";
 import styles from "./PendingApprovalPage.module.css";
 
 export default function PendingApprovalPage() {
+  const { show } = useToast();
+  const [hasRequest, setHasRequest] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+
+  useEffect(() => {
+    void studentService.getSelf().then((student) => {
+      setHasRequest(!!student?.requestedHostelId);
+    });
+  }, []);
+
+  async function cancelRequest() {
+    setCancelling(true);
+    try {
+      await studentService.cancelHostelRequest();
+      setHasRequest(false);
+      show("Your hostel request was cancelled.", "success");
+    } catch (error) {
+      show(
+        error instanceof Error ? error.message : "Unable to cancel the request.",
+        "error",
+      );
+    } finally {
+      setCancelling(false);
+    }
+  }
+
   return (
     <div className={styles.wrap}>
       <div className={styles.icon} aria-hidden>
@@ -22,6 +51,15 @@ export default function PendingApprovalPage() {
         <Link to="/hostels">
           <Button>Browse hostels</Button>
         </Link>
+        {hasRequest && (
+          <Button
+            variant="danger"
+            onClick={() => void cancelRequest()}
+            loading={cancelling}
+          >
+            Cancel request
+          </Button>
+        )}
       </div>
     </div>
   );

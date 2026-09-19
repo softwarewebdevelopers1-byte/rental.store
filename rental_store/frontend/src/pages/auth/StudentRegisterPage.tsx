@@ -23,6 +23,7 @@ export default function StudentRegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [hostelCode, setHostelCode] = useState("");
   const [codeState, setCodeState] = useState<CodeState>("idle");
   const [submitting, setSubmitting] = useState(false);
@@ -115,12 +116,22 @@ export default function StudentRegisterPage() {
         />
         <Input
           label="Password"
-          type="password"
+          type={showPassword ? "text" : "password"}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           autoComplete="new-password"
           hint="At least 6 characters."
           required
+          endAdornment={
+            <button
+              type="button"
+              onClick={() => setShowPassword((visible) => !visible)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-pressed={showPassword}
+            >
+              {showPassword ? "Hide" : "Show"}
+            </button>
+          }
         />
         <Input
           label="Hostel code (optional)"

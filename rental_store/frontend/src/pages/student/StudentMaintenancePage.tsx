@@ -1,4 +1,5 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { useStudentMaintenance } from "../../hooks/useMaintenance";
 import { useToast } from "../../hooks/useToast";
@@ -12,6 +13,8 @@ import { Skeleton } from "../../components/common/Skeleton";
 import { EmptyState } from "../../components/common/EmptyState";
 import { ErrorState } from "../../components/common/ErrorState";
 import { FileUpload } from "../../components/common/FileUpload";
+import { studentService } from "../../services/studentService";
+import type { Student } from "../../types/user";
 import type { MaintenanceCategory } from "../../types/maintenance";
 import styles from "./StudentMaintenancePage.module.css";
 
@@ -27,8 +30,23 @@ const CATEGORIES: { value: MaintenanceCategory; label: string }[] = [
 export default function StudentMaintenancePage() {
   const { user } = useAuth();
   const { show } = useToast();
+  const [student, setStudent] = useState<Student | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+  useEffect(() => {
+    let cancelled = false;
+    void studentService.getSelf().then((profile) => {
+      if (!cancelled) {
+        setStudent(profile);
+        setProfileLoading(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const { data, loading, error, reload, create } = useStudentMaintenance(
-    user?.id ?? "",
+    student?.hostelId ? user?.id ?? "" : "",
   );
 
   const [title, setTitle] = useState("");
@@ -43,12 +61,16 @@ export default function StudentMaintenancePage() {
       show("Please sign in to raise a request.", "error");
       return;
     }
+    if (!student?.hostelId) {
+      show("Please register for a hostel before raising a maintenance request.", "error");
+      return;
+    }
     setSubmitting(true);
     try {
       await create({
         studentId: user.id,
-        hostelId: "",
-        roomId: "",
+        hostelId: student.hostelId,
+        roomId: student.roomId ?? "",
         title,
         description,
         category,
@@ -70,67 +92,79 @@ export default function StudentMaintenancePage() {
         subtitle="Report issues and track their status."
       />
 
-      <Card title="New request">
-        <form onSubmit={onSubmit} className={styles.form}>
-          <Input
-            label="Title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-          />
-          <Select
-            label="Category"
-            value={category}
-            onChange={(e) => setCategory(e.target.value as MaintenanceCategory)}
-            options={CATEGORIES}
-          />
-          <div className={styles.field}>
-            <label className={styles.label}>Description</label>
-            <textarea
-              className={styles.textarea}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={4}
-              required
-            />
-          </div>
-          <FileUpload
-            folder="maintenance"
-            label="Attachments (optional)"
-            accept="image/*,application/pdf"
-            multiple
-            value={attachments}
-            onChange={setAttachments}
-          />
-          <Button
-            type="submit"
-            disabled={!title || !description}
-            loading={submitting}
-          >
-            Submit request
-          </Button>
-        </form>
-      </Card>
-
-      <section>
-        <h2 className={styles.sectionTitle}>My requests</h2>
-        {loading ? (
-          <Skeleton height={120} radius="var(--radius-lg)" />
-        ) : error ? (
-          <ErrorState description={error} onRetry={reload} />
-        ) : data.length === 0 ? (
+      {!profileLoading && !student?.hostelId ? (
+        <Card>
           <EmptyState
-            title="No requests yet"
-            description="Raise a request above if anything needs fixing."
+            title="Register for a hostel first"
+            description="You need to register for a hostel before you can report or track maintenance issues."
+            action={<Link to="/student/change-hostel">Register for a hostel</Link>}
           />
-        ) : (
-          <div className={styles.list}>
-            {data.map((m) => (
-              <MaintenanceCard key={m.id} request={m} />
-            ))}
-          </div>
-        )}
-      </section>
+        </Card>
+      ) : (
+        <>
+          <Card title="New request">
+            <form onSubmit={onSubmit} className={styles.form}>
+              <Input
+                label="Title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+              />
+              <Select
+                label="Category"
+                value={category}
+                onChange={(e) => setCategory(e.target.value as MaintenanceCategory)}
+                options={CATEGORIES}
+              />
+              <div className={styles.field}>
+                <label className={styles.label}>Description</label>
+                <textarea
+                  className={styles.textarea}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={4}
+                  required
+                />
+              </div>
+              <FileUpload
+                folder="maintenance"
+                label="Attachments (optional)"
+                accept="image/*,application/pdf"
+                multiple
+                value={attachments}
+                onChange={setAttachments}
+              />
+              <Button
+                type="submit"
+                disabled={!title || !description}
+                loading={submitting}
+              >
+                Submit request
+              </Button>
+            </form>
+          </Card>
+
+          <section>
+            <h2 className={styles.sectionTitle}>My requests</h2>
+            {loading ? (
+              <Skeleton height={120} radius="var(--radius-lg)" />
+            ) : error ? (
+              <ErrorState description={error} onRetry={reload} />
+            ) : data.length === 0 ? (
+              <EmptyState
+                title="No requests yet"
+                description="Raise a request above if anything needs fixing."
+              />
+            ) : (
+              <div className={styles.list}>
+                {data.map((m) => (
+                  <MaintenanceCard key={m.id} request={m} />
+                ))}
+              </div>
+            )}
+          </section>
+        </>
+      )}
     </div>
   );
 }

@@ -24,6 +24,7 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -80,12 +81,22 @@ export default function LoginPage() {
         />
         <Input
           label="Password"
-          type="password"
+          type={showPassword ? "text" : "password"}
           autoComplete="current-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
           error={error ?? undefined}
+          endAdornment={
+            <button
+              type="button"
+              onClick={() => setShowPassword((visible) => !visible)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-pressed={showPassword}
+            >
+              {showPassword ? "Hide" : "Show"}
+            </button>
+          }
         />
         <Button type="submit" fullWidth size="lg" loading={loading}>
           Sign in

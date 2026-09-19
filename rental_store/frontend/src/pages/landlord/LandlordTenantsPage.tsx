@@ -4,10 +4,11 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { TenantCard } from "../../components/hostel/TenantCard";
 import { Skeleton } from "../../components/common/Skeleton";
 import { EmptyState } from "../../components/common/EmptyState";
+import { ErrorState } from "../../components/common/ErrorState";
 
 export default function LandlordTenantsPage() {
   const { user } = useAuth();
-  const { data, loading } = useLandlordTenants(user?.id ?? "");
+  const { data, loading, error, reload } = useLandlordTenants(user?.id ?? "");
 
   return (
     <div>
@@ -17,6 +18,8 @@ export default function LandlordTenantsPage() {
       />
       {loading ? (
         <Skeleton height={200} radius="var(--radius-lg)" />
+      ) : error ? (
+        <ErrorState description={error} onRetry={reload} />
       ) : data.length === 0 ? (
         <EmptyState
           title="No tenants yet"

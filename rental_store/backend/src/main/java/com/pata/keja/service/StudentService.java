@@ -17,6 +17,8 @@ public interface StudentService {
 
     StudentResponse changeHostel(ChangeHostelRequest req);
 
+    StudentResponse cancelHostelRequest();
+
     StudentResponse getById(String id);
 
     Page<StudentSummaryResponse> list(StudentRoleFilter filter, Pageable pageable);

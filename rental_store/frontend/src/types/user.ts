@@ -23,6 +23,7 @@ export interface Student extends User {
   roomId?: string;
   membershipStatus: MembershipStatus;
   requestedHostelId?: string;
+  requestedHostelName?: string;
 }
 
 export interface Landlord extends User {

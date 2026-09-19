@@ -39,6 +39,9 @@ function toStudent(raw: StudentResponse): Student {
     ...(raw.hostelId ? { hostelId: raw.hostelId } : {}),
     ...(raw.roomId ? { roomId: raw.roomId } : {}),
     ...(raw.requestedHostelId ? { requestedHostelId: raw.requestedHostelId } : {}),
+    ...(raw.requestedHostelName
+      ? { requestedHostelName: raw.requestedHostelName }
+      : {}),
   };
 }
 
@@ -49,5 +52,19 @@ export const studentService = {
     } catch {
       return null;
     }
+  },
+
+  async changeHostel(code: string): Promise<Student> {
+    return toStudent(
+      await http.post<StudentResponse>("/students/me/change-hostel", {
+        newHostelCode: code.trim(),
+      }),
+    );
+  },
+
+  async cancelHostelRequest(): Promise<Student> {
+    return toStudent(
+      await http.delete<StudentResponse>("/students/me/hostel-request"),
+    );
   },
 };

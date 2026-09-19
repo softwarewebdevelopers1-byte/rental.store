@@ -5,11 +5,14 @@ import { Card } from "../../components/common/Card";
 import { Button } from "../../components/common/Button";
 import { Skeleton } from "../../components/common/Skeleton";
 import { EmptyState } from "../../components/common/EmptyState";
+import { ErrorState } from "../../components/common/ErrorState";
 import styles from "./LandlordRequestsPage.module.css";
 
 export default function LandlordRequestsPage() {
   const { user } = useAuth();
-  const { data, loading, accept, reject } = usePendingRequests(user?.id ?? "");
+  const { data, loading, error, reload, accept, reject } = usePendingRequests(
+    user?.id ?? "",
+  );
 
   return (
     <div>
@@ -19,6 +22,8 @@ export default function LandlordRequestsPage() {
       />
       {loading ? (
         <Skeleton height={200} radius="var(--radius-lg)" />
+      ) : error ? (
+        <ErrorState description={error} onRetry={reload} />
       ) : data.length === 0 ? (
         <EmptyState
           title="No pending requests"

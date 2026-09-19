@@ -1,14 +1,22 @@
-import { forwardRef, type InputHTMLAttributes } from "react";
+import {
+  forwardRef,
+  type InputHTMLAttributes,
+  type ReactNode,
+} from "react";
 import styles from "./Input.module.css";
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   hint?: string;
   error?: string;
+  endAdornment?: ReactNode;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, hint, error, id, className = "", ...rest }, ref) => {
+  (
+    { label, hint, error, endAdornment, id, className = "", ...rest },
+    ref,
+  ) => {
     const inputId =
       id ?? rest.name ?? `input-${Math.random().toString(36).slice(2, 8)}`;
     return (
@@ -18,16 +26,21 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             {label}
           </label>
         )}
-        <input
-          id={inputId}
-          ref={ref}
-          className={`${styles.input} ${error ? styles.hasError : ""}`}
-          aria-invalid={!!error}
-          aria-describedby={
-            error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined
-          }
-          {...rest}
-        />
+        <div className={endAdornment ? styles.inputWrap : undefined}>
+          <input
+            id={inputId}
+            ref={ref}
+            className={`${styles.input} ${endAdornment ? styles.inputWithAdornment : ""} ${error ? styles.hasError : ""}`}
+            aria-invalid={!!error}
+            aria-describedby={
+              error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined
+            }
+            {...rest}
+          />
+          {endAdornment && (
+            <div className={styles.adornment}>{endAdornment}</div>
+          )}
+        </div>
         {error ? (
           <span id={`${inputId}-error`} className={styles.error}>
             {error}
