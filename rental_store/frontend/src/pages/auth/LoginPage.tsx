@@ -17,7 +17,7 @@ const DEMO_ROLES: { role: UserRole; label: string }[] = [
 ];
 
 export default function LoginPage() {
-  const { login, loginAsRole, user } = useAuth();
+  const { login, loginAsRole } = useAuth();
   const { show } = useToast();
   const navigate = useNavigate();
   const location = useLocation() as { state?: { from?: { pathname: string } } };
@@ -36,11 +36,9 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
     try {
-      await login(email, password);
+      const session = await login(email, password);
       show("Signed in successfully", "success");
-      // useAuth state updates; navigate based on resolved user
-      const path = user ? redirectFor(user.role) : "/";
-      navigate(path, { replace: true });
+      navigate(redirectFor(session.user.role), { replace: true });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Login failed";
       setError(message);

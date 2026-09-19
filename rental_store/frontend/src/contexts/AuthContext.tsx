@@ -17,8 +17,8 @@ interface AuthContextValue {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  loginAsRole: (role: UserRole) => Promise<void>;
+  login: (email: string, password: string) => Promise<AuthSession>;
+  loginAsRole: (role: UserRole) => Promise<AuthSession>;
   registerStudent: (input: RegisterStudentInput) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -43,11 +43,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (email: string, password: string) => {
     const s = await authService.login({ email, password });
     setSession(s);
+    return s;
   }, []);
 
   const loginAsRole = useCallback(async (role: UserRole) => {
     const s = await authService.loginAsRole(role);
     setSession(s);
+    return s;
   }, []);
 
   const registerStudent = useCallback(async (input: RegisterStudentInput) => {
