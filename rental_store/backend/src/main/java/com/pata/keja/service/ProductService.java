@@ -13,6 +13,8 @@ public interface ProductService {
 
     Page<ProductSummaryResponse> listByAgent(String agentId, Pageable pageable);
 
+    Page<ProductSummaryResponse> listByCurrentAgent(Pageable pageable);
+
     ProductResponse getById(String productId);
 
     ProductResponse create(String agentId, ProductCreateRequest req);

@@ -1,7 +1,5 @@
-import { mockConflicts } from "../data/conflicts";
+import { http } from "./apiClient";
 import type { Conflict } from "../types/conflict";
-import { delay } from "../utils/delay";
-import { generateId } from "../utils/idGenerator";
 
 export interface CreateConflictInput {
   orderId: string;
@@ -11,50 +9,94 @@ export interface CreateConflictInput {
   description: string;
 }
 
+interface Page<T> {
+  content: T[];
+}
+
+interface ConflictSummaryResponse {
+  id: string;
+  orderId: string;
+  issue: Conflict["issue"];
+  status: Conflict["status"];
+  studentId: string;
+  agentId: string;
+  createdAt: string;
+  resolvedAt: string | null;
+}
+
+interface ConflictResponse extends ConflictSummaryResponse {
+  description: string;
+  resolution: string | null;
+}
+
+function toConflict(raw: ConflictResponse): Conflict {
+  return {
+    id: raw.id,
+    orderId: raw.orderId,
+    studentId: raw.studentId,
+    agentId: raw.agentId,
+    issue: raw.issue,
+    description: raw.description,
+    status: raw.status,
+    ...(raw.resolution ? { resolution: raw.resolution } : {}),
+    createdAt: raw.createdAt,
+    ...(raw.resolvedAt ? { resolvedAt: raw.resolvedAt } : {}),
+  };
+}
+
+function toSummary(raw: ConflictSummaryResponse): Conflict {
+  return {
+    id: raw.id,
+    orderId: raw.orderId,
+    studentId: raw.studentId,
+    agentId: raw.agentId,
+    issue: raw.issue,
+    description: "",
+    status: raw.status,
+    createdAt: raw.createdAt,
+    ...(raw.resolvedAt ? { resolvedAt: raw.resolvedAt } : {}),
+  };
+}
+
+async function list(path: string): Promise<Conflict[]> {
+  const page = await http.get<Page<ConflictSummaryResponse>>(path);
+  return page.content.map(toSummary);
+}
+
 export const conflictService = {
   async listForStudent(studentId: string): Promise<Conflict[]> {
-    return delay(
-      mockConflicts
-        .filter((c) => c.studentId === studentId)
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
-    );
+    void studentId;
+    return list("/conflicts/me");
   },
 
   async listForAgent(agentId: string): Promise<Conflict[]> {
-    return delay(
-      mockConflicts
-        .filter((c) => c.agentId === agentId)
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
-    );
+    void agentId;
+    return list("/conflicts/agent");
   },
 
   async listAll(): Promise<Conflict[]> {
-    return delay(
-      [...mockConflicts].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
-    );
+    return list("/conflicts/admin");
   },
 
   async getById(id: string): Promise<Conflict | null> {
-    return delay(mockConflicts.find((c) => c.id === id) ?? null);
+    return toConflict(await http.get<ConflictResponse>(`/conflicts/${id}`));
   },
 
   async create(input: CreateConflictInput): Promise<Conflict> {
-    const conflict: Conflict = {
-      ...input,
-      id: generateId("cf"),
-      status: "OPEN",
-      createdAt: new Date().toISOString(),
-    };
-    mockConflicts.push(conflict);
-    return delay(conflict);
+    void input.studentId;
+    void input.agentId;
+    const raw = await http.post<ConflictResponse>(
+      `/conflicts/me/orders/${input.orderId}`,
+      { issue: input.issue, description: input.description, attachments: [] },
+    );
+    return toConflict(raw);
   },
 
   async resolve(id: string, resolution: string): Promise<Conflict | null> {
-    const conflict = mockConflicts.find((c) => c.id === id);
-    if (!conflict) return delay(null);
-    conflict.status = "RESOLVED";
-    conflict.resolution = resolution;
-    conflict.resolvedAt = new Date().toISOString();
-    return delay(conflict);
+    const raw = await http.post<ConflictResponse>(`/conflicts/${id}/resolve`, {
+      decision: "RESOLVED",
+      resolution,
+    });
+    return toConflict(raw);
   },
 };

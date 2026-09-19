@@ -46,6 +46,17 @@ public class RoomServiceImpl implements RoomService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<RoomSummaryResponse> listVacant(String hostelId) {
+        if (!hostelRepo.existsById(hostelId)) {
+            throw new NotFoundException("Hostel not found");
+        }
+        return roomRepo.findVacantByHostel(hostelId).stream()
+                .map(roomMapper::toSummary)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public RoomResponse getById(String roomId) {
         Room room = roomRepo.findByIdWithAssociations(roomId)
                 .orElseThrow(() -> new NotFoundException("Room not found"));

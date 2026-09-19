@@ -1,23 +1,53 @@
-import { mockConversations, mockMessages } from "../data/messages";
+import { http } from "./apiClient";
 import type { Conversation, Message } from "../types/message";
-import { delay } from "../utils/delay";
-import { generateId } from "../utils/idGenerator";
+
+interface ConversationSummaryResponse {
+  id: string;
+  subject: Conversation["subject"];
+  lastMessageAt: string;
+  unreadCount: number;
+  otherPartyId: string;
+}
+
+interface ConversationResponse {
+  id: string;
+  subject: Conversation["subject"];
+  lastMessageAt: string;
+  participants: Array<{ userId: string }>;
+  messages: MessageResponse[];
+}
+
+interface MessageResponse {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  body: string;
+  createdAt: string;
+}
+
+function toMessage(raw: MessageResponse): Message {
+  return { ...raw, read: true };
+}
 
 export const messageService = {
   async listConversations(userId: string): Promise<Conversation[]> {
-    return delay(
-      mockConversations
-        .filter((c) => c.participants.includes(userId))
-        .sort((a, b) => b.lastMessageAt.localeCompare(a.lastMessageAt)),
+    const conversations = await http.get<ConversationSummaryResponse[]>(
+      "/messages/conversations",
     );
+    return conversations.map((conversation) => ({
+      id: conversation.id,
+      participants: [userId, conversation.otherPartyId],
+      subject: conversation.subject,
+      lastMessageAt: conversation.lastMessageAt,
+      unreadCount: conversation.unreadCount,
+    }));
   },
 
   async listMessages(conversationId: string): Promise<Message[]> {
-    return delay(
-      mockMessages
-        .filter((m) => m.conversationId === conversationId)
-        .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
+    const conversation = await http.get<ConversationResponse>(
+      `/messages/conversations/${conversationId}`,
     );
+    return conversation.messages.map(toMessage);
   },
 
   async sendMessage(
@@ -25,31 +55,15 @@ export const messageService = {
     senderId: string,
     body: string,
   ): Promise<Message> {
-    const msg: Message = {
-      id: generateId("m"),
-      conversationId,
-      senderId,
-      body,
-      createdAt: new Date().toISOString(),
-      read: false,
-    };
-    mockMessages.push(msg);
-
-    const conv = mockConversations.find((c) => c.id === conversationId);
-    if (conv) {
-      conv.lastMessageAt = msg.createdAt;
-      conv.unreadCount = 0;
-    }
-    return delay(msg, 150);
+    void senderId;
+    const message = await http.post<MessageResponse>(
+      `/messages/conversations/${conversationId}/messages`,
+      { body },
+    );
+    return toMessage(message);
   },
 
   async markConversationRead(conversationId: string): Promise<void> {
-    mockConversations
-      .filter((c) => c.id === conversationId)
-      .forEach((c) => (c.unreadCount = 0));
-    mockMessages
-      .filter((m) => m.conversationId === conversationId)
-      .forEach((m) => (m.read = true));
-    await delay(undefined, 100);
+    await http.post<void>(`/messages/conversations/${conversationId}/read`);
   },
 };

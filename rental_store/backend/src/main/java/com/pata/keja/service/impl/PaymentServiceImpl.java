@@ -69,6 +69,12 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Page<PaymentSummaryResponse> listForStudent(String studentId, Pageable pageable) {
+        return paymentRepo.findAllByStudentId(studentId, pageable).map(paymentMapper::toSummary);
+    }
+
+    @Override
     public PaymentResponse recordPayment(String studentId, PaymentCreateRequest req) {
         Student student = studentRepo.findWithAssociationsById(studentId)
                 .orElseThrow(() -> new NotFoundException("Student not found"));

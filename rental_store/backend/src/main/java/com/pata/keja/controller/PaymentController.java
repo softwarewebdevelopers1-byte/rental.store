@@ -58,6 +58,14 @@ public class PaymentController {
         return ResponseEntity.created(URI.create("/api/payments/" + response.id())).body(response);
     }
 
+    @GetMapping("/students/{studentId}")
+    @PreAuthorize("#studentId == authentication.principal.id or hasRole('ADMIN')")
+    public Page<PaymentSummaryResponse> listForStudent(
+            @PathVariable String studentId,
+            @PageableDefault(size = 20, sort = "createdAt", direction = DESC) Pageable pageable) {
+        return paymentService.listForStudent(studentId, pageable);
+    }
+
     @GetMapping("/hostel/{hostelId}")
     @PreAuthorize("hasRole('LANDLORD') or hasRole('ADMIN')")
     public Page<PaymentSummaryResponse> listForHostel(

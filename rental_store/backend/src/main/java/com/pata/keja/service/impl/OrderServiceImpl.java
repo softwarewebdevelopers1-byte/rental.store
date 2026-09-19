@@ -125,6 +125,12 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(readOnly = true)
+    public Page<OrderSummaryResponse> listAll(Pageable pageable) {
+        return orderRepo.findAll(pageable).map(orderMapper::toSummary);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public OrderResponse getById(String orderId, String viewerId) {
         Order order = orderRepo.findByIdWithDetails(orderId)
                 .orElseThrow(() -> new NotFoundException("Order not found"));

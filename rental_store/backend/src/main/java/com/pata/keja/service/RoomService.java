@@ -12,6 +12,8 @@ public interface RoomService {
 
     List<RoomSummaryResponse> listForHostel(String hostelId);
 
+    List<RoomSummaryResponse> listVacant(String hostelId);
+
     RoomResponse getById(String roomId);
 
     RoomResponse create(String hostelId, RoomCreateRequest req);

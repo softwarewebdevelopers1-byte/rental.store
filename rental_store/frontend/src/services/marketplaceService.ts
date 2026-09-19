@@ -1,7 +1,5 @@
-import { mockProducts, mockPacks } from "../data/products";
+import { http } from "./apiClient";
 import type { Pack, Product } from "../types/marketplace";
-import { delay } from "../utils/delay";
-import { generateId } from "../utils/idGenerator";
 
 export interface MarketplaceQuery {
   q?: string;
@@ -9,85 +7,133 @@ export interface MarketplaceQuery {
   activeOnly?: boolean;
 }
 
+interface Page<T> {
+  content: T[];
+}
+
+interface ProductResponse {
+  id: string;
+  agentId: string;
+  name: string;
+  description: string | null;
+  price: number;
+  imageUrl: string | null;
+  active: boolean;
+}
+
+interface PackItemResponse {
+  productId: string;
+  quantity: number;
+}
+
+interface PackResponse {
+  id: string;
+  agentId: string;
+  name: string;
+  description: string | null;
+  items: PackItemResponse[];
+  price: number;
+  imageUrl: string | null;
+  active: boolean;
+}
+
+function toProduct(raw: ProductResponse): Product {
+  return {
+    id: raw.id,
+    agentId: raw.agentId,
+    name: raw.name,
+    description: raw.description ?? "",
+    price: raw.price,
+    imageUrl: raw.imageUrl ?? "",
+    active: raw.active,
+  };
+}
+
+function toPack(raw: PackResponse): Pack {
+  return {
+    id: raw.id,
+    agentId: raw.agentId,
+    name: raw.name,
+    description: raw.description ?? "",
+    items: raw.items.map((item) => ({
+      productId: item.productId,
+      quantity: item.quantity,
+    })),
+    price: raw.price,
+    imageUrl: raw.imageUrl ?? "",
+    active: raw.active,
+  };
+}
+
+function params(query: MarketplaceQuery): string {
+  return query.q ? `?q=${encodeURIComponent(query.q)}` : "";
+}
+
 export const marketplaceService = {
-  async listProducts(q: MarketplaceQuery = {}): Promise<Product[]> {
-    let items = [...mockProducts];
-    if (q.activeOnly !== false) items = items.filter((p) => p.active);
-    if (q.agentId) items = items.filter((p) => p.agentId === q.agentId);
-    if (q.q) {
-      const needle = q.q.toLowerCase();
-      items = items.filter(
-        (p) =>
-          p.name.toLowerCase().includes(needle) ||
-          p.description.toLowerCase().includes(needle),
-      );
-    }
-    return delay(items);
+  async listProducts(query: MarketplaceQuery = {}): Promise<Product[]> {
+    const path = query.agentId ? "/agents/me/products" : "/marketplace/products";
+    const page = await http.get<Page<ProductResponse>>(`${path}${params(query)}`);
+    return page.content
+      .map(toProduct)
+      .filter((product) => query.agentId === undefined || product.agentId === query.agentId)
+      .filter((product) => query.activeOnly === false || product.active);
   },
 
   async getProduct(id: string): Promise<Product | null> {
-    return delay(mockProducts.find((p) => p.id === id) ?? null);
+    return toProduct(await http.get<ProductResponse>(`/marketplace/products/${id}`));
   },
 
   async createProduct(input: Omit<Product, "id">): Promise<Product> {
-    const product: Product = { ...input, id: generateId("pr") };
-    mockProducts.push(product);
-    return delay(product);
+    const raw = await http.post<ProductResponse>("/agents/me/products", {
+      name: input.name,
+      description: input.description,
+      price: input.price,
+      imageUrl: input.imageUrl,
+    });
+    return toProduct(raw);
   },
 
-  async updateProduct(
-    id: string,
-    patch: Partial<Product>,
-  ): Promise<Product | null> {
-    const idx = mockProducts.findIndex((p) => p.id === id);
-    if (idx < 0) return delay(null);
-    mockProducts[idx] = { ...mockProducts[idx], ...patch };
-    return delay(mockProducts[idx]);
+  async updateProduct(id: string, patch: Partial<Product>): Promise<Product | null> {
+    const raw = await http.patch<ProductResponse>(`/agents/me/products/${id}`, patch);
+    return toProduct(raw);
   },
 
   async removeProduct(id: string): Promise<boolean> {
-    const idx = mockProducts.findIndex((p) => p.id === id);
-    if (idx < 0) return delay(false);
-    mockProducts[idx].active = false;
-    return delay(true);
+    await http.delete<void>(`/agents/me/products/${id}`);
+    return true;
   },
 
-  async listPacks(q: MarketplaceQuery = {}): Promise<Pack[]> {
-    let items = [...mockPacks];
-    if (q.activeOnly !== false) items = items.filter((p) => p.active);
-    if (q.agentId) items = items.filter((p) => p.agentId === q.agentId);
-    if (q.q) {
-      const needle = q.q.toLowerCase();
-      items = items.filter(
-        (p) =>
-          p.name.toLowerCase().includes(needle) ||
-          p.description.toLowerCase().includes(needle),
-      );
-    }
-    return delay(items);
+  async listPacks(query: MarketplaceQuery = {}): Promise<Pack[]> {
+    const path = query.agentId ? "/agents/me/packs" : "/marketplace/packs";
+    const page = await http.get<Page<PackResponse>>(`${path}${params(query)}`);
+    return page.content
+      .map(toPack)
+      .filter((pack) => query.agentId === undefined || pack.agentId === query.agentId)
+      .filter((pack) => query.activeOnly === false || pack.active);
   },
 
   async getPack(id: string): Promise<Pack | null> {
-    return delay(mockPacks.find((p) => p.id === id) ?? null);
+    return toPack(await http.get<PackResponse>(`/marketplace/packs/${id}`));
   },
 
   async createPack(input: Omit<Pack, "id">): Promise<Pack> {
-    const pack: Pack = { ...input, id: generateId("pk") };
-    mockPacks.push(pack);
-    return delay(pack);
+    const raw = await http.post<PackResponse>("/agents/me/packs", {
+      name: input.name,
+      description: input.description,
+      price: input.price,
+      imageUrl: input.imageUrl,
+      items: input.items,
+    });
+    return toPack(raw);
   },
 
   async updatePack(id: string, patch: Partial<Pack>): Promise<Pack | null> {
-    const idx = mockPacks.findIndex((p) => p.id === id);
-    if (idx < 0) return delay(null);
-    mockPacks[idx] = { ...mockPacks[idx], ...patch };
-    return delay(mockPacks[idx]);
+    const raw = await http.patch<PackResponse>(`/agents/me/packs/${id}`, patch);
+    return toPack(raw);
   },
 
   async removePack(id: string): Promise<boolean> {
-    const idx = mockPacks.findIndex((p) => p.id === id);
-    if (idx < 0) return delay(false);
-    mockPacks[idx].active = false;
-    return delay(true);
+    await http.delete<void>(`/agents/me/packs/${id}`);
+    return true;
   },
 };

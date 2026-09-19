@@ -1,15 +1,28 @@
-import { mockRooms } from "../data/rooms";
+import { http } from "./apiClient";
 import type { Room, RoomStatus } from "../types/room";
-import { delay } from "../utils/delay";
-import { generateId } from "../utils/idGenerator";
+
+interface RoomResponse {
+  id: string;
+  hostelId: string;
+  number: string;
+  price: number;
+  status: RoomStatus;
+  tenantId: string | null;
+  tenantName: string | null;
+}
+
+function toRoom(raw: RoomResponse): Room {
+  return {
+    ...raw,
+    tenantId: raw.tenantId ?? undefined,
+    tenantName: raw.tenantName ?? undefined,
+  };
+}
 
 export const roomService = {
   async listForHostel(hostelId: string): Promise<Room[]> {
-    return delay(
-      mockRooms
-        .filter((r) => r.hostelId === hostelId)
-        .sort((a, b) => a.number.localeCompare(b.number)),
-    );
+    const rooms = await http.get<RoomResponse[]>(`/rooms/hostel/${hostelId}`);
+    return rooms.map(toRoom);
   },
 
   async create(input: {
@@ -17,32 +30,25 @@ export const roomService = {
     number: string;
     price: number;
   }): Promise<Room> {
-    const room: Room = {
-      id: generateId("r"),
-      hostelId: input.hostelId,
+    const room = await http.post<RoomResponse>(`/rooms/hostel/${input.hostelId}`, {
       number: input.number,
       price: input.price,
-      status: "VACANT",
-    };
-    mockRooms.push(room);
-    return delay(room);
+    });
+    return toRoom(room);
   },
 
   async update(id: string, patch: Partial<Room>): Promise<Room | null> {
-    const idx = mockRooms.findIndex((r) => r.id === id);
-    if (idx < 0) return delay(null);
-    mockRooms[idx] = { ...mockRooms[idx], ...patch };
-    return delay(mockRooms[idx]);
+    const room = await http.patch<RoomResponse>(`/rooms/${id}`, patch);
+    return toRoom(room);
   },
 
   async setStatus(id: string, status: RoomStatus): Promise<Room | null> {
-    return this.update(id, { status });
+    const room = await http.patch<RoomResponse>(`/rooms/${id}/status`, { status });
+    return toRoom(room);
   },
 
   async remove(id: string): Promise<boolean> {
-    const idx = mockRooms.findIndex((r) => r.id === id);
-    if (idx < 0) return delay(false);
-    mockRooms.splice(idx, 1);
-    return delay(true);
+    await http.delete<void>(`/rooms/${id}`);
+    return true;
   },
 };

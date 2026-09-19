@@ -32,6 +32,9 @@ public interface PaymentRepository extends JpaRepository<Payment, String> {
     Page<Payment> findAllByHostelId(String hostelId, Pageable pageable);
 
     @EntityGraph(attributePaths = { "student", "hostel", "room" })
+    Page<Payment> findAllByStudentId(String studentId, Pageable pageable);
+
+    @EntityGraph(attributePaths = { "student", "hostel", "room" })
     Page<Payment> findAllByHostelIdAndStatus(
             String hostelId,
             PaymentStatus status,

@@ -1,6 +1,5 @@
-import { mockUsers } from "../data/users";
-import type { AuthSession, Student, UserRole } from "../types/user";
-import { delay } from "../utils/delay";
+import { http } from "./apiClient";
+import type { AuthSession, Student, User, UserRole } from "../types/user";
 
 export interface LoginInput {
   email: string;
@@ -14,61 +13,77 @@ export interface RegisterStudentInput {
   hostelCode?: string;
 }
 
-// Demo password for all mock users.
-const DEMO_PASSWORD = "password";
+interface BackendUser {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  active: boolean;
+  createdAt: string;
+}
+
+interface LoginResponse {
+  token: string;
+  user: BackendUser;
+}
+
+interface StudentResponse extends BackendUser {
+  role: "STUDENT";
+  membershipStatus: Student["membershipStatus"];
+  hostelId: string | null;
+  roomId: string | null;
+  requestedHostelId: string | null;
+}
+
+function toUser(user: BackendUser): User {
+  return { ...user };
+}
+
+function toStudent(response: StudentResponse): Student {
+  return {
+    ...toUser(response),
+    role: "STUDENT",
+    membershipStatus: response.membershipStatus,
+    ...(response.hostelId ? { hostelId: response.hostelId } : {}),
+    ...(response.roomId ? { roomId: response.roomId } : {}),
+    ...(response.requestedHostelId ? { requestedHostelId: response.requestedHostelId } : {}),
+  };
+}
+
+const demoEmails: Record<UserRole, string> = {
+  STUDENT: "student@example.com",
+  LANDLORD: "landlord@example.com",
+  CARETAKER: "caretaker@example.com",
+  MARKET_AGENT: "agent@example.com",
+  ADMIN: "admin@example.com",
+};
 
 export const authService = {
   async login({ email, password }: LoginInput): Promise<AuthSession> {
-    const user = mockUsers.find(
-      (u) => u.email.toLowerCase() === email.toLowerCase(),
-    );
-    if (!user || password !== DEMO_PASSWORD) {
-      throw new Error("Invalid credentials");
-    }
-    return delay({
-      user,
-      token: `mock-token-${user.id}-${Date.now()}`,
-    });
+    const response = await http.post<LoginResponse>("/auth/login", { email, password });
+    return { user: toUser(response.user), token: response.token };
   },
 
   async loginAsRole(role: UserRole): Promise<AuthSession> {
-    const user = mockUsers.find((u) => u.role === role);
-    if (!user) throw new Error(`No demo user for role ${role}`);
-    return delay({ user, token: `mock-token-${user.id}` });
+    return this.login({ email: demoEmails[role], password: "password" });
   },
 
   async validateHostelCode(code: string): Promise<boolean> {
-    const { hostelService } = await import("./hostelService");
-    const hostel = await hostelService.findByCode(code);
-    return hostel !== null;
+    const response = await http.get<{ valid: boolean }>(
+      `/auth/validate-hostel-code?code=${encodeURIComponent(code)}`,
+    );
+    return response.valid;
   },
 
   async registerStudent(input: RegisterStudentInput): Promise<AuthSession> {
-    let hostelId: string | undefined;
-    if (input.hostelCode) {
-      const { hostelService } = await import("./hostelService");
-      const hostel = await hostelService.findByCode(input.hostelCode);
-      if (!hostel) throw new Error("Invalid hostel code");
-      hostelId = hostel.id;
-    }
-
-    const user: Student = {
-      id: `u-stu-${Date.now()}`,
-      name: input.name,
-      email: input.email,
-      role: "STUDENT",
-      active: true,
-      createdAt: new Date().toISOString(),
-      membershipStatus: hostelId ? "PENDING" : "INACTIVE",
-      ...(hostelId ? { requestedHostelId: hostelId } : {}),
-    };
-    const { mockStudents } = await import("../data/users");
-    mockStudents.push(user);
-    mockUsers.push(user);
-    return delay({ user, token: `mock-token-${user.id}` });
+    const response = await http.post<StudentResponse>("/auth/register/student", {
+      ...input,
+      hostelCode: input.hostelCode ?? "",
+    });
+    return { user: toStudent(response), token: "" };
   },
 
   async logout(): Promise<void> {
-    await delay(undefined, 100);
+    return;
   },
 };

@@ -1,13 +1,7 @@
-import { mockHostels } from "../data/hostels";
-import { mockRooms } from "../data/rooms";
-import { mockUsers } from "../data/users";
+import { http } from "./apiClient";
 import type { Hostel } from "../types/hostel";
 import type { Room } from "../types/room";
 import type { Landlord, Student } from "../types/user";
-import { mockStudents } from "../data/users";
-import { mockPayments } from "../data/payments";
-import { mockMessages } from "../data/messages";
-import { delay } from "../utils/delay";
 
 export interface HostelFilters {
   query?: string;
@@ -41,77 +35,173 @@ export interface PendingStudentRequest {
   requestedHostelName: string;
 }
 
-function toSummary(hostel: Hostel): HostelSummary {
-  const rooms = mockRooms.filter((r) => r.hostelId === hostel.id);
-  const vacant = rooms.filter((r) => r.status === "VACANT");
-  const prices = rooms.map((r) => r.price);
-  const landlord = mockUsers.find(
-    (u): u is Landlord => u.id === hostel.landlordId && u.role === "LANDLORD",
-  );
+interface Page<T> {
+  content: T[];
+}
+
+interface RoomSummary {
+  id: string;
+  hostelId: string;
+  number: string;
+  price: number;
+  status: Room["status"];
+  tenantId: string | null;
+  tenantName: string | null;
+}
+
+interface HostelSummaryResponse {
+  id: string;
+  name: string;
+  code: string;
+  location: string;
+  mainImage: string | null;
+  rating: number;
+  reviewCount: number;
+  vacantRooms: number;
+  totalRooms: number;
+  minPrice: number | null;
+  maxPrice: number | null;
+  landlordVerified: boolean;
+  landlordId: string;
+  landlordName: string;
+  createdAt: string;
+}
+
+interface HostelResponse extends HostelSummaryResponse {
+  description: string | null;
+  images: string[];
+  active: boolean;
+  bookedRooms: number;
+  rooms: Array<{
+    id: string;
+    number: string;
+    price: number;
+    status: Room["status"] | string;
+    tenantId: string | null;
+    tenantName: string | null;
+  }>;
+  caretakers: unknown[];
+  updatedAt: string;
+}
+
+interface StudentSummaryResponse {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  avatarUrl: string | null;
+  active: boolean;
+  membershipStatus: Student["membershipStatus"];
+  hostelId: string | null;
+  roomId: string | null;
+  requestedHostelId: string | null;
+  createdAt: string;
+}
+
+interface PendingRequestResponse {
+  studentId: string;
+  studentName: string;
+  studentEmail: string;
+  requestedHostelId: string;
+  requestedHostelName: string;
+  requestedAt: string;
+}
+
+function queryString(params: Record<string, string | number | boolean | undefined>): string {
+  const search = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined) search.set(key, String(value));
+  });
+  const result = search.toString();
+  return result ? `?${result}` : "";
+}
+
+function toHostelSummary(raw: HostelSummaryResponse): HostelSummary {
   return {
-    ...hostel,
-    vacantRooms: vacant.length,
-    priceRange: prices.length
-      ? [Math.min(...prices), Math.max(...prices)]
-      : null,
-    landlordVerified: landlord?.verificationStatus === "APPROVED",
+    id: raw.id,
+    landlordId: raw.landlordId,
+    name: raw.name,
+    code: raw.code,
+    location: raw.location,
+    images: raw.mainImage ? [raw.mainImage] : [],
+    rating: raw.rating,
+    reviewCount: raw.reviewCount,
+    active: true,
+    createdAt: raw.createdAt,
+    vacantRooms: raw.vacantRooms,
+    priceRange:
+      raw.minPrice != null && raw.maxPrice != null
+        ? [raw.minPrice, raw.maxPrice]
+        : null,
+    landlordVerified: raw.landlordVerified,
+  };
+}
+
+function toHostel(raw: HostelResponse): HostelSummary {
+  return {
+    ...toHostelSummary(raw),
+    description: raw.description ?? undefined,
+    images: raw.images ?? [],
+    active: raw.active,
+  };
+}
+
+function toRoom(raw: RoomSummary): Room {
+  return {
+    ...raw,
+    tenantId: raw.tenantId ?? undefined,
+    tenantName: raw.tenantName ?? undefined,
+  };
+}
+
+function toStudent(raw: StudentSummaryResponse): Student {
+  return {
+    id: raw.id,
+    name: raw.name,
+    email: raw.email,
+    phone: raw.phone ?? undefined,
+    avatarUrl: raw.avatarUrl ?? undefined,
+    role: "STUDENT",
+    active: raw.active,
+    createdAt: raw.createdAt,
+    membershipStatus: raw.membershipStatus,
+    ...(raw.hostelId ? { hostelId: raw.hostelId } : {}),
+    ...(raw.roomId ? { roomId: raw.roomId } : {}),
+    ...(raw.requestedHostelId ? { requestedHostelId: raw.requestedHostelId } : {}),
   };
 }
 
 export const hostelService = {
   async list(filters: HostelFilters = {}): Promise<HostelSummary[]> {
-    let results = mockHostels.filter((h) => h.active).map(toSummary);
-
-    if (filters.query) {
-      const q = filters.query.toLowerCase();
-      results = results.filter(
-        (h) =>
-          h.name.toLowerCase().includes(q) ||
-          h.location.toLowerCase().includes(q),
-      );
-    }
-    if (filters.location) {
-      const l = filters.location.toLowerCase();
-      results = results.filter((h) => h.location.toLowerCase().includes(l));
-    }
-    if (filters.minPrice != null) {
-      results = results.filter(
-        (h) => h.priceRange && h.priceRange[0] >= filters.minPrice!,
-      );
-    }
-    if (filters.maxPrice != null) {
-      results = results.filter(
-        (h) => h.priceRange && h.priceRange[1] <= filters.maxPrice!,
-      );
-    }
-    if (filters.vacantOnly) {
-      results = results.filter((h) => h.vacantRooms > 0);
-    }
-    if (filters.minRating != null) {
-      results = results.filter((h) => h.rating >= filters.minRating!);
-    }
-    if (filters.sortBy === "price-asc") {
-      results.sort(
-        (a, b) => (a.priceRange?.[0] ?? 0) - (b.priceRange?.[0] ?? 0),
-      );
-    } else if (filters.sortBy === "price-desc") {
-      results.sort(
-        (a, b) => (b.priceRange?.[0] ?? 0) - (a.priceRange?.[0] ?? 0),
-      );
-    } else if (filters.sortBy === "rating-desc") {
-      results.sort((a, b) => b.rating - a.rating);
-    }
-
-    return delay(results);
+    const sortBy =
+      filters.sortBy === "price-asc"
+        ? "PRICE_ASC"
+        : filters.sortBy === "price-desc"
+          ? "PRICE_DESC"
+          : filters.sortBy === "rating-desc"
+            ? "RATING_DESC"
+            : undefined;
+    const page = await http.get<Page<HostelSummaryResponse>>(
+      `/hostels${queryString({
+        q: filters.query,
+        location: filters.location,
+        minPrice: filters.minPrice,
+        maxPrice: filters.maxPrice,
+        vacantOnly: filters.vacantOnly,
+        minRating: filters.minRating,
+        sortBy,
+      })}`,
+    );
+    return page.content.map(toHostelSummary);
   },
 
   async getById(id: string): Promise<HostelSummary | null> {
-    const hostel = mockHostels.find((h) => h.id === id);
-    return delay(hostel ? toSummary(hostel) : null);
+    return toHostel(await http.get<HostelResponse>(`/hostels/${id}`));
   },
 
   async getRooms(hostelId: string): Promise<Room[]> {
-    return delay(mockRooms.filter((r) => r.hostelId === hostelId));
+    const rooms = await http.get<RoomSummary[]>(`/hostels/${hostelId}/rooms`);
+    return rooms.map(toRoom);
   },
 
   async bookRoom(
@@ -120,172 +210,139 @@ export const hostelService = {
     tenantId: string,
     tenantName: string,
   ): Promise<Room | null> {
-    const room = mockRooms.find(
-      (item) => item.id === roomId && item.hostelId === hostelId,
-    );
-    if (!room || room.status !== "VACANT") return delay(null);
-
-    room.status = "BOOKED";
-    room.tenantId = tenantId;
-    room.tenantName = tenantName;
-
-    const student = mockStudents.find((item) => item.id === tenantId);
-    if (student) {
-      student.hostelId = room.hostelId;
-      student.roomId = room.id;
-      student.membershipStatus = "ACTIVE";
-      student.requestedHostelId = undefined;
-    }
-
-    return delay(room);
+    void roomId;
+    void hostelId;
+    void tenantId;
+    void tenantName;
+    throw new Error("Room booking is not exposed by the backend service layer");
   },
 
   async findByCode(code: string): Promise<Hostel | null> {
-    const hostel = mockHostels.find(
-      (h) => h.code.toUpperCase() === code.trim().toUpperCase() && h.active,
+    const raw = await http.get<HostelSummaryResponse>(
+      `/hostels/code/${encodeURIComponent(code.trim())}`,
     );
-    return delay(hostel ?? null);
+    return toHostelSummary(raw);
   },
 
   async listByLandlord(landlordId: string): Promise<HostelSummary[]> {
-    const results = mockHostels
-      .filter((h) => h.landlordId === landlordId && h.active)
-      .map(toSummary);
-    return delay(results);
+    void landlordId;
+    const page = await http.get<Page<HostelSummaryResponse>>("/hostels/me");
+    return page.content.map(toHostelSummary);
   },
 
   async statsForLandlord(landlordId: string): Promise<LandlordStats> {
-    const hostels = mockHostels.filter(
-      (h) => h.landlordId === landlordId && h.active,
-    );
-    const hostelIds = new Set(hostels.map((h) => h.id));
-    const rooms = mockRooms.filter((r) => hostelIds.has(r.hostelId));
-    const students = mockStudents.filter(
-      (s) => s.hostelId && hostelIds.has(s.hostelId),
-    );
-    const pendingRequests = mockStudents.filter(
-      (s) =>
-        s.membershipStatus === "PENDING" &&
-        s.requestedHostelId &&
-        hostelIds.has(s.requestedHostelId),
-    ).length;
-    const outstandingPayments = mockPayments.filter(
-      (p) =>
-        hostelIds.has(p.hostelId) &&
-        (p.status === "PENDING" || p.status === "OVERDUE"),
-    ).length;
-    const unreadMessages = mockMessages.filter(
-      (m) => !m.read && m.senderId === landlordId,
-    ).length;
-
-    return delay({
-      totalHostels: hostels.length,
-      totalRooms: rooms.length,
-      vacantRooms: rooms.filter((r) => r.status === "VACANT").length,
-      bookedRooms: rooms.filter((r) => r.status === "BOOKED").length,
-      activeTenants: students.filter((s) => s.membershipStatus === "ACTIVE")
-        .length,
-      pendingRequests,
-      outstandingPayments,
-      unreadMessages,
-    });
+    void landlordId;
+    return http.get<LandlordStats>("/landlords/me/stats");
   },
 
-  async listTenants(
-    landlordId: string,
-    hostelId?: string,
-  ): Promise<Student[]> {
-    const landlordHostelIds = new Set(
-      mockHostels
-        .filter((h) => h.landlordId === landlordId && h.active)
-        .map((h) => h.id),
+  async listTenants(landlordId: string, hostelId?: string): Promise<Student[]> {
+    void landlordId;
+    if (!hostelId) throw new Error("A hostel id is required to list tenants");
+    const page = await http.get<Page<StudentSummaryResponse>>(
+      `/hostels/${hostelId}/tenants`,
     );
-    return delay(
-      mockStudents.filter(
-        (s) =>
-          s.membershipStatus === "ACTIVE" &&
-          s.hostelId &&
-          landlordHostelIds.has(s.hostelId) &&
-          (!hostelId || s.hostelId === hostelId),
+    return page.content.map(toStudent);
+  },
+
+  async listPendingRequests(landlordId: string): Promise<PendingStudentRequest[]> {
+    void landlordId;
+    const hostels = await http.get<Page<HostelSummaryResponse>>("/hostels/me");
+    const requests = await Promise.all(
+      hostels.content.map((hostel) =>
+        http.get<PendingRequestResponse[]>(`/hostels/${hostel.id}/pending-requests`),
       ),
     );
-  },
-
-  async listPendingRequests(
-    landlordId: string,
-  ): Promise<PendingStudentRequest[]> {
-    const landlordHostels = mockHostels.filter(
-      (h) => h.landlordId === landlordId && h.active,
-    );
-    const byId = new Map(landlordHostels.map((h) => [h.id, h]));
-    return delay(
-      mockStudents
-        .filter(
-          (s) =>
-            s.membershipStatus === "PENDING" &&
-            !!s.requestedHostelId &&
-            byId.has(s.requestedHostelId),
-        )
-        .map((student) => ({
-          student,
-          requestedHostelName: byId.get(student.requestedHostelId!)!.name,
-        })),
-    );
+    return requests.flat().map((raw) => ({
+      student: {
+        id: raw.studentId,
+        name: raw.studentName,
+        email: raw.studentEmail,
+        role: "STUDENT" as const,
+        active: true,
+        createdAt: raw.requestedAt,
+        membershipStatus: "PENDING" as const,
+        requestedHostelId: raw.requestedHostelId,
+      },
+      requestedHostelName: raw.requestedHostelName,
+    }));
   },
 
   async acceptRequest(studentId: string): Promise<Student | null> {
-    const student = mockStudents.find((s) => s.id === studentId);
-    if (!student || !student.requestedHostelId) return delay(null);
-    student.hostelId = student.requestedHostelId;
-    student.membershipStatus = "ACTIVE";
-    student.requestedHostelId = undefined;
-    return delay(student);
+    const request = (await this.listPendingRequests("")).find(
+      (item) => item.student.id === studentId,
+    );
+    if (!request?.student.requestedHostelId) return null;
+    await http.post<void>(
+      `/hostels/${request.student.requestedHostelId}/requests/${studentId}/accept`,
+    );
+    return {
+      ...request.student,
+      hostelId: request.student.requestedHostelId,
+      membershipStatus: "ACTIVE",
+      requestedHostelId: undefined,
+    };
   },
 
   async rejectRequest(studentId: string): Promise<Student | null> {
-    const student = mockStudents.find((s) => s.id === studentId);
-    if (!student) return delay(null);
-    student.membershipStatus = "REJECTED";
-    return delay(student);
+    const request = (await this.listPendingRequests("")).find(
+      (item) => item.student.id === studentId,
+    );
+    if (!request?.student.requestedHostelId) return null;
+    await http.post<void>(
+      `/hostels/${request.student.requestedHostelId}/requests/${studentId}/reject`,
+    );
+    return { ...request.student, membershipStatus: "REJECTED" };
   },
 
   async updateVerification(
     landlordId: string,
     status: Landlord["verificationStatus"],
   ): Promise<Landlord | null> {
-    const landlord = mockUsers.find(
-      (u): u is Landlord => u.id === landlordId && u.role === "LANDLORD",
-    );
-    if (!landlord) return delay(null);
-    landlord.verificationStatus = status;
-    return delay(landlord);
+    const raw = await http.post<{
+      id: string;
+      name: string;
+      email: string;
+      phone: string | null;
+      avatarUrl: string | null;
+      active: boolean;
+      verificationStatus: Landlord["verificationStatus"];
+      hostels: Array<{ id?: string }> | null;
+      createdAt: string;
+    }>(`/admin/landlords/${landlordId}/verification`, { decision: status });
+    return {
+      id: raw.id,
+      name: raw.name,
+      email: raw.email,
+      phone: raw.phone ?? undefined,
+      avatarUrl: raw.avatarUrl ?? undefined,
+      role: "LANDLORD",
+      active: raw.active,
+      createdAt: raw.createdAt,
+      verificationStatus: raw.verificationStatus,
+      hostelIds: raw.hostels?.flatMap((hostel) => (hostel.id ? [hostel.id] : [])) ?? [],
+    };
   },
 
   async create(
     payload: Omit<Hostel, "id" | "createdAt" | "rating" | "reviewCount">,
   ): Promise<Hostel> {
-    const hostel: Hostel = {
-      ...payload,
-      id: `h-${Date.now()}`,
-      rating: 0,
-      reviewCount: 0,
-      createdAt: new Date().toISOString(),
-    };
-    mockHostels.push(hostel);
-    return delay(hostel);
+    const raw = await http.post<HostelResponse>("/hostels", {
+      name: payload.name,
+      code: payload.code,
+      location: payload.location,
+      description: payload.description,
+      images: payload.images,
+    });
+    return toHostel(raw);
   },
 
   async update(id: string, patch: Partial<Hostel>): Promise<Hostel | null> {
-    const idx = mockHostels.findIndex((h) => h.id === id);
-    if (idx < 0) return delay(null);
-    mockHostels[idx] = { ...mockHostels[idx], ...patch };
-    return delay(mockHostels[idx]);
+    const raw = await http.patch<HostelResponse>(`/hostels/${id}`, patch);
+    return toHostel(raw);
   },
 
   async remove(id: string): Promise<boolean> {
-    const idx = mockHostels.findIndex((h) => h.id === id);
-    if (idx < 0) return delay(false);
-    mockHostels[idx].active = false;
-    return delay(true);
+    await http.delete<void>(`/hostels/${id}`);
+    return true;
   },
 };

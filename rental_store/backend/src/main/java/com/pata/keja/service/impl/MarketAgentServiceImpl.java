@@ -10,6 +10,7 @@ import com.pata.keja.exception.NotFoundException;
 import com.pata.keja.mapper.MarketAgentMapper;
 import com.pata.keja.repository.MarketAgentRepository;
 import com.pata.keja.repository.UserRepository;
+import com.pata.keja.security.CurrentUserProvider;
 import com.pata.keja.service.MarketAgentService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -36,6 +37,12 @@ public class MarketAgentServiceImpl implements MarketAgentService {
     @Transactional(readOnly = true)
     public Page<MarketAgentSummaryResponse> list(Pageable pageable) {
         return agentRepo.findAll(pageable).map(agentMapper::toSummary);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public MarketAgentResponse getCurrent() {
+        return getById(CurrentUserProvider.requireUserId());
     }
 
     @Override

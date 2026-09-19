@@ -1,33 +1,18 @@
-import {
-  mockUsers,
-  mockStudents,
-  mockLandlords,
-  mockCaretakers,
-  mockAgents,
-  mockAdmins,
-} from "../data/users";
-import { mockHostels } from "../data/hostels";
-import { mockRooms } from "../data/rooms";
-import { mockPayments } from "../data/payments";
-import { mockOrders } from "../data/orders";
-import { mockConflicts } from "../data/conflicts";
-import { mockInvitations } from "../data/invitations";
+import { http } from "./apiClient";
 import type {
-  User,
-  Student,
-  Landlord,
-  Caretaker,
-  MarketAgent,
   Admin,
+  Caretaker,
+  Landlord,
+  MarketAgent,
+  Student,
+  User,
   UserRole,
 } from "../types/user";
 import type { Hostel } from "../types/hostel";
 import type { Room } from "../types/room";
-import type { Order } from "../types/order";
+import type { Order, OrderStatus } from "../types/order";
 import type { Conflict } from "../types/conflict";
 import type { Invitation, InvitationKind } from "../types/invitation";
-import { delay } from "../utils/delay";
-import { generateId } from "../utils/idGenerator";
 
 export interface PlatformStats {
   totalStudents: number;
@@ -50,106 +35,296 @@ export interface UserFilter {
   q?: string;
 }
 
+interface Page<T> {
+  content: T[];
+}
+
+interface UserSummaryResponse {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  active: boolean;
+  createdAt: string;
+}
+
+interface StudentSummaryResponse extends UserSummaryResponse {
+  membershipStatus: Student["membershipStatus"];
+  hostelId: string | null;
+  roomId: string | null;
+  requestedHostelId: string | null;
+}
+
+interface LandlordSummaryResponse extends UserSummaryResponse {
+  verificationStatus: Landlord["verificationStatus"];
+}
+
+interface LandlordResponse extends LandlordSummaryResponse {
+  hostels: Array<{ id?: string }> | null;
+}
+
+interface CaretakerSummaryResponse extends UserSummaryResponse {
+  assignedHostelIds: string[];
+}
+
+interface AgentSummaryResponse extends UserSummaryResponse {}
+
+interface HostelSummaryResponse {
+  id: string;
+  name: string;
+  code: string;
+  location: string;
+  mainImage: string | null;
+  rating: number;
+  reviewCount: number;
+  vacantRooms: number;
+  totalRooms: number;
+  landlordVerified: boolean;
+  landlordId: string;
+  landlordName: string;
+  createdAt: string;
+}
+
+interface HostelResponse extends HostelSummaryResponse {
+  description: string | null;
+  images: string[];
+  active: boolean;
+}
+
+interface RoomResponse {
+  id: string;
+  hostelId: string;
+  number: string;
+  price: number;
+  status: Room["status"];
+  tenantId: string | null;
+  tenantName: string | null;
+}
+
+interface OrderSummaryResponse {
+  id: string;
+  status: OrderStatus;
+  total: number;
+  studentId: string;
+  agentId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface ConflictSummaryResponse {
+  id: string;
+  orderId: string;
+  issue: Conflict["issue"];
+  status: Conflict["status"];
+  studentId: string;
+  agentId: string;
+  createdAt: string;
+  resolvedAt: string | null;
+}
+
+interface ConflictResponse extends ConflictSummaryResponse {
+  description: string;
+  resolution: string | null;
+}
+
+interface InvitationSummaryResponse {
+  id: string;
+  token: string;
+  kind: InvitationKind;
+  email: string | null;
+  status: Invitation["status"];
+  createdAt: string;
+  expiresAt: string;
+}
+
+interface InvitationResponse extends InvitationSummaryResponse {}
+
+function toUser(raw: UserSummaryResponse): User {
+  return { ...raw };
+}
+
+function toStudent(raw: StudentSummaryResponse): Student {
+  return {
+    ...toUser(raw),
+    role: "STUDENT",
+    membershipStatus: raw.membershipStatus,
+    ...(raw.hostelId ? { hostelId: raw.hostelId } : {}),
+    ...(raw.roomId ? { roomId: raw.roomId } : {}),
+    ...(raw.requestedHostelId ? { requestedHostelId: raw.requestedHostelId } : {}),
+  };
+}
+
+function toLandlord(raw: LandlordSummaryResponse | LandlordResponse): Landlord {
+  return {
+    ...toUser(raw),
+    role: "LANDLORD",
+    verificationStatus: raw.verificationStatus,
+    hostelIds: "hostels" in raw && raw.hostels
+      ? raw.hostels.flatMap((hostel) => (hostel.id ? [hostel.id] : []))
+      : [],
+  };
+}
+
+function toCaretaker(raw: CaretakerSummaryResponse): Caretaker {
+  return { ...toUser(raw), role: "CARETAKER", assignedHostelIds: raw.assignedHostelIds };
+}
+
+function toAgent(raw: AgentSummaryResponse): MarketAgent {
+  return { ...toUser(raw), role: "MARKET_AGENT" };
+}
+
+function toHostel(raw: HostelSummaryResponse | HostelResponse): Hostel {
+  return {
+    id: raw.id,
+    landlordId: raw.landlordId,
+    name: raw.name,
+    code: raw.code,
+    location: raw.location,
+    ...("description" in raw && raw.description ? { description: raw.description } : {}),
+    images: "images" in raw ? raw.images : raw.mainImage ? [raw.mainImage] : [],
+    rating: raw.rating,
+    reviewCount: raw.reviewCount,
+    active: "active" in raw ? raw.active : true,
+    createdAt: raw.createdAt,
+  };
+}
+
+function toRoom(raw: RoomResponse): Room {
+  return {
+    ...raw,
+    tenantId: raw.tenantId ?? undefined,
+    tenantName: raw.tenantName ?? undefined,
+  };
+}
+
+function toOrder(raw: OrderSummaryResponse): Order {
+  return {
+    id: raw.id,
+    studentId: raw.studentId,
+    agentId: raw.agentId,
+    items: [],
+    total: raw.total,
+    status: raw.status,
+    createdAt: raw.createdAt,
+    updatedAt: raw.updatedAt,
+    timeline: [],
+  };
+}
+
+function toConflict(raw: ConflictSummaryResponse | ConflictResponse): Conflict {
+  return {
+    id: raw.id,
+    orderId: raw.orderId,
+    studentId: raw.studentId,
+    agentId: raw.agentId,
+    issue: raw.issue,
+    description: "description" in raw ? raw.description : "",
+    status: raw.status,
+    ...("resolution" in raw && raw.resolution ? { resolution: raw.resolution } : {}),
+    createdAt: raw.createdAt,
+    ...(raw.resolvedAt ? { resolvedAt: raw.resolvedAt } : {}),
+  };
+}
+
+function toInvitation(raw: InvitationSummaryResponse | InvitationResponse): Invitation {
+  return {
+    id: raw.id,
+    kind: raw.kind,
+    token: raw.token,
+    ...(raw.email ? { email: raw.email } : {}),
+    createdAt: raw.createdAt,
+    expiresAt: raw.expiresAt,
+    status: raw.status,
+  };
+}
+
+function pageQuery(params: Record<string, string | undefined>): string {
+  const search = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined) search.set(key, value);
+  });
+  const query = search.toString();
+  return query ? `?${query}` : "";
+}
+
 export const adminService = {
   async stats(): Promise<PlatformStats> {
-    const pendingVerifications = mockLandlords.filter(
-      (l) => l.verificationStatus === "PENDING",
-    ).length;
-    const pendingStudentRequests = mockStudents.filter(
-      (s) => s.membershipStatus === "PENDING" && s.requestedHostelId,
-    ).length;
-
-    return delay({
-      totalStudents: mockStudents.length,
-      totalLandlords: mockLandlords.length,
-      totalCaretakers: mockCaretakers.length,
-      totalMarketAgents: mockAgents.length,
-      totalHostels: mockHostels.filter((h) => h.active).length,
-      totalRooms: mockRooms.length,
-      vacantRooms: mockRooms.filter((r) => r.status === "VACANT").length,
-      bookedRooms: mockRooms.filter((r) => r.status === "BOOKED").length,
-      pendingVerifications,
-      pendingStudentRequests,
-      marketplaceOrders: mockOrders.length,
-      marketplaceConflicts: mockConflicts.filter(
-        (c) => c.status !== "RESOLVED" && c.status !== "REJECTED",
-      ).length,
-    });
+    return http.get<PlatformStats>("/admin/stats");
   },
 
   async listUsers(filter: UserFilter = {}): Promise<User[]> {
-    let items = [...mockUsers];
-    if (filter.role) items = items.filter((u) => u.role === filter.role);
-    if (filter.active !== undefined)
-      items = items.filter((u) => u.active === filter.active);
-    if (filter.q) {
-      const needle = filter.q.toLowerCase();
-      items = items.filter(
-        (u) =>
-          u.name.toLowerCase().includes(needle) ||
-          u.email.toLowerCase().includes(needle),
-      );
-    }
-    return delay(items);
+    const page = await http.get<Page<UserSummaryResponse>>(
+      `/admin/users${pageQuery({ q: filter.q, role: filter.role })}`,
+    );
+    return page.content
+      .map(toUser)
+      .filter((user) => filter.active === undefined || user.active === filter.active);
   },
 
   async getUser(id: string): Promise<User | null> {
-    return delay(mockUsers.find((u) => u.id === id) ?? null);
+    return toUser(await http.get<UserSummaryResponse>(`/admin/users/${id}`));
   },
 
   async setUserActive(id: string, active: boolean): Promise<User | null> {
-    const u = mockUsers.find((x) => x.id === id);
-    if (!u) return delay(null);
-    u.active = active;
-    return delay(u);
+    await http.patch<void>(`/admin/users/${id}/active?active=${active}`);
+    return this.getUser(id);
   },
 
   async listLandlords(): Promise<Landlord[]> {
-    return delay([...mockLandlords]);
+    const page = await http.get<Page<LandlordSummaryResponse>>("/landlords");
+    return page.content.map(toLandlord);
   },
 
   async listStudents(): Promise<Student[]> {
-    return delay([...mockStudents]);
+    const page = await http.get<Page<StudentSummaryResponse>>("/students");
+    return page.content.map(toStudent);
   },
 
   async listCaretakers(): Promise<Caretaker[]> {
-    return delay([...mockCaretakers]);
+    const page = await http.get<Page<CaretakerSummaryResponse>>("/caretakers");
+    return page.content.map(toCaretaker);
   },
 
   async listAgents(): Promise<MarketAgent[]> {
-    return delay([...mockAgents]);
+    const page = await http.get<Page<AgentSummaryResponse>>("/agents");
+    return page.content.map(toAgent);
   },
 
   async listHostels(): Promise<Hostel[]> {
-    return delay([...mockHostels]);
+    const page = await http.get<Page<HostelSummaryResponse>>("/hostels");
+    return page.content.map(toHostel);
   },
 
   async getHostel(id: string): Promise<Hostel | null> {
-    return delay(mockHostels.find((h) => h.id === id) ?? null);
+    return toHostel(await http.get<HostelResponse>(`/hostels/${id}`));
   },
 
   async getHostelRooms(id: string): Promise<Room[]> {
-    return delay(mockRooms.filter((r) => r.hostelId === id));
+    const rooms = await http.get<RoomResponse[]>(`/hostels/${id}/rooms`);
+    return rooms.map(toRoom);
   },
 
   async listVerificationRequests(): Promise<Landlord[]> {
-    return delay(
-      mockLandlords.filter((l) => l.verificationStatus === "PENDING"),
+    const page = await http.get<Page<LandlordSummaryResponse>>(
+      "/admin/landlords/verifications",
     );
+    return page.content.map(toLandlord);
   },
 
   async decideVerification(
     landlordId: string,
     decision: "APPROVED" | "REJECTED",
   ): Promise<Landlord | null> {
-    const l = mockLandlords.find((x) => x.id === landlordId);
-    if (!l) return delay(null);
-    l.verificationStatus = decision;
-    return delay(l);
+    const raw = await http.post<LandlordResponse>(
+      `/admin/landlords/${landlordId}/verification`,
+      { decision },
+    );
+    return toLandlord(raw);
   },
 
   async listInvitations(): Promise<Invitation[]> {
-    return delay([...mockInvitations]);
+    const page = await http.get<Page<InvitationSummaryResponse>>("/invitations");
+    return page.content.map(toInvitation);
   },
 
   async createInvitation(input: {
@@ -157,61 +332,47 @@ export const adminService = {
     email?: string;
     expiresAt: string;
   }): Promise<Invitation> {
-    const prefix = input.kind === "LANDLORD" ? "LL" : "MA";
-    const token = `${prefix}-${generateId("t").toUpperCase().slice(0, 8)}`;
-    const invitation: Invitation = {
-      id: generateId("inv"),
+    const days = Math.max(
+      1,
+      Math.ceil((new Date(input.expiresAt).getTime() - Date.now()) / 86_400_000),
+    );
+    const raw = await http.post<InvitationResponse>("/invitations", {
       kind: input.kind,
       email: input.email,
-      token,
-      createdAt: new Date().toISOString(),
-      expiresAt: input.expiresAt,
-      status: "ACTIVE",
-    };
-    mockInvitations.push(invitation);
-    return delay(invitation);
+      expiresInDays: days,
+    });
+    return toInvitation(raw);
   },
 
   async revokeInvitation(id: string): Promise<Invitation | null> {
-    const inv = mockInvitations.find((i) => i.id === id);
-    if (!inv) return delay(null);
-    inv.status = "REVOKED";
-    return delay(inv);
+    return toInvitation(await http.post<InvitationResponse>(`/invitations/${id}/revoke`));
   },
 
   async listOrders(): Promise<Order[]> {
-    return delay(
-      [...mockOrders].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
-    );
+    const page = await http.get<Page<OrderSummaryResponse>>("/orders/admin");
+    return page.content.map(toOrder);
   },
 
   async listConflicts(): Promise<Conflict[]> {
-    return delay(
-      [...mockConflicts].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
-    );
+    const page = await http.get<Page<ConflictSummaryResponse>>("/conflicts/admin");
+    return page.content.map(toConflict);
   },
 
   async getConflict(id: string): Promise<Conflict | null> {
-    return delay(mockConflicts.find((c) => c.id === id) ?? null);
+    return toConflict(await http.get<ConflictResponse>(`/conflicts/${id}`));
   },
 
-  async resolveConflict(
-    id: string,
-    resolution: string,
-  ): Promise<Conflict | null> {
-    const c = mockConflicts.find((x) => x.id === id);
-    if (!c) return delay(null);
-    c.status = "RESOLVED";
-    c.resolution = resolution;
-    c.resolvedAt = new Date().toISOString();
-    return delay(c);
+  async resolveConflict(id: string, resolution: string): Promise<Conflict | null> {
+    const raw = await http.post<ConflictResponse>(`/conflicts/${id}/resolve`, {
+      decision: "RESOLVED",
+      resolution,
+    });
+    return toConflict(raw);
   },
 
-  // Referenced by payments page; kept here so adminService is self-contained.
   async listPayments() {
-    return delay([...mockPayments]);
+    throw new Error("Admin payment listing is not exposed by the frontend endpoint map");
   },
 };
 
-// Also export the collection of admins for completeness.
-export const adminUsers: Admin[] = mockAdmins;
+export const adminUsers: Admin[] = [];

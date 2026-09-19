@@ -35,4 +35,6 @@ public interface LandlordRepository extends JpaRepository<Landlord, String> {
     Page<Landlord> findAllByVerificationStatus(
             VerificationStatus status,
             Pageable pageable);
+
+    long countByVerificationStatus(VerificationStatus status);
 }

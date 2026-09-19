@@ -16,6 +16,8 @@ public interface OrderService {
 
     Page<OrderSummaryResponse> listForAgent(String agentId, OrderStatus filter, Pageable pageable);
 
+    Page<OrderSummaryResponse> listAll(Pageable pageable);
+
     OrderResponse getById(String orderId, String viewerId);
 
     OrderResponse updateStatus(String orderId, String requesterId, OrderStatusUpdateRequest req);

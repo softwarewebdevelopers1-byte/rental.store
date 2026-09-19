@@ -1,24 +1,45 @@
-import { mockNotifications } from "../data/notifications";
+import { http } from "./apiClient";
 import type { AppNotification } from "../types/notification";
-import { delay } from "../utils/delay";
+
+interface Page<T> {
+  content: T[];
+}
+
+interface NotificationResponse {
+  id: string;
+  kind: AppNotification["kind"];
+  title: string;
+  body: string;
+  link: string | null;
+  read: boolean;
+  createdAt: string;
+}
+
+function toNotification(raw: NotificationResponse, userId: string): AppNotification {
+  return {
+    id: raw.id,
+    userId,
+    kind: raw.kind,
+    title: raw.title,
+    body: raw.body,
+    read: raw.read,
+    createdAt: raw.createdAt,
+    ...(raw.link ? { link: raw.link } : {}),
+  };
+}
 
 export const notificationService = {
   async listForUser(userId: string): Promise<AppNotification[]> {
-    return delay(
-      mockNotifications
-        .filter((n) => n.userId === userId)
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
-    );
+    const page = await http.get<Page<NotificationResponse>>("/notifications");
+    return page.content.map((notification) => toNotification(notification, userId));
   },
+
   async markRead(id: string): Promise<void> {
-    const n = mockNotifications.find((x) => x.id === id);
-    if (n) n.read = true;
-    await delay(undefined, 100);
+    await http.post<void>(`/notifications/${id}/read`);
   },
+
   async markAllRead(userId: string): Promise<void> {
-    mockNotifications
-      .filter((n) => n.userId === userId)
-      .forEach((n) => (n.read = true));
-    await delay(undefined, 100);
+    void userId;
+    await http.post<void>("/notifications/read-all");
   },
 };

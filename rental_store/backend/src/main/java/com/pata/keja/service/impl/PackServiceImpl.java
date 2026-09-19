@@ -13,6 +13,7 @@ import com.pata.keja.repository.MarketAgentRepository;
 import com.pata.keja.repository.PackRepository;
 import com.pata.keja.repository.ProductRepository;
 import com.pata.keja.service.PackService;
+import com.pata.keja.security.CurrentUserProvider;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -56,6 +57,12 @@ public class PackServiceImpl implements PackService {
     public Page<PackSummaryResponse> listByAgent(String agentId, Pageable pageable) {
         Page<Pack> page = packRepo.findAllByAgentId(agentId, pageable);
         return page.map(p -> packMapper.toSummary(p, loadProductsById(p)));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<PackSummaryResponse> listByCurrentAgent(Pageable pageable) {
+        return listByAgent(CurrentUserProvider.requireUserId(), pageable);
     }
 
     @Override

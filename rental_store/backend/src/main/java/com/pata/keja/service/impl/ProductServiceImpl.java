@@ -12,6 +12,7 @@ import com.pata.keja.mapper.ProductMapper;
 import com.pata.keja.repository.MarketAgentRepository;
 import com.pata.keja.repository.ProductRepository;
 import com.pata.keja.service.ProductService;
+import com.pata.keja.security.CurrentUserProvider;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -44,6 +45,12 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     public Page<ProductSummaryResponse> listByAgent(String agentId, Pageable pageable) {
         return productRepo.findAllByAgentId(agentId, pageable).map(productMapper::toSummary);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ProductSummaryResponse> listByCurrentAgent(Pageable pageable) {
+        return listByAgent(CurrentUserProvider.requireUserId(), pageable);
     }
 
     @Override

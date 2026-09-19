@@ -28,7 +28,7 @@ import static org.springframework.data.domain.Sort.Direction.DESC;
 /** Market-agent administration — the admin marketplace partner management screen. */
 @RestController
 @RequestMapping("/api/agents")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("isAuthenticated()")
 public class AgentController {
 
     private final MarketAgentService marketAgentService;
@@ -38,17 +38,26 @@ public class AgentController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public Page<MarketAgentSummaryResponse> list(
             @PageableDefault(size = 20, sort = "createdAt", direction = DESC) Pageable pageable) {
         return marketAgentService.list(pageable);
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public MarketAgentResponse getById(@PathVariable String id) {
         return marketAgentService.getById(id);
     }
 
+    @GetMapping("/me")
+    @PreAuthorize("hasRole('MARKET_AGENT')")
+    public MarketAgentResponse getCurrent() {
+        return marketAgentService.getCurrent();
+    }
+
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<MarketAgentResponse> create(
             @Valid @RequestBody MarketAgentCreateRequest request) {
         MarketAgentResponse response = marketAgentService.create(request);
@@ -56,6 +65,7 @@ public class AgentController {
     }
 
     @PatchMapping("/{id}/active")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> setActive(
             @PathVariable String id,
             @RequestParam boolean active) {

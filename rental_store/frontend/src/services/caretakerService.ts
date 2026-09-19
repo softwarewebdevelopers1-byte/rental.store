@@ -1,12 +1,8 @@
-import { mockCaretakers, mockStudents } from "../data/users";
-import { mockHostels } from "../data/hostels";
-import { mockRooms } from "../data/rooms";
-import { mockMaintenance } from "../data/maintenance";
-import type { Caretaker, Student } from "../types/user";
+import { http } from "./apiClient";
 import type { Hostel } from "../types/hostel";
-import type { Room } from "../types/room";
 import type { MaintenanceRequest } from "../types/maintenance";
-import { delay } from "../utils/delay";
+import type { Room } from "../types/room";
+import type { Caretaker, Student } from "../types/user";
 
 export interface CaretakerStats {
   assignedHostels: number;
@@ -22,93 +18,172 @@ export interface TenantWithRoom {
   hostel: Hostel;
 }
 
+interface HostelSummaryResponse {
+  id: string;
+  name: string;
+  code: string;
+  location: string;
+  mainImage: string | null;
+  rating: number;
+  reviewCount: number;
+  landlordId: string;
+  createdAt: string;
+}
+
+interface StudentSummaryResponse {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  avatarUrl: string | null;
+  active: boolean;
+  membershipStatus: Student["membershipStatus"];
+  hostelId: string | null;
+  roomId: string | null;
+  hostelName: string | null;
+  roomNumber: string | null;
+  createdAt: string;
+}
+
+interface CaretakerResponse {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  avatarUrl: string | null;
+  active: boolean;
+  assignedHostelIds: string[];
+  createdAt: string;
+}
+
+interface MaintenanceSummaryResponse {
+  id: string;
+  title: string;
+  category: MaintenanceRequest["category"];
+  status: MaintenanceRequest["status"];
+  studentId: string;
+  hostelId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface Page<T> {
+  content: T[];
+}
+
+function toHostel(raw: HostelSummaryResponse): Hostel {
+  return {
+    id: raw.id,
+    landlordId: raw.landlordId,
+    name: raw.name,
+    code: raw.code,
+    location: raw.location,
+    images: raw.mainImage ? [raw.mainImage] : [],
+    rating: raw.rating,
+    reviewCount: raw.reviewCount,
+    active: true,
+    createdAt: raw.createdAt,
+  };
+}
+
+function toStudent(raw: StudentSummaryResponse): Student {
+  return {
+    id: raw.id,
+    name: raw.name,
+    email: raw.email,
+    phone: raw.phone ?? undefined,
+    avatarUrl: raw.avatarUrl ?? undefined,
+    role: "STUDENT",
+    active: raw.active,
+    createdAt: raw.createdAt,
+    membershipStatus: raw.membershipStatus,
+    ...(raw.hostelId ? { hostelId: raw.hostelId } : {}),
+    ...(raw.roomId ? { roomId: raw.roomId } : {}),
+  };
+}
+
+function toCaretaker(raw: CaretakerResponse): Caretaker {
+  return {
+    id: raw.id,
+    name: raw.name,
+    email: raw.email,
+    phone: raw.phone ?? undefined,
+    avatarUrl: raw.avatarUrl ?? undefined,
+    role: "CARETAKER",
+    active: raw.active,
+    assignedHostelIds: raw.assignedHostelIds,
+    createdAt: raw.createdAt,
+  };
+}
+
+function toMaintenance(raw: MaintenanceSummaryResponse): MaintenanceRequest {
+  return {
+    id: raw.id,
+    title: raw.title,
+    category: raw.category,
+    status: raw.status,
+    studentId: raw.studentId,
+    hostelId: raw.hostelId,
+    roomId: "",
+    description: "",
+    attachments: [],
+    createdAt: raw.createdAt,
+    updatedAt: raw.updatedAt,
+  };
+}
+
 export const caretakerService = {
   async getCaretaker(caretakerId: string): Promise<Caretaker | null> {
-    return delay(mockCaretakers.find((c) => c.id === caretakerId) ?? null);
+    void caretakerId;
+    return toCaretaker(await http.get<CaretakerResponse>("/caretakers/me"));
   },
 
   async listAssignedHostels(caretakerId: string): Promise<Hostel[]> {
-    const caretaker = mockCaretakers.find((c) => c.id === caretakerId);
-    if (!caretaker) return delay([]);
-    const ids = new Set(caretaker.assignedHostelIds);
-    return delay(mockHostels.filter((h) => ids.has(h.id) && h.active));
+    void caretakerId;
+    const hostels = await http.get<HostelSummaryResponse[]>("/caretakers/me/hostels");
+    return hostels.map(toHostel);
   },
 
   async stats(caretakerId: string): Promise<CaretakerStats> {
-    const caretaker = mockCaretakers.find((c) => c.id === caretakerId);
-    if (!caretaker) {
-      return delay({
-        assignedHostels: 0,
-        totalTenants: 0,
-        openRequests: 0,
-        inProgressRequests: 0,
-        resolvedRequests: 0,
-      });
-    }
-    const hostelIds = new Set(caretaker.assignedHostelIds);
-    const tenants = mockStudents.filter(
-      (s) =>
-        s.hostelId &&
-        hostelIds.has(s.hostelId) &&
-        s.membershipStatus === "ACTIVE",
-    );
-    const requests = mockMaintenance.filter((m) => hostelIds.has(m.hostelId));
-
-    return delay({
-      assignedHostels: hostelIds.size,
-      totalTenants: tenants.length,
-      openRequests: requests.filter((r) => r.status === "OPEN").length,
-      inProgressRequests: requests.filter((r) => r.status === "IN_PROGRESS")
-        .length,
-      resolvedRequests: requests.filter(
-        (r) => r.status === "RESOLVED" || r.status === "CLOSED",
-      ).length,
-    });
+    void caretakerId;
+    return http.get<CaretakerStats>("/caretakers/me/stats");
   },
 
   async listMaintenance(caretakerId: string): Promise<MaintenanceRequest[]> {
-    const caretaker = mockCaretakers.find((c) => c.id === caretakerId);
-    if (!caretaker) return delay([]);
-    const ids = new Set(caretaker.assignedHostelIds);
-    return delay(
-      mockMaintenance
-        .filter((m) => ids.has(m.hostelId))
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    void caretakerId;
+    const hostels = await http.get<HostelSummaryResponse[]>("/caretakers/me/hostels");
+    const requests = await Promise.all(
+      hostels.map((hostel) =>
+        http.get<MaintenanceSummaryResponse[]>(`/maintenance/hostel/${hostel.id}`),
+      ),
     );
+    return requests.flat().map(toMaintenance);
   },
 
   async listTenants(caretakerId: string): Promise<TenantWithRoom[]> {
-    const caretaker = mockCaretakers.find((c) => c.id === caretakerId);
-    if (!caretaker) return delay([]);
-    const ids = new Set(caretaker.assignedHostelIds);
-    const hostels = mockHostels.filter((h) => ids.has(h.id));
-    const hostelMap = new Map(hostels.map((h) => [h.id, h] as const));
-
-    const tenants = mockStudents.filter(
-      (s) =>
-        s.hostelId && ids.has(s.hostelId) && s.membershipStatus === "ACTIVE",
-    );
-
-    return delay(
-      tenants.map((t) => {
-        const hostel = hostelMap.get(t.hostelId!);
-        const room = t.roomId
-          ? mockRooms.find((r) => r.id === t.roomId)
-          : undefined;
-        return { student: t, room, hostel: hostel! };
-      }),
-    );
+    void caretakerId;
+    const page = await http.get<Page<StudentSummaryResponse>>("/caretakers/me/tenants");
+    return page.content.map((raw) => ({
+      student: toStudent(raw),
+      hostel: {
+        id: raw.hostelId ?? "",
+        landlordId: "",
+        name: raw.hostelName ?? "",
+        code: "",
+        location: "",
+        images: [],
+        rating: 0,
+        reviewCount: 0,
+        active: true,
+        createdAt: raw.createdAt,
+      },
+    }));
   },
 
   async updateMaintenanceStatus(
     id: string,
     status: MaintenanceRequest["status"],
   ): Promise<void> {
-    const req = mockMaintenance.find((m) => m.id === id);
-    if (req) {
-      req.status = status;
-      req.updatedAt = new Date().toISOString();
-    }
-    await delay(undefined, 200);
+    await http.patch(`/maintenance/${id}/status`, { status });
   },
 };

@@ -13,6 +13,8 @@ public interface PackService {
 
     Page<PackSummaryResponse> listByAgent(String agentId, Pageable pageable);
 
+    Page<PackSummaryResponse> listByCurrentAgent(Pageable pageable);
+
     PackResponse getById(String packId);
 
     PackResponse create(String agentId, PackCreateRequest req);

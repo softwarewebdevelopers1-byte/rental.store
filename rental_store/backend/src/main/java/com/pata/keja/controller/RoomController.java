@@ -39,6 +39,11 @@ public class RoomController {
         return roomService.listForHostel(hostelId);
     }
 
+    @GetMapping("/hostel/{hostelId}/vacant")
+    public List<RoomSummaryResponse> listVacant(@PathVariable String hostelId) {
+        return roomService.listVacant(hostelId);
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public RoomResponse getById(@PathVariable("id") String id) {

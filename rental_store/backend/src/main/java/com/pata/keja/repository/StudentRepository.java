@@ -11,6 +11,7 @@ import com.pata.keja.enums.MembershipStatus;
 import com.pata.keja.models.Student;
 
 import java.util.List;
+import java.util.Collection;
 import java.util.Optional;
 
 public interface StudentRepository extends JpaRepository<Student, String> {
@@ -27,6 +28,20 @@ public interface StudentRepository extends JpaRepository<Student, String> {
 
     @EntityGraph(attributePaths = { "room", "hostel" })
     Page<Student> findAllByMembershipStatus(MembershipStatus status, Pageable pageable);
+
+    @EntityGraph(attributePaths = { "room", "hostel" })
+    Page<Student> findAllByHostelIdInAndMembershipStatus(
+            Collection<String> hostelIds,
+            MembershipStatus status,
+            Pageable pageable);
+
+    @EntityGraph(attributePaths = { "room", "hostel" })
+    Page<Student> findAllByHostelIdAndMembershipStatus(
+            String hostelId,
+            MembershipStatus status,
+            Pageable pageable);
+
+    long countByMembershipStatus(MembershipStatus status);
 
     @Query("""
                 select s from Student s

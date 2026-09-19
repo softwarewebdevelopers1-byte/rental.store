@@ -14,6 +14,8 @@ public interface PaymentService {
 
     StudentPaymentSummaryResponse summaryForStudent(String studentId);
 
+    Page<PaymentSummaryResponse> listForStudent(String studentId, Pageable pageable);
+
     Page<PaymentSummaryResponse> listForHostel(
             String hostelId,
             PaymentStatusFilter filter,

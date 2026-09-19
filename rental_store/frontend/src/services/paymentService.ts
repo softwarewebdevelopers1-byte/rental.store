@@ -1,9 +1,5 @@
-import { mockPayments } from "../data/payments";
-import { mockRooms } from "../data/rooms";
-import { mockStudents } from "../data/users";
+import { http } from "./apiClient";
 import type { Payment } from "../types/payment";
-import { delay } from "../utils/delay";
-import { generateId } from "../utils/idGenerator";
 
 export interface StudentPaymentSummary {
   currentRent: number;
@@ -27,61 +23,83 @@ export interface StkPushResult {
   receivedAt?: string;
 }
 
+interface Page<T> {
+  content: T[];
+}
+
+interface PaymentResponse {
+  id: string;
+  studentId: string;
+  hostelId: string;
+  roomId: string;
+  amount: number;
+  status: Payment["status"];
+  dueDate: string;
+  paidAt: string | null;
+  method: Payment["method"] | null;
+  reference: string | null;
+}
+
+interface StudentPaymentSummaryResponse {
+  currentRent: number;
+  currentStatus: Payment["status"];
+  nextDueDate: string | null;
+  history: PaymentResponse[];
+}
+
+function toPayment(raw: PaymentResponse): Payment {
+  return {
+    id: raw.id,
+    studentId: raw.studentId,
+    hostelId: raw.hostelId,
+    roomId: raw.roomId,
+    amount: raw.amount,
+    status: raw.status,
+    dueDate: raw.dueDate,
+    ...(raw.paidAt ? { paidAt: raw.paidAt } : {}),
+    ...(raw.method ? { method: raw.method } : {}),
+    ...(raw.reference ? { mpesaCode: raw.reference } : {}),
+  };
+}
+
 export const paymentService = {
   async listForStudent(studentId: string): Promise<Payment[]> {
-    return delay(
-      mockPayments
-        .filter((p) => p.studentId === studentId)
-        .sort((a, b) => b.dueDate.localeCompare(a.dueDate)),
+    const page = await http.get<Page<PaymentResponse>>(
+      `/payments/students/${studentId}`,
     );
+    return page.content.map(toPayment);
   },
 
   async summaryForStudent(studentId: string): Promise<StudentPaymentSummary> {
-    const student = mockStudents.find((s) => s.id === studentId);
-    const room = student?.roomId
-      ? mockRooms.find((r) => r.id === student.roomId)
-      : undefined;
-    const history = mockPayments
-      .filter((p) => p.studentId === studentId)
-      .sort((a, b) => b.dueDate.localeCompare(a.dueDate));
-
-    const nextDue = history.find((p) => p.status !== "PAID") ?? null;
-    return delay({
-      currentRent: room?.price ?? 0,
-      status: nextDue?.status ?? "PENDING",
-      nextDueDate: nextDue?.dueDate ?? null,
-      history,
-    });
+    void studentId;
+    const raw = await http.get<StudentPaymentSummaryResponse>("/payments/me/summary");
+    return {
+      currentRent: raw.currentRent,
+      status: raw.currentStatus,
+      nextDueDate: raw.nextDueDate,
+      history: raw.history.map(toPayment),
+    };
   },
 
-  async createPayment(
-    input: Omit<Payment, "id" | "paidAt">,
-  ): Promise<Payment> {
-    const payment: Payment = {
-      ...input,
-      id: generateId("p"),
-      paidAt: input.status === "PAID" ? new Date().toISOString() : undefined,
-    };
-    mockPayments.push(payment);
-    return delay(payment);
+  async createPayment(input: Omit<Payment, "id" | "paidAt">): Promise<Payment> {
+    void input.studentId;
+    void input.hostelId;
+    void input.roomId;
+    const raw = await http.post<PaymentResponse>("/payments/me", {
+      amount: input.amount,
+      dueDate: input.dueDate.slice(0, 10),
+      method: input.method,
+      reference: input.mpesaCode,
+    });
+    return toPayment(raw);
   },
 
   async sendReminder(studentId: string): Promise<void> {
-    void studentId;
-    await delay(undefined, 200);
+    await http.post<void>("/payments/reminders", { studentIds: [studentId] });
   },
 
   async stkPush(input: StkPushInput): Promise<StkPushResult> {
-    await delay(undefined, 1800);
-    const ok = Math.random() > 0.15;
-    return {
-      checkoutRequestId: `ws_CO_${Date.now().toString(36)}`,
-      merchantRequestId: `mr-${Date.now().toString(36)}`,
-      amount: input.amount,
-      phone: input.phone,
-      status: ok ? "SUCCESS" : "FAILED",
-      description: `Rent payment — KES ${input.amount}`,
-      receivedAt: ok ? new Date().toISOString() : undefined,
-    };
+    void input;
+    throw new Error("STK push is not exposed by the backend service layer");
   },
 };

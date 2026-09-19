@@ -99,4 +99,11 @@ public class OrderController {
             @Valid @RequestBody OrderStatusUpdateRequest request) {
         return orderService.updateStatus(id, principal.id(), request);
     }
+
+    @GetMapping("/admin")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Page<OrderSummaryResponse> listAll(
+            @PageableDefault(size = 20, sort = "createdAt", direction = DESC) Pageable pageable) {
+        return orderService.listAll(pageable);
+    }
 }

@@ -10,6 +10,8 @@ public interface MarketAgentService {
 
     Page<MarketAgentSummaryResponse> list(Pageable pageable);
 
+    MarketAgentResponse getCurrent();
+
     MarketAgentResponse getById(String agentId);
 
     MarketAgentResponse create(MarketAgentCreateRequest req);

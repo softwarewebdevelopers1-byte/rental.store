@@ -1,7 +1,5 @@
-import { mockOrders } from "../data/orders";
+import { http } from "./apiClient";
 import type { Order, OrderStatus } from "../types/order";
-import { delay } from "../utils/delay";
-import { generateId } from "../utils/idGenerator";
 
 export interface CreateOrderInput {
   studentId: string;
@@ -15,74 +13,119 @@ export interface PayOrderInput {
   mpesaCode: string;
 }
 
+interface Page<T> {
+  content: T[];
+}
+
+interface OrderItemResponse {
+  kind: Order["items"][number]["kind"];
+  refId: string;
+  name: string;
+  unitPrice: number;
+  quantity: number;
+}
+
+interface OrderResponse {
+  id: string;
+  status: OrderStatus;
+  total: number;
+  studentId: string;
+  agentId: string;
+  items: OrderItemResponse[];
+  timeline: Array<{ status: OrderStatus; at: string }>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface OrderSummaryResponse {
+  id: string;
+  status: OrderStatus;
+  total: number;
+  studentId: string;
+  agentId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+function toOrder(raw: OrderResponse): Order {
+  return {
+    id: raw.id,
+    studentId: raw.studentId,
+    agentId: raw.agentId,
+    items: raw.items.map((item) => ({ ...item })),
+    total: raw.total,
+    status: raw.status,
+    createdAt: raw.createdAt,
+    updatedAt: raw.updatedAt,
+    timeline: raw.timeline.map(({ status, at }) => ({ status, at })),
+  };
+}
+
+function toSummary(raw: OrderSummaryResponse): Order {
+  return {
+    id: raw.id,
+    studentId: raw.studentId,
+    agentId: raw.agentId,
+    items: [],
+    total: raw.total,
+    status: raw.status,
+    createdAt: raw.createdAt,
+    updatedAt: raw.updatedAt,
+    timeline: [],
+  };
+}
+
 export const orderService = {
   async listForStudent(studentId: string): Promise<Order[]> {
-    return delay(
-      mockOrders
-        .filter((o) => o.studentId === studentId)
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
-    );
+    void studentId;
+    const page = await http.get<Page<OrderSummaryResponse>>("/orders/me");
+    return page.content.map(toSummary);
   },
 
   async listForAgent(agentId: string): Promise<Order[]> {
-    return delay(
-      mockOrders
-        .filter((o) => o.agentId === agentId)
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
-    );
+    void agentId;
+    const page = await http.get<Page<OrderSummaryResponse>>("/orders/agent");
+    return page.content.map(toSummary);
   },
 
   async getById(id: string): Promise<Order | null> {
-    return delay(mockOrders.find((o) => o.id === id) ?? null);
+    return toOrder(await http.get<OrderResponse>(`/orders/me/${id}`));
   },
 
   async create(input: CreateOrderInput): Promise<Order> {
-    const now = new Date().toISOString();
-    const order: Order = {
-      id: generateId("o"),
-      studentId: input.studentId,
-      agentId: input.agentId,
-      items: input.items,
-      total: input.total,
-      status: "PENDING_PAYMENT",
-      createdAt: now,
-      updatedAt: now,
-      timeline: [{ status: "PENDING_PAYMENT", at: now }],
-    };
-    mockOrders.push(order);
-    return delay(order);
+    void input.studentId;
+    void input.agentId;
+    void input.total;
+    const raw = await http.post<OrderResponse>("/orders/me", {
+      items: input.items.map(({ kind, refId, quantity }) => ({ kind, refId, quantity })),
+    });
+    return toOrder(raw);
   },
 
-  async payOrder(
-    orderId: string,
-    input: PayOrderInput,
-  ): Promise<Order | null> {
-    const order = mockOrders.find((o) => o.id === orderId);
-    if (!order) return delay(null);
-    const now = new Date().toISOString();
-    order.status = "PAID";
-    order.mpesaPhone = input.phone;
-    order.mpesaCode = input.mpesaCode;
-    order.updatedAt = now;
-    order.timeline.push({ status: "PAID", at: now });
-    return delay(order);
+  async payOrder(orderId: string, input: PayOrderInput): Promise<Order | null> {
+    void orderId;
+    void input;
+    throw new Error("Order payment is not exposed by the backend service layer");
   },
 
   async advanceStatus(id: string, status: OrderStatus): Promise<Order | null> {
-    const order = mockOrders.find((o) => o.id === id);
-    if (!order) return delay(null);
-    const now = new Date().toISOString();
-    order.status = status;
-    order.updatedAt = now;
-    order.timeline.push({ status, at: now });
-    return delay(order);
+    const raw = await http.patch<OrderResponse>(`/orders/agent/${id}/status`, {
+      status,
+    });
+    return toOrder(raw);
   },
 
   async confirmReceived(id: string): Promise<Order | null> {
-    return this.advanceStatus(id, "RECEIVED");
+    const raw = await http.post<OrderResponse>(`/orders/me/${id}/receive`);
+    return toOrder(raw);
   },
 
   async markConflict(id: string): Promise<Order | null> {
-    return this.advanceStatus(id, "CONFLICT");
+    await http.post(`/conflicts/me/orders/${id}`, {
+      issue: "OTHER",
+      description: "Order marked as conflicted",
+      attachments: [],
+    });
+    return this.getById(id);
   },
 };
