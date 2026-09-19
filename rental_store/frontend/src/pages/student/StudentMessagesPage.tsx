@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { useConversations, useMessages } from "../../hooks/useMessages";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -6,8 +6,7 @@ import { ConversationList } from "../../components/messaging/ConversationList";
 import { ChatWindow } from "../../components/messaging/ChatWindow";
 import { Skeleton } from "../../components/common/Skeleton";
 import { EmptyState } from "../../components/common/EmptyState";
-import { mockUsers } from "../../data/users";
-import { mockConversations } from "../../data/messages";
+import { userService } from "../../services/userService";
 import styles from "./StudentMessagesPage.module.css";
 
 export default function StudentMessagesPage() {
@@ -15,8 +14,23 @@ export default function StudentMessagesPage() {
   const { data: conversations, loading: loadingConvs } = useConversations(
     user?.id ?? "",
   );
+  const [users, setUsers] = useState<Record<string, { name: string }>>({});
   const [activeId, setActiveId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    const ids = [...new Set(conversations.flatMap((conversation) => conversation.participants))];
+    if (!ids.length) return;
+    let cancelled = false;
+    void userService.listByIds(ids).then((loaded) => {
+      if (!cancelled) {
+        setUsers(Object.fromEntries(loaded.map((item) => [item.id, { name: item.name }])));
+      }
+    }).catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [conversations]);
 
   const currentConv = activeId ?? conversations[0]?.id ?? null;
   const {
@@ -26,7 +40,7 @@ export default function StudentMessagesPage() {
   } = useMessages(currentConv);
 
   const nameFor = (id: string) =>
-    mockUsers.find((u) => u.id === id)?.name ?? "Unknown";
+    users[id]?.name ?? (id === user?.id ? user.name : "Unknown");
 
   const filtered = useMemo(
     () =>
@@ -35,19 +49,20 @@ export default function StudentMessagesPage() {
           .map(nameFor)
           .some((n) => n.toLowerCase().includes(search.toLowerCase())),
       ),
-    [conversations, search],
+    [conversations, search, users, user?.id, user?.name],
   );
 
   const titleFor = (convId: string) => {
-    const conv = mockConversations.find((c) => c.id === convId);
+    const conv = conversations.find((c) => c.id === convId);
     if (!conv) return "Conversation";
     const others = conv.participants.filter((p) => p !== user?.id);
     return others.map(nameFor).join(", ") || "You";
   };
 
   const previewFor = (convId: string) => {
-    const last = [...mockConversations].find((c) => c.id === convId);
-    return last ? "Open to view messages" : "";
+    return conversations.some((conversation) => conversation.id === convId)
+      ? "Open to view messages"
+      : "";
   };
 
   return (

@@ -7,7 +7,7 @@ import { Button } from "../../components/common/Button";
 import { Skeleton } from "../../components/common/Skeleton";
 import { EmptyState } from "../../components/common/EmptyState";
 import { maintenanceService } from "../../services/maintenanceService";
-import { mockHostels } from "../../data/hostels";
+import { hostelService } from "../../services/hostelService";
 import type {
   MaintenanceRequest,
   MaintenanceStatus,
@@ -21,14 +21,15 @@ export default function LandlordMaintenancePage() {
 
   async function load() {
     setLoading(true);
-    const hostelIds = mockHostels
-      .filter((h) => h.landlordId === user?.id)
-      .map((h) => h.id);
-    const all = await Promise.all(
-      hostelIds.map((id) => maintenanceService.listForHostel(id)),
-    );
-    setItems(all.flat().sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
-    setLoading(false);
+    try {
+      const hostels = await hostelService.listByLandlord(user?.id ?? "");
+      const all = await Promise.all(
+        hostels.map((hostel) => maintenanceService.listForHostel(hostel.id)),
+      );
+      setItems(all.flat().sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {

@@ -5,8 +5,8 @@ import { Card } from "../../components/common/Card";
 import { RatingStars } from "../../components/common/RatingStars";
 import { Skeleton } from "../../components/common/Skeleton";
 import { EmptyState } from "../../components/common/EmptyState";
-import { mockHostels } from "../../data/hostels";
-import { mockRatings } from "../../data/ratings";
+import { hostelService } from "../../services/hostelService";
+import { ratingService } from "../../services/ratingService";
 import type { Rating } from "../../types/rating";
 
 export default function LandlordRatingsPage() {
@@ -17,11 +17,11 @@ export default function LandlordRatingsPage() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      await new Promise((r) => setTimeout(r, 200));
-      const hostelIds = new Set(
-        mockHostels.filter((h) => h.landlordId === user?.id).map((h) => h.id),
+      const hostels = await hostelService.listByLandlord(user?.id ?? "");
+      const results = await Promise.all(
+        hostels.map((hostel) => ratingService.listForHostel(hostel.id)),
       );
-      const rs = mockRatings.filter((r) => hostelIds.has(r.hostelId));
+      const rs = results.flat().sort((a, b) => b.createdAt.localeCompare(a.createdAt));
       if (!cancelled) {
         setRatings(rs);
         setLoading(false);

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../../hooks/useToast";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -6,16 +6,22 @@ import { Card } from "../../components/common/Card";
 import { Button } from "../../components/common/Button";
 import { StatusBadge } from "../../components/common/StatusBadge";
 import { hostelService } from "../../services/hostelService";
-import { mockLandlords } from "../../data/users";
+import type { Landlord } from "../../types/user";
 
 export default function LandlordVerificationPage() {
   const { user } = useAuth();
   const { show } = useToast();
-  const landlord = mockLandlords.find((l) => l.id === user?.id);
-  const [status, setStatus] = useState(
-    landlord?.verificationStatus ?? "NOT_REQUESTED",
+  const [status, setStatus] = useState<Landlord["verificationStatus"]>(
+    "NOT_REQUESTED",
   );
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    void hostelService.listByLandlord(user.id).then((hostels) => {
+      setStatus(hostels.some((hostel) => hostel.landlordVerified) ? "APPROVED" : "NOT_REQUESTED");
+    });
+  }, [user]);
 
   async function requestVerification() {
     if (!user) return;

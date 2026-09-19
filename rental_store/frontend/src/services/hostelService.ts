@@ -1,7 +1,7 @@
 import { http } from "./apiClient";
 import type { Hostel } from "../types/hostel";
 import type { Room } from "../types/room";
-import type { Landlord, Student } from "../types/user";
+import type { Caretaker, Landlord, Student } from "../types/user";
 
 export interface HostelFilters {
   query?: string;
@@ -17,6 +17,7 @@ export interface HostelSummary extends Hostel {
   vacantRooms: number;
   priceRange: [number, number] | null;
   landlordVerified: boolean;
+  caretakers?: Caretaker[];
 }
 
 export interface LandlordStats {
@@ -80,7 +81,7 @@ interface HostelResponse extends HostelSummaryResponse {
     tenantId: string | null;
     tenantName: string | null;
   }>;
-  caretakers: unknown[];
+  caretakers: Array<{ id: string; name: string; email: string }>;
   updatedAt: string;
 }
 
@@ -143,6 +144,15 @@ function toHostel(raw: HostelResponse): HostelSummary {
     description: raw.description ?? undefined,
     images: raw.images ?? [],
     active: raw.active,
+    caretakers: raw.caretakers.map((caretaker) => ({
+      id: caretaker.id,
+      name: caretaker.name,
+      email: caretaker.email,
+      role: "CARETAKER",
+      active: true,
+      assignedHostelIds: [raw.id],
+      createdAt: raw.createdAt,
+    })),
   };
 }
 
@@ -298,6 +308,9 @@ export const hostelService = {
     landlordId: string,
     status: Landlord["verificationStatus"],
   ): Promise<Landlord | null> {
+    const path = status === "PENDING"
+      ? "/landlords/me/verification/request"
+      : `/admin/landlords/${landlordId}/verification`;
     const raw = await http.post<{
       id: string;
       name: string;
@@ -308,7 +321,7 @@ export const hostelService = {
       verificationStatus: Landlord["verificationStatus"];
       hostels: Array<{ id?: string }> | null;
       createdAt: string;
-    }>(`/admin/landlords/${landlordId}/verification`, { decision: status });
+    }>(path, status === "PENDING" ? undefined : { decision: status });
     return {
       id: raw.id,
       name: raw.name,

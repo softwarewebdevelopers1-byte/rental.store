@@ -4,7 +4,6 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { TenantCard } from "../../components/hostel/TenantCard";
 import { Skeleton } from "../../components/common/Skeleton";
 import { EmptyState } from "../../components/common/EmptyState";
-import { mockRooms } from "../../data/rooms";
 
 export default function LandlordTenantsPage() {
   const { user } = useAuth();
@@ -32,10 +31,7 @@ export default function LandlordTenantsPage() {
           }}
         >
           {data.map((t) => {
-            const room = mockRooms.find((r) => r.id === t.roomId);
-            return (
-              <TenantCard key={t.id} student={t} roomNumber={room?.number} />
-            );
+            return <TenantCard key={t.id} student={t} />;
           })}
         </div>
       )}

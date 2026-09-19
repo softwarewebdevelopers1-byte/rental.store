@@ -20,10 +20,7 @@ import { RoomFormModal } from "../../components/hostel/RoomFormModal";
 import { TenantCard } from "../../components/hostel/TenantCard";
 import { roomService } from "../../services/roomService";
 import { useToast } from "../../hooks/useToast";
-import { mockRooms } from "../../data/rooms";
-import { mockUsers } from "../../data/users";
 import type { Room } from "../../types/room";
-import type { Caretaker, User } from "../../types/user";
 import styles from "./HostelDetailsPage.module.css";
 
 type TabId =
@@ -35,10 +32,6 @@ type TabId =
   | "caretakers"
   | "ratings"
   | "photos";
-
-function isCaretaker(user: User): user is Caretaker {
-  return user.role === "CARETAKER";
-}
 
 export default function LandlordHostelDetailsPage() {
   const { hostelId = "" } = useParams<{ hostelId: string }>();
@@ -79,13 +72,7 @@ export default function LandlordHostelDetailsPage() {
   );
   const { data: ratings } = useHostelRatings(hostelId);
 
-  const caretakers = useMemo(
-    () =>
-      mockUsers
-        .filter(isCaretaker)
-        .filter((u) => u.assignedHostelIds.includes(hostelId)),
-    [hostelId],
-  );
+  const caretakers = useMemo(() => hostel?.caretakers ?? [], [hostel]);
 
   if (loading) return <Skeleton height={400} radius="var(--radius-lg)" />;
   if (!hostel) return <EmptyState title="Hostel not found" />;
@@ -237,7 +224,7 @@ export default function LandlordHostelDetailsPage() {
         ) : (
           <div className={styles.tenantGrid}>
             {tenants.map((t) => {
-              const room = mockRooms.find((r) => r.id === t.roomId);
+              const room = rooms.find((r) => r.id === t.roomId);
               return (
                 <TenantCard key={t.id} student={t} roomNumber={room?.number} />
               );

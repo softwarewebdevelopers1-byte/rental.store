@@ -11,7 +11,6 @@ import { MaintenanceCard } from "../../components/maintenance/MaintenanceCard";
 import { Skeleton } from "../../components/common/Skeleton";
 import { EmptyState } from "../../components/common/EmptyState";
 import { ErrorState } from "../../components/common/ErrorState";
-import { mockStudents } from "../../data/users";
 import type { MaintenanceCategory } from "../../types/maintenance";
 import styles from "./StudentMaintenancePage.module.css";
 
@@ -27,7 +26,6 @@ const CATEGORIES: { value: MaintenanceCategory; label: string }[] = [
 export default function StudentMaintenancePage() {
   const { user } = useAuth();
   const { show } = useToast();
-  const student = mockStudents.find((s) => s.id === user?.id);
   const { data, loading, error, reload, create } = useStudentMaintenance(
     user?.id ?? "",
   );
@@ -39,16 +37,16 @@ export default function StudentMaintenancePage() {
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!user || !student?.hostelId || !student.roomId) {
-      show("You must be in a hostel to raise a request.", "error");
+    if (!user) {
+      show("Please sign in to raise a request.", "error");
       return;
     }
     setSubmitting(true);
     try {
       await create({
         studentId: user.id,
-        hostelId: student.hostelId,
-        roomId: student.roomId,
+        hostelId: "",
+        roomId: "",
         title,
         description,
         category,
