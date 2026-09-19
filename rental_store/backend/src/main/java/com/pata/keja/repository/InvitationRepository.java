@@ -47,8 +47,8 @@ public interface InvitationRepository extends JpaRepository<Invitation, String> 
     @Modifying
     @Query("""
                 update Invitation i
-                set i.status = com.pata.keja.domain.enums.InvitationStatus.EXPIRED
-                where i.status = com.pata.keja.domain.enums.InvitationStatus.ACTIVE
+                set i.status = com.pata.keja.enums.InvitationStatus.EXPIRED
+                where i.status = com.pata.keja.enums.InvitationStatus.ACTIVE
                   and i.expiresAt < :now
             """)
     int expireOverdue(@Param("now") Instant now);

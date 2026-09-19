@@ -1,7 +1,5 @@
 package com.pata.keja.service.impl;
 
-import java.util.UUID;
-
 import com.pata.keja.dto.admin.UserSummaryResponse;
 import com.pata.keja.dto.auth.HostelCodeValidationResponse;
 import com.pata.keja.dto.auth.LoginRequest;
@@ -13,6 +11,7 @@ import com.pata.keja.models.User;
 import com.pata.keja.repository.HostelRepository;
 import com.pata.keja.repository.UserRepository;
 import com.pata.keja.service.AuthService;
+import com.pata.keja.security.JwtService;
 import com.pata.keja.exception.NotFoundException;
 
 import org.springframework.security.authentication.BadCredentialsException;
@@ -28,15 +27,18 @@ public class AuthServiceImpl implements AuthService {
     private final HostelRepository hostelRepository;
     private final PasswordEncoder passwordEncoder;
     private final StudentRegistrationService studentRegistrationService;
+    private final JwtService jwtService;
 
     public AuthServiceImpl(UserRepository userRepository,
             HostelRepository hostelRepository,
             PasswordEncoder passwordEncoder,
-            StudentRegistrationService studentRegistrationService) {
+            StudentRegistrationService studentRegistrationService,
+            JwtService jwtService) {
         this.userRepository = userRepository;
         this.hostelRepository = hostelRepository;
         this.passwordEncoder = passwordEncoder;
         this.studentRegistrationService = studentRegistrationService;
+        this.jwtService = jwtService;
     }
 
     @Override
@@ -48,7 +50,7 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
 
         return new LoginResponse(
-                "demo-token-" + UUID.randomUUID(),
+                jwtService.issueToken(user),
                 new UserSummaryResponse(
                         user.getId(),
                         user.getName(),
