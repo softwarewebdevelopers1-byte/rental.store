@@ -14,6 +14,12 @@ public interface MessageService {
 
     MessageResponse sendMessage(String conversationId, String senderId, SendMessageRequest req);
 
+    MessageResponse editMessage(String messageId, String userId, EditMessageRequest req);
+
+    void deleteMessage(String messageId, String userId);
+
+    MessageResponse forwardMessage(String messageId, String userId, ForwardMessageRequest req);
+
     void markRead(String conversationId, String userId);
 
     long unreadCountForUser(String userId);

@@ -35,6 +35,8 @@ public interface ConversationRepository extends JpaRepository<Conversation, Stri
                 where p.user.id in :userIds
                 group by c
                 having count(distinct p.user.id) = :count
+                   and (select count(cp) from ConversationParticipant cp
+                        where cp.conversation = c) = :count
             """)
     List<Conversation> findByParticipants(
             @Param("userIds") List<String> userIds,

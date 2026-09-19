@@ -123,6 +123,48 @@ public class MessageServiceImpl implements MessageService {
     }
 
     @Override
+    public MessageResponse editMessage(String messageId, String userId, EditMessageRequest req) {
+        Message message = messageRepo.findById(messageId)
+                .orElseThrow(() -> new NotFoundException("Message not found"));
+        if (!message.getSender().getId().equals(userId)) {
+            throw new ConflictException("You can only edit your own messages");
+        }
+        message.setBody(req.body());
+        return messageMapper.toResponse(message);
+    }
+
+    @Override
+    public void deleteMessage(String messageId, String userId) {
+        Message message = messageRepo.findById(messageId)
+                .orElseThrow(() -> new NotFoundException("Message not found"));
+        if (!message.getSender().getId().equals(userId)) {
+            throw new ConflictException("You can only delete your own messages");
+        }
+        messageRepo.delete(message);
+    }
+
+    @Override
+    public MessageResponse forwardMessage(String messageId, String userId, ForwardMessageRequest req) {
+        Message source = messageRepo.findById(messageId)
+                .orElseThrow(() -> new NotFoundException("Message not found"));
+        Conversation sourceConversation = conversationRepo.findByIdWithParticipants(
+                source.getConversation().getId()).orElseThrow(() -> new NotFoundException("Conversation not found"));
+        requireParticipant(sourceConversation, userId);
+        ConversationResponse target = getOrCreateDirect(userId, req.targetUserId());
+        Message forwarded = new Message();
+        Conversation targetConversation = conversationRepo.findByIdWithParticipants(target.id())
+                .orElseThrow(() -> new NotFoundException("Conversation not found"));
+        ConversationParticipant sender = requireParticipant(targetConversation, userId);
+        forwarded.setConversation(targetConversation);
+        forwarded.setSender(sender.getUser());
+        forwarded.setBody(source.getBody());
+        messageRepo.save(forwarded);
+        targetConversation.setLastMessageAt(Instant.now());
+        sender.setLastReadAt(forwarded.getCreatedAt());
+        return messageMapper.toResponse(forwarded);
+    }
+
+    @Override
     public void markRead(String conversationId, String userId) {
         ConversationParticipant p = participantRepo
                 .findByConversationIdAndUserId(conversationId, userId)
@@ -152,6 +194,12 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     public ConversationResponse getOrCreateDirect(String userAId, String userBId) {
+        if (userAId.equals(userBId)) {
+            throw new ConflictException("Cannot start a conversation with yourself");
+        }
+        userRepo.findById(userBId)
+                .orElseThrow(() -> new NotFoundException("User not found: " + userBId));
+
         List<Conversation> existing = conversationRepo.findByParticipants(
                 List.of(userAId, userBId), 2);
         if (!existing.isEmpty()) {

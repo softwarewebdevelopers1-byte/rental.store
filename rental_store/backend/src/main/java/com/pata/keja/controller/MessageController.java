@@ -7,6 +7,8 @@ import jakarta.validation.Valid;
 
 import com.pata.keja.dto.messaging.ConversationResponse;
 import com.pata.keja.dto.messaging.ConversationSummaryResponse;
+import com.pata.keja.dto.messaging.EditMessageRequest;
+import com.pata.keja.dto.messaging.ForwardMessageRequest;
 import com.pata.keja.dto.messaging.MessageResponse;
 import com.pata.keja.dto.messaging.SendMessageRequest;
 import com.pata.keja.dto.messaging.StartConversationRequest;
@@ -18,6 +20,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -65,6 +69,30 @@ public class MessageController {
         MessageResponse response = messageService.sendMessage(id, principal.id(), request);
         return ResponseEntity.created(URI.create("/api/messages/conversations/" + id + "/messages/" + response.id()))
                 .body(response);
+    }
+
+    @PatchMapping("/messages/{messageId}")
+    public MessageResponse editMessage(
+            @PathVariable String messageId,
+            @AuthenticationPrincipal AppUserPrincipal principal,
+            @Valid @RequestBody EditMessageRequest request) {
+        return messageService.editMessage(messageId, principal.id(), request);
+    }
+
+    @DeleteMapping("/messages/{messageId}")
+    public ResponseEntity<Void> deleteMessage(
+            @PathVariable String messageId,
+            @AuthenticationPrincipal AppUserPrincipal principal) {
+        messageService.deleteMessage(messageId, principal.id());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/messages/{messageId}/forward")
+    public MessageResponse forwardMessage(
+            @PathVariable String messageId,
+            @AuthenticationPrincipal AppUserPrincipal principal,
+            @Valid @RequestBody ForwardMessageRequest request) {
+        return messageService.forwardMessage(messageId, principal.id(), request);
     }
 
     @PostMapping("/conversations/{id}/read")
