@@ -6,12 +6,14 @@ import { Input } from "../../components/common/Input";
 import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../../hooks/useToast";
 import { accountService } from "../../services/accountService";
+import { FileUpload } from "../../components/common/FileUpload";
 import styles from "./AccountSettingsPage.module.css";
 
 export default function AccountSettingsPage() {
   const { user, updateUser } = useAuth();
   const { show } = useToast();
   const [email, setEmail] = useState(user?.email ?? "");
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl ?? "");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
@@ -27,6 +29,7 @@ export default function AccountSettingsPage() {
     try {
       const updated = await accountService.update({
         email: email.trim(),
+        ...(avatarUrl ? { avatarUrl } : {}),
         ...(newPassword ? { currentPassword, newPassword } : {}),
       });
       updateUser(updated);
@@ -44,10 +47,16 @@ export default function AccountSettingsPage() {
 
   return (
     <div className={styles.wrap}>
-      <PageHeader title="Account settings" subtitle="Update your email address or password." />
+      <PageHeader title="Account settings" subtitle="Update your email address, avatar, or password." />
       <Card>
         <form className={styles.form} onSubmit={onSubmit}>
           <Input label="Email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
+          <FileUpload
+            folder="avatars"
+            label="Profile photo"
+            value={avatarUrl ? [avatarUrl] : []}
+            onChange={(urls) => setAvatarUrl(urls[0] ?? "")}
+          />
           <h2 className={styles.sectionTitle}>Change password</h2>
           <Input
             label="Current password"

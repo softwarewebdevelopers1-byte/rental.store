@@ -93,7 +93,7 @@ export default function LandlordMessagesPage() {
               loading={loadingMsgs}
               currentUserId={user?.id ?? ""}
               nameFor={nameFor}
-              onSend={(body) => send(user?.id ?? "", body)}
+              onSend={(body, attachments) => send(user?.id ?? "", body, attachments)}
               forwardTargets={conversations
                 .flatMap((conversation) => conversation.participants)
                 .filter((id) => id !== user?.id)

@@ -17,6 +17,7 @@ interface BackendUser {
   id: string;
   name: string;
   email: string;
+  avatarUrl: string | null;
   role: UserRole;
   active: boolean;
   createdAt: string;
@@ -36,7 +37,7 @@ interface StudentResponse extends BackendUser {
 }
 
 function toUser(user: BackendUser): User {
-  return { ...user };
+  return { ...user, avatarUrl: user.avatarUrl ?? undefined };
 }
 
 const demoEmails: Record<UserRole, string> = {

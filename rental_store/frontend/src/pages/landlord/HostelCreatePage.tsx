@@ -26,9 +26,7 @@ export default function HostelCreatePage() {
         code: values.code,
         location: values.location,
         description: values.description || undefined,
-        images: values.images.length
-          ? values.images
-          : ["https://picsum.photos/seed/hostel/800/500"],
+        images: values.images,
         active: true,
       });
       show("Hostel created successfully.", "success");

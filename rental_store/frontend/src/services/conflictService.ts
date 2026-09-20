@@ -7,6 +7,7 @@ export interface CreateConflictInput {
   agentId: string;
   issue: Conflict["issue"];
   description: string;
+  attachments?: string[];
 }
 
 interface Page<T> {
@@ -87,7 +88,11 @@ export const conflictService = {
     void input.agentId;
     const raw = await http.post<ConflictResponse>(
       `/conflicts/me/orders/${input.orderId}`,
-      { issue: input.issue, description: input.description, attachments: [] },
+      {
+        issue: input.issue,
+        description: input.description,
+        attachments: input.attachments ?? [],
+      },
     );
     return toConflict(raw);
   },

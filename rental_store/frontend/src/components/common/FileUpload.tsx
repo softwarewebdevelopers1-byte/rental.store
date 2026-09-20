@@ -66,8 +66,14 @@ export function FileUpload({
     }
   }
 
-  function remove(index: number) {
+  async function remove(index: number) {
+    const url = value[index];
     onChange(value.filter((_, i) => i !== index));
+    try {
+      await uploadService.remove(url);
+    } catch (error) {
+      show(error instanceof Error ? error.message : "Unable to remove file", "error");
+    }
   }
 
   function isImage(url: string): boolean {
@@ -141,7 +147,7 @@ export function FileUpload({
               <button
                 type="button"
                 className={styles.remove}
-                onClick={() => remove(i)}
+                onClick={() => void remove(i)}
                 disabled={isUploading}
                 aria-label="Remove"
               >

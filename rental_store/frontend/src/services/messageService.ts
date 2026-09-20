@@ -24,10 +24,11 @@ interface MessageResponse {
   senderId: string;
   body: string;
   createdAt: string;
+  attachments?: string[];
 }
 
 function toMessage(raw: MessageResponse): Message {
-  return { ...raw, read: true };
+  return { ...raw, attachments: raw.attachments ?? [], read: true };
 }
 
 export const messageService = {
@@ -80,11 +81,12 @@ export const messageService = {
     conversationId: string,
     senderId: string,
     body: string,
+    attachments: string[] = [],
   ): Promise<Message> {
     void senderId;
     const message = await http.post<MessageResponse>(
       `/messages/conversations/${conversationId}/messages`,
-      { body },
+      { body, attachments },
     );
     return toMessage(message);
   },

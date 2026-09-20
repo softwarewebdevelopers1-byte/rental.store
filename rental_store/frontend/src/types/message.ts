@@ -12,6 +12,7 @@ export interface Message {
   conversationId: string;
   senderId: string;
   body: string;
+  attachments: string[];
   createdAt: string;
   read: boolean;
 }

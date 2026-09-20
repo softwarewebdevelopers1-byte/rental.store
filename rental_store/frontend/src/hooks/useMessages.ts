@@ -22,6 +22,7 @@ function toIncomingMessage(payload: unknown): Message | null {
     senderId: value.senderId,
     body: value.body,
     createdAt: value.createdAt,
+    attachments: [],
     read: true,
   };
 }
@@ -119,12 +120,13 @@ export function useMessages(conversationId: string | null) {
   }, [conversationId, reload]);
 
   const send = useCallback(
-    async (senderId: string, body: string) => {
+    async (senderId: string, body: string, attachments: string[] = []) => {
       if (!conversationId || !body.trim()) return;
       const msg = await messageService.sendMessage(
         conversationId,
         senderId,
         body.trim(),
+        attachments,
       );
       setData((prev) => [...prev, msg]);
     },

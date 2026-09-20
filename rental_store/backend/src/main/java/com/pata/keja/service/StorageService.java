@@ -25,4 +25,9 @@ public interface StorageService {
      * Best-effort: does not throw if the object is already gone.
      */
     void delete(String url);
+
+    /**
+     * Returns whether the URL belongs to this configured R2 bucket/public origin.
+     */
+    boolean ownsUrl(String url);
 }

@@ -72,7 +72,17 @@ public class StorageServiceImpl implements StorageService {
                 .cacheControl("public, max-age=31536000, immutable")
                 .build();
 
-        s3Client.putObject(put, RequestBody.fromBytes(content));
+        try {
+            s3Client.putObject(put, RequestBody.fromBytes(content));
+        } catch (S3Exception exception) {
+            if (exception.statusCode() == 403) {
+                throw new ConflictException(
+                        "Cloudflare R2 denied the upload. Verify that R2_ACCESS_KEY and "
+                                + "R2_SECRET_KEY belong to an API token with Object Read & Write "
+                                + "access to bucket '" + props.bucket() + "'.");
+            }
+            throw new ConflictException("Cloudflare R2 upload failed: " + exception.awsErrorDetails().errorMessage());
+        }
 
         return buildPublicUrl(key);
     }
@@ -94,6 +104,11 @@ public class StorageServiceImpl implements StorageService {
         } catch (S3Exception e) {
             log.warn("Failed to delete R2 object for URL (ignored): {}", url, e);
         }
+    }
+
+    @Override
+    public boolean ownsUrl(String url) {
+        return extractKey(url) != null;
     }
 
     private String buildPublicUrl(String key) {
@@ -133,8 +148,16 @@ public class StorageServiceImpl implements StorageService {
         }
         try {
             URI uri = URI.create(url);
+            URI endpoint = URI.create(props.endpoint());
+            if (!endpoint.getHost().equalsIgnoreCase(uri.getHost())) {
+                return null;
+            }
             String path = uri.getPath();
             if (path.startsWith("/")) path = path.substring(1);
+            String bucketPrefix = props.bucket() + "/";
+            if (path.startsWith(bucketPrefix)) {
+                path = path.substring(bucketPrefix.length());
+            }
             return path.isBlank() ? null : path;
         } catch (Exception e) {
             return null;

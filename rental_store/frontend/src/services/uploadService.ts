@@ -10,16 +10,19 @@ export type UploadFolder =
   | "messages"
   | "conflicts";
 
+function authHeaders(): HeadersInit {
+  const token = getAuthToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 export const uploadService = {
   async upload(file: File, folder: UploadFolder): Promise<string> {
     const form = new FormData();
     form.append("file", file);
     form.append("folder", folder);
-
-    const token = getAuthToken();
     const response = await fetch(`${API_BASE_URL}/uploads`, {
       method: "POST",
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      headers: authHeaders(),
       body: form,
     });
 
@@ -28,9 +31,7 @@ export const uploadService = {
       let message = response.statusText;
       try {
         const payload = JSON.parse(text) as { error?: unknown };
-        if (payload && typeof payload.error === "string") {
-          message = payload.error;
-        }
+        if (typeof payload.error === "string") message = payload.error;
       } catch {
         /* non-JSON response body */
       }
@@ -39,5 +40,15 @@ export const uploadService = {
 
     const payload = (await response.json()) as { url: string };
     return payload.url;
+  },
+
+  async remove(url: string): Promise<void> {
+    const response = await fetch(
+      `${API_BASE_URL}/uploads?url=${encodeURIComponent(url)}`,
+      { method: "DELETE", headers: authHeaders() },
+    );
+    if (!response.ok) {
+      throw new ApiError("Unable to remove uploaded file", response.status);
+    }
   },
 };

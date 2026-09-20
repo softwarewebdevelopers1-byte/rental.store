@@ -16,6 +16,7 @@ import { OrderTimeline } from "../../components/marketplace/OrderTimeline";
 import { Skeleton } from "../../components/common/Skeleton";
 import { EmptyState } from "../../components/common/EmptyState";
 import { MpesaPaymentModal } from "../../components/payments/MpesaPaymentModal";
+import { FileUpload } from "../../components/common/FileUpload";
 import type { ConflictIssue } from "../../types/conflict";
 import styles from "./StudentOrderDetailsPage.module.css";
 
@@ -36,6 +37,7 @@ export default function StudentOrderDetailsPage() {
   const [reportOpen, setReportOpen] = useState(false);
   const [issue, setIssue] = useState<ConflictIssue>("DAMAGED_ITEM");
   const [description, setDescription] = useState("");
+  const [attachments, setAttachments] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [payOpen, setPayOpen] = useState(false);
   const [paying, setPaying] = useState(false);
@@ -60,10 +62,12 @@ export default function StudentOrderDetailsPage() {
         agentId: order!.agentId,
         issue,
         description,
+        attachments,
       });
       await orderService.markConflict(order!.id);
       setReportOpen(false);
       setDescription("");
+      setAttachments([]);
       show("Conflict reported. An admin will review it.", "success");
       await reload();
     } finally {
@@ -201,6 +205,14 @@ export default function StudentOrderDetailsPage() {
               required
             />
           </div>
+          <FileUpload
+            folder="conflicts"
+            label="Attachments (optional)"
+            accept="image/*,application/pdf"
+            multiple
+            value={attachments}
+            onChange={setAttachments}
+          />
         </form>
       </Modal>
     </div>

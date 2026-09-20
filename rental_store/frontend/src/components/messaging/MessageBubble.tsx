@@ -4,6 +4,7 @@ import { Button } from "../common/Button";
 
 interface MessageBubbleProps {
   body: string;
+  attachments?: string[];
   mine: boolean;
   createdAt: string;
   senderName: string;
@@ -15,6 +16,7 @@ interface MessageBubbleProps {
 
 export function MessageBubble({
   body,
+  attachments = [],
   mine,
   createdAt,
   senderName,
@@ -28,6 +30,15 @@ export function MessageBubble({
       <div className={styles.bubble}>
         {!mine && <div className={styles.sender}>{senderName}</div>}
         <div className={styles.body}>{body}</div>
+        {attachments.length > 0 && (
+          <div>
+            {attachments.map((url) => (
+              <a key={url} href={url} target="_blank" rel="noreferrer">
+                View attachment
+              </a>
+            ))}
+          </div>
+        )}
         <div className={styles.time}>{formatRelative(createdAt)}</div>
         <div className={styles.actions}>
           {mine && onEdit && (

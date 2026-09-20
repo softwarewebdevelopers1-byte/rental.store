@@ -4,6 +4,7 @@ import { Button } from "../common/Button";
 import { LoadingSpinner } from "../common/LoadingSpinner";
 import { EmptyState } from "../common/EmptyState";
 import { useToast } from "../../hooks/useToast";
+import { FileUpload } from "../common/FileUpload";
 import type { Message } from "../../types/message";
 import type { MessageTarget } from "../../types/message";
 import styles from "./ChatWindow.module.css";
@@ -15,7 +16,7 @@ interface ChatWindowProps {
   loading: boolean;
   currentUserId: string;
   nameFor: (userId: string) => string;
-  onSend: (body: string) => Promise<void> | void;
+  onSend: (body: string, attachments: string[]) => Promise<void> | void;
   forwardTargets?: MessageTarget[];
   onEdit: (messageId: string, body: string) => Promise<void>;
   onDelete: (messageId: string) => Promise<void>;
@@ -37,6 +38,7 @@ export function ChatWindow({
 }: ChatWindowProps) {
   const { show } = useToast();
   const [draft, setDraft] = useState("");
+  const [attachments, setAttachments] = useState<string[]>([]);
   const [sending, setSending] = useState(false);
   const [editing, setEditing] = useState<{ id: string; body: string } | null>(null);
   const [forwardingId, setForwardingId] = useState<string | null>(null);
@@ -52,8 +54,9 @@ export function ChatWindow({
     if (!draft.trim() || sending) return;
     setSending(true);
     try {
-      await onSend(draft.trim());
+      await onSend(draft.trim(), attachments);
       setDraft("");
+      setAttachments([]);
     } finally {
       setSending(false);
     }
@@ -123,6 +126,7 @@ export function ChatWindow({
                   key={m.id}
                   messageId={m.id}
                   body={m.body}
+                  attachments={m.attachments}
                   mine={m.senderId === currentUserId}
                   createdAt={m.createdAt}
                   senderName={nameFor(m.senderId)}
@@ -168,6 +172,12 @@ export function ChatWindow({
       )}
 
       <form className={styles.composer} onSubmit={handleSubmit}>
+        <FileUpload
+          folder="messages"
+          label=""
+          value={attachments}
+          onChange={setAttachments}
+        />
         <input
           className={styles.input}
           value={draft}
@@ -175,7 +185,7 @@ export function ChatWindow({
           placeholder="Type a message..."
           aria-label="Message"
         />
-        <Button type="submit" disabled={!draft.trim()} loading={sending}>
+        <Button type="submit" disabled={!draft.trim() && attachments.length === 0} loading={sending}>
           Send
         </Button>
       </form>
