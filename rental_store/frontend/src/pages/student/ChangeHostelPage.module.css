@@ -9,6 +9,22 @@
   flex-direction: column;
   gap: var(--space-4);
 }
+.currentHostel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.currentHostelLabel {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+.currentHostel h2 {
+  font-size: var(--text-lg);
+}
+.currentHostel p {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
 .success {
   display: flex;
   flex-direction: column;

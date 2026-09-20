@@ -2,6 +2,7 @@ package com.pata.keja.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -24,6 +25,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/api/invitations/token/**", "/error").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/messages/stream").permitAll()
                         .requestMatchers("/api/hostels", "/api/hostels/*", "/api/hostels/*/rooms",
                                 "/api/hostels/code/*", "/api/rooms/hostel/*", "/api/marketplace/**",
                                 "/api/ratings/hostel/**").permitAll()

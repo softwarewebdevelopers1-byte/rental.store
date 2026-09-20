@@ -10,6 +10,7 @@ import com.pata.keja.exception.ConflictException;
 import com.pata.keja.exception.NotFoundException;
 import com.pata.keja.mapper.ConversationMapper;
 import com.pata.keja.mapper.MessageMapper;
+import com.pata.keja.messaging.MessageEventBus;
 import com.pata.keja.repository.ConversationParticipantRepository;
 import com.pata.keja.repository.ConversationRepository;
 import com.pata.keja.repository.MessageRepository;
@@ -32,19 +33,22 @@ public class MessageServiceImpl implements MessageService {
     private final UserRepository userRepo;
     private final ConversationMapper conversationMapper;
     private final MessageMapper messageMapper;
+    private final MessageEventBus messageEventBus;
 
     public MessageServiceImpl(ConversationRepository conversationRepo,
             ConversationParticipantRepository participantRepo,
             MessageRepository messageRepo,
             UserRepository userRepo,
             ConversationMapper conversationMapper,
-            MessageMapper messageMapper) {
+            MessageMapper messageMapper,
+            MessageEventBus messageEventBus) {
         this.conversationRepo = conversationRepo;
         this.participantRepo = participantRepo;
         this.messageRepo = messageRepo;
         this.userRepo = userRepo;
         this.conversationMapper = conversationMapper;
         this.messageMapper = messageMapper;
+        this.messageEventBus = messageEventBus;
     }
 
     @Override
@@ -119,7 +123,11 @@ public class MessageServiceImpl implements MessageService {
         // Author has read their own message
         senderParticipant.setLastReadAt(m.getCreatedAt());
 
-        return messageMapper.toResponse(m);
+        MessageResponse response = messageMapper.toResponse(m);
+        c.getParticipants().stream()
+                .filter(participant -> !participant.getUser().getId().equals(senderId))
+                .forEach(participant -> messageEventBus.publish(participant.getUser().getId(), response));
+        return response;
     }
 
     @Override
@@ -181,6 +189,7 @@ public class MessageServiceImpl implements MessageService {
             Instant lastRead = c.getParticipants().stream()
                     .filter(p -> p.getUser().getId().equals(userId))
                     .map(ConversationParticipant::getLastReadAt)
+                    .filter(java.util.Objects::nonNull)
                     .findFirst()
                     .orElse(null);
             if (lastRead == null) {

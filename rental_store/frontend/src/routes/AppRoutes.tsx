@@ -81,6 +81,7 @@ import ConflictDetailsPage from "../pages/admin/ConflictDetailsPage";
 
 import NotFoundPage from "../pages/NotFoundPage";
 import UnauthorizedPage from "../pages/UnauthorizedPage";
+import AccountSettingsPage from "../pages/account/AccountSettingsPage";
 
 export function AppRoutes() {
   return (
@@ -118,6 +119,7 @@ export function AppRoutes() {
         <Route path="/student/ratings" element={<StudentRatingsPage />} />
         <Route path="/student/orders" element={<StudentOrdersPage />} />
         <Route path="/student/orders/:orderId" element={<StudentOrderDetailsPage />} />
+        <Route path="/account-settings" element={<AccountSettingsPage />} />
       </Route>
 
       <Route element={<RoleRoute allow={["LANDLORD"]}><LandlordLayout /></RoleRoute>}>
@@ -134,6 +136,7 @@ export function AppRoutes() {
         <Route path="/landlord/caretakers" element={<LandlordCaretakersPage />} />
         <Route path="/landlord/ratings" element={<LandlordRatingsPage />} />
         <Route path="/landlord/verification" element={<LandlordVerificationPage />} />
+        <Route path="/account-settings" element={<AccountSettingsPage />} />
       </Route>
 
       <Route element={<RoleRoute allow={["CARETAKER"]}><CaretakerLayout /></RoleRoute>}>
@@ -141,6 +144,7 @@ export function AppRoutes() {
         <Route path="/caretaker/maintenance" element={<CaretakerMaintenancePage />} />
         <Route path="/caretaker/messages" element={<CaretakerMessagesPage />} />
         <Route path="/caretaker/tenants" element={<CaretakerTenantsPage />} />
+        <Route path="/account-settings" element={<AccountSettingsPage />} />
       </Route>
 
       <Route element={<RoleRoute allow={["MARKET_AGENT"]}><AgentLayout /></RoleRoute>}>
@@ -152,6 +156,7 @@ export function AppRoutes() {
         <Route path="/agent/orders" element={<AgentOrdersPage />} />
         <Route path="/agent/orders/:orderId" element={<AgentOrderDetailsPage />} />
         <Route path="/agent/conflicts" element={<AgentConflictsPage />} />
+        <Route path="/account-settings" element={<AccountSettingsPage />} />
       </Route>
 
       <Route element={<RoleRoute allow={["ADMIN"]}><AdminLayout /></RoleRoute>}>
@@ -169,6 +174,7 @@ export function AppRoutes() {
         <Route path="/admin/orders" element={<AdminOrdersPage />} />
         <Route path="/admin/conflicts" element={<ConflictsPage />} />
         <Route path="/admin/conflicts/:conflictId" element={<ConflictDetailsPage />} />
+        <Route path="/account-settings" element={<AccountSettingsPage />} />
       </Route>
 
       <Route path="/unauthorized" element={<UnauthorizedPage />} />

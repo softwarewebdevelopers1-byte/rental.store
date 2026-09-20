@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import type { NavItem } from "../../constants/routes";
 import { APP_LOGO, APP_NAME } from "../../constants/config";
 import { useAuth } from "../../hooks/useAuth";
@@ -39,6 +39,9 @@ export function Sidebar({ items, onNavigate }: SidebarProps) {
             <span className={styles.userName}>{user.name}</span>
             <span className={styles.userRole}>{ROLE_LABELS[user.role]}</span>
           </div>
+          <Link className={styles.settings} to="/account-settings" onClick={onNavigate}>
+            Account settings
+          </Link>
           <button className={styles.logout} onClick={() => void logout()}>
             Sign out
           </button>

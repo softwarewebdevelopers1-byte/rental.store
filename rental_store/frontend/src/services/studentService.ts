@@ -37,7 +37,11 @@ function toStudent(raw: StudentResponse): Student {
     membershipStatus: raw.membershipStatus,
     createdAt: raw.createdAt,
     ...(raw.hostelId ? { hostelId: raw.hostelId } : {}),
+    ...(raw.hostelName ? { hostelName: raw.hostelName } : {}),
+    ...(raw.hostelLocation ? { hostelLocation: raw.hostelLocation } : {}),
     ...(raw.roomId ? { roomId: raw.roomId } : {}),
+    ...(raw.roomNumber ? { roomNumber: raw.roomNumber } : {}),
+    ...(raw.roomPrice != null ? { roomPrice: raw.roomPrice } : {}),
     ...(raw.requestedHostelId ? { requestedHostelId: raw.requestedHostelId } : {}),
     ...(raw.requestedHostelName
       ? { requestedHostelName: raw.requestedHostelName }

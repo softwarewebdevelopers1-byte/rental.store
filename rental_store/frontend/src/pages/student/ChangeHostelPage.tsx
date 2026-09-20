@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Card } from "../../components/common/Card";
 import { Button } from "../../components/common/Button";
@@ -14,6 +14,7 @@ import styles from "./ChangeHostelPage.module.css";
 export default function ChangeHostelPage() {
   const { show } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [student, setStudent] = useState<Student | null>(null);
 
   useEffect(() => {
@@ -29,7 +30,7 @@ export default function ChangeHostelPage() {
   }, []);
 
   const isLinking = !student?.hostelId;
-  const [code, setCode] = useState("");
+  const [code, setCode] = useState(() => searchParams.get("code")?.toUpperCase() ?? "");
   const [hostelName, setHostelName] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -106,6 +107,16 @@ export default function ChangeHostelPage() {
             : "Enter the invitation code for your new hostel."
         }
       />
+      {student.hostelId && (
+        <Card>
+          <div className={styles.currentHostel}>
+            <span className={styles.currentHostelLabel}>Current hostel</span>
+            <h2>{student.hostelName ?? "Current hostel"}</h2>
+            {student.hostelLocation && <p>{student.hostelLocation}</p>}
+            {student.roomNumber && <p>Room {student.roomNumber}</p>}
+          </div>
+        </Card>
+      )}
       {student.requestedHostelId && (
         <Card>
           <div className={styles.success}>

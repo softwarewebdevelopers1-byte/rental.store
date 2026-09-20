@@ -1,11 +1,40 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { messageService } from "../services/messageService";
+import { openMessageStream } from "../services/messageStream";
+import { getAuthToken } from "../services/authToken";
 import type { Conversation, Message } from "../types/message";
+
+function toIncomingMessage(payload: unknown): Message | null {
+  if (!payload || typeof payload !== "object") return null;
+  const value = payload as Record<string, unknown>;
+  if (
+    typeof value.id !== "string" ||
+    typeof value.conversationId !== "string" ||
+    typeof value.senderId !== "string" ||
+    typeof value.body !== "string" ||
+    typeof value.createdAt !== "string"
+  ) {
+    return null;
+  }
+  return {
+    id: value.id,
+    conversationId: value.conversationId,
+    senderId: value.senderId,
+    body: value.body,
+    createdAt: value.createdAt,
+    read: true,
+  };
+}
 
 export function useConversations(userId: string) {
   const [data, setData] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const dataRef = useRef(data);
+
+  useEffect(() => {
+    dataRef.current = data;
+  }, [data]);
 
   const reload = useCallback(async () => {
     if (!userId) return;
@@ -22,10 +51,29 @@ export function useConversations(userId: string) {
 
   useEffect(() => {
     void reload();
-    const interval = window.setInterval(() => {
-      void reload();
-    }, 5000);
-    return () => window.clearInterval(interval);
+    const token = getAuthToken();
+    if (!token) return;
+    return openMessageStream(token, {
+      onMessage: (payload) => {
+        const message = toIncomingMessage(payload);
+        if (!message) return;
+        const knownConversation = dataRef.current.some(
+          (conversation) => conversation.id === message.conversationId,
+        );
+        setData((previous) =>
+          previous.map((conversation) =>
+            conversation.id === message.conversationId
+              ? {
+                  ...conversation,
+                  lastMessageAt: message.createdAt,
+                  unreadCount: conversation.unreadCount + 1,
+                }
+              : conversation,
+          ),
+        );
+        if (!knownConversation) void reload();
+      },
+    });
   }, [reload]);
 
   return { data, loading, error, reload };
@@ -55,11 +103,20 @@ export function useMessages(conversationId: string | null) {
 
   useEffect(() => {
     void reload();
-    const interval = window.setInterval(() => {
-      void reload();
-    }, 5000);
-    return () => window.clearInterval(interval);
-  }, [reload]);
+    const token = getAuthToken();
+    if (!token) return;
+    return openMessageStream(token, {
+      onMessage: (payload) => {
+        const message = toIncomingMessage(payload);
+        if (!message || message.conversationId !== conversationId) return;
+        setData((previous) =>
+          previous.some((existing) => existing.id === message.id)
+            ? previous
+            : [...previous, message],
+        );
+      },
+    });
+  }, [conversationId, reload]);
 
   const send = useCallback(
     async (senderId: string, body: string) => {

@@ -29,6 +29,7 @@ export default function InvitationRegistrationPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [businessName, setBusinessName] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -137,12 +138,22 @@ export default function InvitationRegistrationPage() {
         )}
         <Input
           label="Password"
-          type="password"
+          type={showPassword ? "text" : "password"}
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           autoComplete="new-password"
           minLength={8}
           required
+          endAdornment={
+            <button
+              type="button"
+              onClick={() => setShowPassword((visible) => !visible)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-pressed={showPassword}
+            >
+              {showPassword ? "Hide" : "Show"}
+            </button>
+          }
         />
         {error && <p className={styles.formError}>{error}</p>}
         <Button type="submit" fullWidth size="lg" loading={submitting}>

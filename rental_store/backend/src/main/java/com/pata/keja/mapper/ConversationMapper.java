@@ -42,6 +42,7 @@ public class ConversationMapper {
         Instant viewerLastRead = c.getParticipants().stream()
                 .filter(p -> p.getUser().getId().equals(viewerId))
                 .map(ConversationParticipant::getLastReadAt)
+                .filter(java.util.Objects::nonNull)
                 .findFirst()
                 .orElse(null);
 

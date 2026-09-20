@@ -11,4 +11,11 @@
 .userRole { color: var(--color-text-muted); font-size: 12px; }
 .logout { align-self: flex-start; padding: 0; color: var(--color-danger); font-size: 13px; text-align: left; }
 .logout:hover { text-decoration: underline; }
+.settings {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+.settings:hover {
+  color: var(--color-primary);
+}
 @media (max-width: 900px) { .sidebar { box-shadow: var(--shadow-lg); } }

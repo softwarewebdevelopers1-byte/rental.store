@@ -20,6 +20,10 @@ export interface User {
 export interface Student extends User {
   role: "STUDENT";
   hostelId?: string;
+  hostelName?: string;
+  hostelLocation?: string;
+  roomNumber?: string;
+  roomPrice?: number;
   roomId?: string;
   membershipStatus: MembershipStatus;
   requestedHostelId?: string;

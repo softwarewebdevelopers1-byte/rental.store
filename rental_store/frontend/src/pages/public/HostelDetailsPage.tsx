@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   hostelService,
   type HostelSummary,
@@ -21,6 +21,7 @@ import styles from "./HostelDetailsPage.module.css";
 
 export default function HostelDetailsPage() {
   const { hostelId = "" } = useParams<{ hostelId: string }>();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { show } = useToast();
   const [hostel, setHostel] = useState<HostelSummary | null>(null);
@@ -137,6 +138,13 @@ export default function HostelDetailsPage() {
     );
 
   const vacantRooms = rooms.filter((r) => r.status === "VACANT");
+  const joinHostel = () => {
+    if (user?.role === "STUDENT") {
+      navigate(`/student/change-hostel?code=${encodeURIComponent(hostel.code)}`);
+      return;
+    }
+    navigate("/register/student");
+  };
 
   return (
     <div className={styles.wrap}>
@@ -204,11 +212,9 @@ export default function HostelDetailsPage() {
               )}
             </strong>
           </div>
-          <Link to="/register/student">
-            <Button fullWidth size="lg">
-              Join this hostel
-            </Button>
-          </Link>
+          <Button fullWidth size="lg" onClick={joinHostel}>
+            Join this hostel
+          </Button>
         </div>
       </section>
 
