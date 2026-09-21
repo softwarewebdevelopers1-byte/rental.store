@@ -212,7 +212,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
     private UserSummaryResponse toUserSummary(User user) {
-        return new UserSummaryResponse(user.getId(), user.getName(), user.getEmail(), user.getAvatarUrl(), user.getRole(),
+        return new UserSummaryResponse(user.getId(), user.getName(), user.getEmail(), user.getPhone(), user.getAvatarUrl(), user.getRole(),
                 user.isActive(), user.getCreatedAt());
     }
 }

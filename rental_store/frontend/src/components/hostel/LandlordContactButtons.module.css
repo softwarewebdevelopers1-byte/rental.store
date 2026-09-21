@@ -1,0 +1,99 @@
+.buttons {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.stacked {
+  flex-direction: column;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-width: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-weight: var(--weight-medium);
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.sm {
+  min-height: 32px;
+  padding: 0 var(--space-3);
+  font-size: 13px;
+}
+
+.md {
+  min-height: 36px;
+  padding: 0 var(--space-4);
+  font-size: 14px;
+}
+
+.whatsapp {
+  background: #e8f8ee;
+  color: #168a45;
+  border-color: #bdeacb;
+}
+
+.whatsapp:hover:not(:disabled) {
+  background: #d8f3e2;
+}
+
+.call {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-color: var(--color-border-strong);
+}
+
+.call:hover:not(:disabled) {
+  background: var(--color-surface-alt);
+}
+
+.icon {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+}
+
+.floating {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .floating {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 20;
+    display: block;
+    padding: 10px 12px max(12px, env(safe-area-inset-bottom));
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .floating .buttons {
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  .floating .button {
+    flex: 1;
+  }
+}

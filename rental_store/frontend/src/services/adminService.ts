@@ -44,6 +44,7 @@ interface UserSummaryResponse {
   id: string;
   name: string;
   email: string;
+  phone?: string | null;
   role: UserRole;
   active: boolean;
   createdAt: string;
@@ -143,7 +144,10 @@ interface InvitationSummaryResponse {
 interface InvitationResponse extends InvitationSummaryResponse {}
 
 function toUser(raw: UserSummaryResponse): User {
-  return { ...raw };
+  return {
+    ...raw,
+    phone: raw.phone ?? undefined,
+  };
 }
 
 function toStudent(raw: StudentSummaryResponse): Student {

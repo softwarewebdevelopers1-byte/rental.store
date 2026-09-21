@@ -18,6 +18,7 @@ interface BackendUser {
   id: string;
   name: string;
   email: string;
+  phone: string | null;
   avatarUrl: string | null;
   role: UserRole;
   active: boolean;
@@ -38,7 +39,11 @@ interface StudentResponse extends BackendUser {
 }
 
 function toUser(user: BackendUser): User {
-  return { ...user, avatarUrl: user.avatarUrl ?? undefined };
+  return {
+    ...user,
+    phone: user.phone ?? undefined,
+    avatarUrl: user.avatarUrl ?? undefined,
+  };
 }
 
 const demoEmails: Record<UserRole, string> = {

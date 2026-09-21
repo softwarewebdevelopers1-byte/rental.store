@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Card } from "../../components/common/Card";
 import { Button } from "../../components/common/Button";
@@ -23,6 +23,27 @@ export default function AccountSettingsPage() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setPhone(user?.phone ?? "");
+  }, [user?.phone]);
+
+  useEffect(() => {
+    let active = true;
+    void accountService.getCurrent().then((current) => {
+      if (!active) return;
+      setEmail(current.email);
+      setPhone(current.phone ?? "");
+      setAvatarUrl(current.avatarUrl ?? "");
+      updateUser(current);
+    }).catch((reason: unknown) => {
+      if (!active) return;
+      setError(reason instanceof Error ? reason.message : "Unable to load account settings.");
+    });
+    return () => {
+      active = false;
+    };
+  }, [updateUser]);
 
   const phoneError = validatePhone(phone, true);
   const tPhoneError = (key: string | null) => {

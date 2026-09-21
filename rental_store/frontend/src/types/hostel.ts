@@ -1,6 +1,7 @@
 export interface Hostel {
   id: string;
   landlordId: string;
+  landlordPhone?: string;
   name: string;
   code: string;
   location: string;

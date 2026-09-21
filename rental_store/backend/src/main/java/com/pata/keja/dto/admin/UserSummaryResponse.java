@@ -8,6 +8,7 @@ public record UserSummaryResponse(
         String id,
         String name,
         String email,
+        String phone,
         String avatarUrl,
         UserRoles role,
         boolean active,

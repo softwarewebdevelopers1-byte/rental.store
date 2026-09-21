@@ -17,6 +17,7 @@ public record HostelResponse(
 
         String landlordId,
         String landlordName,
+        String landlordPhone,
         boolean landlordVerified,
 
         int totalRooms,

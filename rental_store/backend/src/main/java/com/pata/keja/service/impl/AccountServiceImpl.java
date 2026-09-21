@@ -31,6 +31,14 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public UserSummaryResponse getCurrent() {
+        User user = userRepository.findById(CurrentUserProvider.requireUserId())
+                .orElseThrow(() -> new NotFoundException("User not found"));
+        return toUserSummary(user);
+    }
+
+    @Override
     public UserSummaryResponse updateCurrent(AccountUpdateRequest request) {
         User user = userRepository.findById(CurrentUserProvider.requireUserId())
                 .orElseThrow(() -> new NotFoundException("User not found"));
@@ -64,10 +72,15 @@ public class AccountServiceImpl implements AccountService {
             user.setPhone(request.phone());
         }
 
+        return toUserSummary(user);
+    }
+
+    private UserSummaryResponse toUserSummary(User user) {
         return new UserSummaryResponse(
                 user.getId(),
                 user.getName(),
                 user.getEmail(),
+                user.getPhone(),
                 user.getAvatarUrl(),
                 user.getRole(),
                 user.isActive(),

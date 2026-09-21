@@ -14,6 +14,7 @@ import { Skeleton } from "../../components/common/Skeleton";
 import { EmptyState } from "../../components/common/EmptyState";
 import { ErrorState } from "../../components/common/ErrorState";
 import { MpesaPaymentModal } from "../../components/payments/MpesaPaymentModal";
+import { LandlordContactButtons } from "../../components/hostel/LandlordContactButtons";
 import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../../hooks/useToast";
 import { billingPeriodLabel, type Room } from "../../types/room";
@@ -32,7 +33,6 @@ export default function HostelDetailsPage() {
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [landlordPhone, setLandlordPhone] = useState<string | null>(null);
 
   async function load() {
     setLoading(true);
@@ -111,23 +111,6 @@ export default function HostelDetailsPage() {
   useEffect(() => {
     void load();
   }, [hostelId]);
-
-  useEffect(() => {
-    // Fetch landlord phone for contact links
-    (async () => {
-      try {
-        if (hostel?.landlordId) {
-          const mod = await import("../../services/landlordService");
-          const landlord = await mod.landlordService.getById(hostel.landlordId);
-          setLandlordPhone(landlord.phone ?? null);
-        } else {
-          setLandlordPhone(null);
-        }
-      } catch {
-        setLandlordPhone(null);
-      }
-    })();
-  }, [hostel]);
 
   if (loading) {
     return (
@@ -252,21 +235,15 @@ export default function HostelDetailsPage() {
               )}
             </strong>
           </div>
-          {landlordPhone && (
-            <div className={styles.stat}>
-              <span>Contact landlord</span>
-              <strong>
-                <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
-                  <a href={`tel:${landlordPhone}`}>
-                    <Button size="sm" variant="secondary">Call</Button>
-                  </a>
-                  <a href={`https://wa.me/${landlordPhone.replace(/\D/g, "").replace(/^0+/, "")}`} target="_blank" rel="noreferrer">
-                    <Button size="sm" variant="primary">WhatsApp</Button>
-                  </a>
-                </div>
-              </strong>
-            </div>
-          )}
+          <div className={styles.stat}>
+            <span>Contact landlord</span>
+            <LandlordContactButtons
+              landlordName={hostel.landlordName ?? ""}
+              landlordPhone={hostel.landlordPhone ?? ""}
+              hostelName={hostel.name}
+              size="sm"
+            />
+          </div>
           <Button fullWidth size="lg" onClick={joinHostel}>
             Join this hostel
           </Button>

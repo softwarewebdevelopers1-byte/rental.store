@@ -69,6 +69,7 @@ interface HostelSummaryResponse {
   landlordVerified: boolean;
   landlordId: string;
   landlordName: string;
+  landlordPhone?: string | null;
   createdAt: string;
 }
 
@@ -142,6 +143,7 @@ function toHostelSummary(raw: HostelSummaryResponse): HostelSummary {
     billingPeriod: raw.billingPeriod,
     landlordVerified: raw.landlordVerified,
     landlordName: raw.landlordName,
+    landlordPhone: raw.landlordPhone ?? undefined,
   };
 }
 

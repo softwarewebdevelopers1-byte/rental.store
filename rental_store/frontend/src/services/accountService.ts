@@ -5,6 +5,7 @@ interface AccountUpdateResponse {
   id: string;
   name: string;
   email: string;
+  phone: string | null;
   avatarUrl: string | null;
   role: User["role"];
   active: boolean;
@@ -20,10 +21,20 @@ export interface AccountUpdateInput {
 }
 
 export const accountService = {
+  async getCurrent(): Promise<User> {
+    const response = await http.get<AccountUpdateResponse>("/account/me");
+    return {
+      ...response,
+      phone: response.phone ?? undefined,
+      avatarUrl: response.avatarUrl ?? undefined,
+    };
+  },
+
   async update(input: AccountUpdateInput): Promise<User> {
     const response = await http.patch<AccountUpdateResponse>("/account/me", input);
     return {
       ...response,
+      phone: response.phone ?? undefined,
       avatarUrl: response.avatarUrl ?? undefined,
     };
   },

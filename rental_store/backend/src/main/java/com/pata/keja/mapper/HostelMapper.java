@@ -90,6 +90,7 @@ public class HostelMapper {
 
                 h.getLandlord().getId(),
                 h.getLandlord().getName(),
+                h.getLandlord().getPhone(),
                 h.getLandlord().getVerificationStatus() == VerificationStatus.APPROVED,
 
                 rooms.size(),
