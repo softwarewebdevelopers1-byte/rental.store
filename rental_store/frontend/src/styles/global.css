@@ -4,12 +4,14 @@
 html {
   color-scheme: light;
   background: var(--color-bg);
+  scroll-behavior: smooth;
 }
 
 body {
   font-family: var(--font-sans);
   font-size: var(--text-base);
-  line-height: 1.5;
+  font-weight: var(--weight-normal);
+  line-height: 1.6;
   color: var(--color-text);
   background: var(--color-bg);
 }
@@ -25,13 +27,14 @@ h4,
 h5,
 h6 {
   color: var(--color-text);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
   line-height: 1.2;
   letter-spacing: -0.02em;
 }
 
 h1 {
   font-size: var(--text-3xl);
+  letter-spacing: -0.03em;
 }
 
 h2 {
@@ -51,7 +54,9 @@ p {
 }
 
 a {
-  transition: color 120ms ease, background-color 120ms ease;
+  color: inherit;
+  transition: color 150ms ease, background-color 150ms ease,
+    border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
 }
 
 button,
@@ -59,6 +64,13 @@ input,
 select,
 textarea {
   font-family: inherit;
+}
+
+main button[class*="primary"] {
+  border-radius: var(--radius-full);
+  padding: 12px 24px;
+  font-size: 15px;
+  font-weight: var(--weight-semibold);
 }
 
 :focus-visible {
@@ -69,6 +81,20 @@ textarea {
 button:disabled {
   cursor: not-allowed;
   opacity: 0.55;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tabular,
+[data-price],
+input[type="number"] {
+  font-variant-numeric: tabular-nums;
 }
 
 ::selection {

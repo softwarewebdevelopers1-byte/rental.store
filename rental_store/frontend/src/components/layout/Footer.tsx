@@ -75,7 +75,9 @@ export function Footer({ hideBackToTop: _hideBackToTop = false }: FooterProps) {
           <Link to="/" className={styles.brand} aria-label={APP_NAME}>
             <img src={APP_LOGO} alt={APP_NAME} className={styles.logo} />
           </Link>
-          <p className={styles.tagline}>Find, book, and manage hostel living.</p>
+          <p className={styles.tagline}>
+            Find, book, and manage hostel living.
+          </p>
         </div>
 
         <FooterLinks title="Product" links={productLinks} />
@@ -85,7 +87,9 @@ export function Footer({ hideBackToTop: _hideBackToTop = false }: FooterProps) {
       </div>
 
       <div className={styles.bottomBar}>
-        <p>© {new Date().getFullYear()} {APP_NAME}. All rights reserved.</p>
+        <p>
+          © {new Date().getFullYear()} {APP_NAME}. All rights reserved.
+        </p>
         <nav className={styles.bottomLinks} aria-label="Footer">
           <Link to="/policies/platform">Platform Terms</Link>
           <Link to="/policies/platform">Privacy</Link>
@@ -94,6 +98,7 @@ export function Footer({ hideBackToTop: _hideBackToTop = false }: FooterProps) {
           </a>
           <a href="tel:0757475316">0757475316</a>
         </nav>
+        <p className={styles.madeLine}>Made with care by CarlozTechnologies</p>
       </div>
     </footer>
   );

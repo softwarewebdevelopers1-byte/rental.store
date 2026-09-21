@@ -36,7 +36,7 @@ export default function CartPage() {
           description="Browse products and packs to get started."
           action={
             <Link to="/marketplace">
-              <Button>Go to Marketplace</Button>
+              <Button>Browse the marketplace</Button>
             </Link>
           }
         />

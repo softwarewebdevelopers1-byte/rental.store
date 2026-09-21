@@ -1,7 +1,5 @@
 import { Link } from "react-router-dom";
 import type { HostelSummary } from "../../services/hostelService";
-import { Badge } from "../common/Badge";
-import { RatingStars } from "../common/RatingStars";
 import { PriceDisplay } from "../common/PriceDisplay";
 import { billingPeriodLabel } from "../../types/room";
 import styles from "./HostelCard.module.css";
@@ -25,15 +23,30 @@ export function HostelCard({ hostel }: HostelCardProps) {
           className={styles.image}
           loading="lazy"
         />
+        {hostel.landlordVerified && (
+          <span className={styles.verified}>Verified</span>
+        )}
+        <span className={styles.save} aria-hidden="true">
+          <svg viewBox="0 0 24 24" role="presentation">
+            <path d="M20.8 8.8c0 5.1-8.8 10.1-8.8 10.1S3.2 13.9 3.2 8.8A4.7 4.7 0 0 1 12 6.2a4.7 4.7 0 0 1 8.8 2.6Z" />
+          </svg>
+        </span>
       </Link>
       <div className={styles.body}>
-        <header className={styles.header}>
-          <h3 className={styles.name}>{hostel.name}</h3>
-          {hostel.landlordVerified && <Badge tone="success">Verified</Badge>}
-        </header>
-        <p className={styles.location}>📍 {hostel.location}</p>
+        <h3 className={styles.name}>{hostel.name}</h3>
+        <p className={styles.location}>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 21s7-6.1 7-12A7 7 0 0 0 5 9c0 5.9 7 12 7 12Z" />
+            <circle cx="12" cy="9" r="2.2" />
+          </svg>
+          {hostel.location}
+        </p>
         <div className={styles.meta}>
-          <RatingStars value={hostel.rating} count={hostel.reviewCount} />
+          <span className={styles.rating}>
+            <span className={styles.stars} aria-hidden="true">★★★★★</span>
+            <strong>{hostel.rating.toFixed(1)}</strong>
+            <span>({hostel.reviewCount})</span>
+          </span>
           <span className={styles.vacant}>
             {hostel.vacantRooms > 0
               ? `${hostel.vacantRooms} vacant`

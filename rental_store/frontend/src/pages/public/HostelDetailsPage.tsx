@@ -5,8 +5,6 @@ import {
   type HostelSummary,
 } from "../../services/hostelService";
 import { paymentService } from "../../services/paymentService";
-import { PageHeader } from "../../components/layout/PageHeader";
-import { Badge } from "../../components/common/Badge";
 import { RatingStars } from "../../components/common/RatingStars";
 import { PriceDisplay } from "../../components/common/PriceDisplay";
 import { Button } from "../../components/common/Button";
@@ -30,6 +28,7 @@ export default function HostelDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeImage, setActiveImage] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -112,10 +111,23 @@ export default function HostelDetailsPage() {
     void load();
   }, [hostelId]);
 
+  useEffect(() => {
+    if (!lightboxOpen) return undefined;
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setLightboxOpen(false);
+      if (event.key === "ArrowLeft") setActiveImage((current) => Math.max(0, current - 1));
+      if (event.key === "ArrowRight" && hostel) {
+        setActiveImage((current) => Math.min(hostel.images.length - 1, current + 1));
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [hostel, lightboxOpen]);
+
   if (loading) {
     return (
       <div className={styles.wrap}>
-        <Skeleton height={280} radius="var(--radius-lg)" />
+        <Skeleton height={360} radius="var(--radius-lg)" />
         <Skeleton height={32} width="50%" />
         <Skeleton height={20} width="30%" />
         <Skeleton height={200} radius="var(--radius-lg)" />
@@ -152,35 +164,45 @@ export default function HostelDetailsPage() {
     navigate("/register/student");
   };
 
+  const previousImage = () => setActiveImage((current) => Math.max(0, current - 1));
+  const nextImage = () => setActiveImage((current) => Math.min(hostel.images.length - 1, current + 1));
+
   return (
     <div className={styles.wrap}>
-      <Link to="/hostels" className={styles.back}>
-        ← Back to hostels
-      </Link>
-      <PageHeader
-        title={hostel.name}
-        subtitle={hostel.location}
-        actions={
-          hostel.landlordVerified ? (
-            <Badge tone="success">Verified landlord</Badge>
-          ) : undefined
-        }
-      />
+      <Link to="/hostels" className={styles.back}>← Back to hostels</Link>
 
-      <section className={styles.gallery}>
-        <div className={styles.hero}>
-          <img
-            src={hostel.images[activeImage]}
-            alt={`${hostel.name} photo ${activeImage + 1}`}
-          />
+      <header className={styles.titleSection}>
+        <div>
+          <h1>{hostel.name}</h1>
+          <div className={styles.titleMeta}>
+            <span>{hostel.location}</span>
+            <span aria-hidden="true">·</span>
+            <RatingStars value={hostel.rating} count={hostel.reviewCount} />
+          </div>
         </div>
-        <div className={styles.thumbs}>
-          {hostel.images.map((src, i) => (
+        {hostel.landlordVerified && <span className={styles.verified}>Verified landlord</span>}
+      </header>
+
+      <section className={styles.gallery} aria-label={`${hostel.name} photos`}>
+        <div className={styles.galleryTrack}>
+          {hostel.images.map((src, index) => (
             <button
               key={src}
-              className={`${styles.thumb} ${i === activeImage ? styles.thumbActive : ""}`}
-              onClick={() => setActiveImage(i)}
-              aria-label={`Photo ${i + 1}`}
+              className={`${styles.galleryImage} ${index === 0 ? styles.galleryPrimary : ""}`}
+              onClick={() => { setActiveImage(index); setLightboxOpen(true); }}
+              aria-label={`Open photo ${index + 1}`}
+            >
+              <img src={src} alt={`${hostel.name} photo ${index + 1}`} />
+            </button>
+          ))}
+        </div>
+        <div className={styles.thumbs}>
+          {hostel.images.map((src, index) => (
+            <button
+              key={src}
+              className={`${styles.thumb} ${index === activeImage ? styles.thumbActive : ""}`}
+              onClick={() => setActiveImage(index)}
+              aria-label={`Photo ${index + 1}`}
             >
               <img src={src} alt="" />
             </button>
@@ -192,14 +214,52 @@ export default function HostelDetailsPage() {
         <div className={styles.infoBlock}>
           <h2>About this hostel</h2>
           <p>{hostel.description || "No description provided."}</p>
+          <section className={styles.rooms}>
+            <h2>Available rooms</h2>
+            {rooms.length === 0 ? (
+              <EmptyState
+                title="No rooms listed"
+                description="This hostel hasn't published any rooms yet."
+              />
+            ) : (
+              <div className={styles.roomList}>
+                {rooms.map((r) => {
+                  const bookable = r.status === "VACANT";
+                  return (
+                    <div key={r.id} className={`${styles.roomRow} ${bookable ? "" : styles.roomDisabled}`}>
+                      <span className={styles.roomNumber}>Room {r.number}</span>
+                      <PriceDisplay
+                        amount={r.price}
+                        suffix={`/${billingPeriodLabel[r.billingPeriod ?? "MONTHLY"].replace("per ", "")}`}
+                      />
+                      <span className={`${styles.statusPill} ${bookable ? styles.statusVacant : styles.statusOccupied}`}>
+                        {r.status}
+                      </span>
+                      <Button
+                        size="sm"
+                        variant={bookable ? "primary" : "secondary"}
+                        disabled={!bookable || submitting}
+                        onClick={() => void openRoomPayment(r)}
+                      >
+                        {bookable ? "Request room" : "Occupied"}
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
         </div>
-        <div className={styles.sideCard}>
-          <div className={styles.ratingRow}>
-            <RatingStars
-              value={hostel.rating}
-              count={hostel.reviewCount}
-              size="md"
-            />
+        <aside className={styles.sideCard}>
+          <div className={styles.bookingPrice}>
+            <span>From</span>
+            {hostel.priceRange ? (
+              <PriceDisplay
+                amount={hostel.priceRange[0]}
+                suffix={hostel.billingPeriod ? `/${billingPeriodLabel[hostel.billingPeriod].replace("per ", "")}` : "/period varies"}
+                size="lg"
+              />
+            ) : <strong>Price on request</strong>}
           </div>
           <div className={styles.stat}>
             <span>Vacant rooms</span>
@@ -210,32 +270,14 @@ export default function HostelDetailsPage() {
             <strong>
               {hostel.priceRange ? (
                 <>
-                  <PriceDisplay
-                    amount={hostel.priceRange[0]}
-                    suffix={
-                      hostel.billingPeriod
-                        ? `/${billingPeriodLabel[hostel.billingPeriod].replace("per ", "")}`
-                        : "/period varies"
-                    }
-                    size="sm"
-                  />{" "}
-                  –{" "}
-                  <PriceDisplay
-                    amount={hostel.priceRange[1]}
-                    suffix={
-                      hostel.billingPeriod
-                        ? `/${billingPeriodLabel[hostel.billingPeriod].replace("per ", "")}`
-                        : "/period varies"
-                    }
-                    size="sm"
-                  />
+                  <PriceDisplay amount={hostel.priceRange[0]} suffix={hostel.billingPeriod ? `/${billingPeriodLabel[hostel.billingPeriod].replace("per ", "")}` : "/period varies"} size="sm" />
+                  {" – "}
+                  <PriceDisplay amount={hostel.priceRange[1]} suffix={hostel.billingPeriod ? `/${billingPeriodLabel[hostel.billingPeriod].replace("per ", "")}` : "/period varies"} size="sm" />
                 </>
-              ) : (
-                "—"
-              )}
+              ) : "—"}
             </strong>
           </div>
-          <div className={styles.stat}>
+          <div className={styles.contact}>
             <span>Contact landlord</span>
             <LandlordContactButtons
               landlordName={hostel.landlordName ?? ""}
@@ -244,52 +286,21 @@ export default function HostelDetailsPage() {
               size="sm"
             />
           </div>
-          <Button fullWidth size="lg" onClick={joinHostel}>
-            Join this hostel
-          </Button>
-        </div>
+          {hostel.landlordVerified && <p className={styles.trustLine}>✓ Verified landlord</p>}
+          <Button fullWidth size="lg" onClick={joinHostel}>Join this hostel</Button>
+        </aside>
       </section>
 
-      <section className={styles.rooms}>
-        <h2>Available rooms</h2>
-        {rooms.length === 0 ? (
-          <EmptyState
-            title="No rooms listed"
-            description="This hostel hasn't published any rooms yet."
-          />
-        ) : (
-          <div className={styles.roomGrid}>
-            {rooms.map((r) => {
-              const bookable = r.status === "VACANT";
-              return (
-                <div
-                  key={r.id}
-                  className={`${styles.roomCard} ${bookable ? "" : styles.roomDisabled}`}
-                >
-                  <div className={styles.roomTop}>
-                    <span className={styles.roomNumber}>Room {r.number}</span>
-                    <Badge tone={bookable ? "success" : "info"}>
-                      {r.status}
-                    </Badge>
-                  </div>
-                  <PriceDisplay
-                    amount={r.price}
-                    suffix={`/${billingPeriodLabel[r.billingPeriod ?? "MONTHLY"].replace("per ", "")}`}
-                  />
-                  <Button
-                    size="sm"
-                    variant={bookable ? "primary" : "secondary"}
-                    disabled={!bookable || submitting}
-                    onClick={() => void openRoomPayment(r)}
-                  >
-                    {bookable ? "Request room" : "Occupied"}
-                  </Button>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
+      {lightboxOpen && (
+        <div className={styles.lightbox} role="dialog" aria-modal="true" aria-label="Hostel photo viewer">
+          <button className={styles.lightboxClose} onClick={() => setLightboxOpen(false)} aria-label="Close photo viewer">×</button>
+          <button className={styles.lightboxPrev} onClick={previousImage} disabled={activeImage === 0} aria-label="Previous photo">‹</button>
+          <img src={hostel.images[activeImage]} alt={`${hostel.name} photo ${activeImage + 1}`} />
+          <button className={styles.lightboxNext} onClick={nextImage} disabled={activeImage === hostel.images.length - 1} aria-label="Next photo">›</button>
+          <div className={styles.lightboxCount}>{activeImage + 1} / {hostel.images.length}</div>
+        </div>
+      )}
+
       <MpesaPaymentModal
         open={paymentOpen}
         amount={selectedRoom?.price ?? 0}

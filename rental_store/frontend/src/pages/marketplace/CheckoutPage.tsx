@@ -104,7 +104,7 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div>
+    <div className={styles.checkout}>
       <PageHeader title="Checkout" subtitle="Review and place your order." />
       <div className={styles.grid}>
         <Card title="Order items">
@@ -149,7 +149,7 @@ export default function CheckoutPage() {
             onClick={() => setOpen(true)}
             loading={placing}
           >
-            Pay with M-Pesa
+            Place order
           </Button>
         </aside>
       </div>

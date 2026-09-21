@@ -80,12 +80,20 @@ export function ProductCard({ product }: { product: Product }) {
             <Button
               size="sm"
               variant="secondary"
+              leadingIcon={
+                <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+                  <path d="M4 5h2l1.5 9h9.8l2-6.5H7.2" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+                  <circle cx="10" cy="19" r="1.2" fill="currentColor" />
+                  <circle cx="17" cy="19" r="1.2" fill="currentColor" />
+                  <path d="M14 3v5M11.5 5.5h5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                </svg>
+              }
               onClick={() => {
                 add({ kind: "PRODUCT", refId: product.id, quantity: 1 });
                 show(`Added ${product.name} to cart.`, "success");
               }}
             >
-              Add to cart
+              Add
             </Button>
             <Button
               size="sm"
