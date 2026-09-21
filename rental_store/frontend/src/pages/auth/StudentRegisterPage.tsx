@@ -2,13 +2,16 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "../../components/common/Button";
 import { Input } from "../../components/common/Input";
+import { PhoneInput } from "../../components/common/PhoneInput";
 import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../../hooks/useToast";
 import { authService } from "../../services/authService";
+import { validatePhone } from "../../utils/phone";
 import {
   isEmail,
   isNonEmpty,
   isStrongEnough,
+  isPhoneE164,
   normalizeCode,
 } from "../../utils/validators";
 import styles from "./StudentRegisterPage.module.css";
@@ -26,6 +29,7 @@ export default function StudentRegisterPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [hostelCode, setHostelCode] = useState("");
+  const [phone, setPhone] = useState("");
   const [codeState, setCodeState] = useState<CodeState>("idle");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +50,26 @@ export default function StudentRegisterPage() {
     isNonEmpty(name) &&
     isEmail(email) &&
     isStrongEnough(password) &&
+    isPhoneE164(phone) &&
     (hostelCode.trim() === "" || codeState === "valid");
+
+  const phoneError = validatePhone(phone, true);
+  const tPhoneError = (key: string | null) => {
+    switch (key) {
+      case "required":
+        return "Phone number is required.";
+      case "invalid":
+        return "Please enter a valid phone number.";
+      case "tooShort":
+        return "Phone number is too short.";
+      case "tooLong":
+        return "Phone number is too long.";
+      case "invalidChars":
+        return "Phone number can only contain digits, spaces, +, -, and parentheses.";
+      default:
+        return undefined;
+    }
+  };
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -58,6 +81,7 @@ export default function StudentRegisterPage() {
         name: name.trim(),
         email: email.trim(),
         password,
+        phone: phone.trim(),
         hostelCode: hostelCode.trim()
           ? normalizeCode(hostelCode)
           : undefined,
@@ -121,6 +145,14 @@ export default function StudentRegisterPage() {
           onChange={(e) => setEmail(e.target.value)}
           autoComplete="email"
           required
+        />
+        <PhoneInput
+          label="Phone"
+          value={phone}
+          onChange={setPhone}
+          required
+          defaultCountry="KE"
+          error={phoneError ? tPhoneError(phoneError) : undefined}
         />
         <Input
           label="Password"

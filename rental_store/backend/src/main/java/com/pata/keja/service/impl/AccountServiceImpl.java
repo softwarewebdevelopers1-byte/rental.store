@@ -60,6 +60,10 @@ public class AccountServiceImpl implements AccountService {
             user.setAvatarUrl(request.avatarUrl());
         }
 
+        if (request.phone() != null && !request.phone().isBlank()) {
+            user.setPhone(request.phone());
+        }
+
         return new UserSummaryResponse(
                 user.getId(),
                 user.getName(),

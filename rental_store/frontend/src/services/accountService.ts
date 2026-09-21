@@ -13,6 +13,7 @@ interface AccountUpdateResponse {
 
 export interface AccountUpdateInput {
   email?: string;
+  phone?: string;
   avatarUrl?: string;
   currentPassword?: string;
   newPassword?: string;

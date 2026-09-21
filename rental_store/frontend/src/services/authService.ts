@@ -10,6 +10,7 @@ export interface RegisterStudentInput {
   name: string;
   email: string;
   password: string;
+  phone: string;
   hostelCode?: string;
 }
 

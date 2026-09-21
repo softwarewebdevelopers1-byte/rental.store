@@ -62,6 +62,10 @@ public class StudentRegistrationService {
             student.setRequestedAt(Instant.now());
         }
 
+        if (req.phone() != null && !req.phone().isBlank()) {
+            student.setPhone(req.phone());
+        }
+
         studentRepo.save(student);
 
         return studentMapper.toResponse(student);

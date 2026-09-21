@@ -3,16 +3,19 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { Card } from "../../components/common/Card";
 import { Button } from "../../components/common/Button";
 import { Input } from "../../components/common/Input";
+import { PhoneInput } from "../../components/common/PhoneInput";
 import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../../hooks/useToast";
 import { accountService } from "../../services/accountService";
 import { FileUpload } from "../../components/common/FileUpload";
+import { validatePhone } from "../../utils/phone";
 import styles from "./AccountSettingsPage.module.css";
 
 export default function AccountSettingsPage() {
   const { user, updateUser } = useAuth();
   const { show } = useToast();
   const [email, setEmail] = useState(user?.email ?? "");
+  const [phone, setPhone] = useState(user?.phone ?? "");
   const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl ?? "");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -20,6 +23,24 @@ export default function AccountSettingsPage() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const phoneError = validatePhone(phone, true);
+  const tPhoneError = (key: string | null) => {
+    switch (key) {
+      case "required":
+        return "Phone number is required.";
+      case "invalid":
+        return "Please enter a valid phone number.";
+      case "tooShort":
+        return "Phone number is too short.";
+      case "tooLong":
+        return "Phone number is too long.";
+      case "invalidChars":
+        return "Phone number can only contain digits, spaces, +, -, and parentheses.";
+      default:
+        return undefined;
+    }
+  };
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -29,6 +50,7 @@ export default function AccountSettingsPage() {
     try {
       const updated = await accountService.update({
         email: email.trim(),
+        phone: phone.trim(),
         ...(avatarUrl ? { avatarUrl } : {}),
         ...(newPassword ? { currentPassword, newPassword } : {}),
       });
@@ -51,6 +73,7 @@ export default function AccountSettingsPage() {
       <Card>
         <form className={styles.form} onSubmit={onSubmit}>
           <Input label="Email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
+          <PhoneInput label="Phone" value={phone} onChange={setPhone} required defaultCountry="KE" error={phoneError ? tPhoneError(phoneError) : undefined} />
           <FileUpload
             folder="avatars"
             label="Profile photo"
