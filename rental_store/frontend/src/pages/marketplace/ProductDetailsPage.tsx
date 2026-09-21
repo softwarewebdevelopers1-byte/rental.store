@@ -2,6 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import { useProduct } from "../../hooks/useMarketplace";
 import { useCart } from "../../hooks/useCart";
 import { useToast } from "../../hooks/useToast";
+import { useAuth } from "../../hooks/useAuth";
 import { Button } from "../../components/common/Button";
 import { PriceDisplay } from "../../components/common/PriceDisplay";
 import { Skeleton } from "../../components/common/Skeleton";
@@ -13,6 +14,7 @@ export default function ProductDetailsPage() {
   const { data, loading } = useProduct(productId);
   const { add } = useCart();
   const { show } = useToast();
+  const { user } = useAuth();
 
   if (loading) return <Skeleton height={400} radius="var(--radius-lg)" />;
   if (!data) return <EmptyState title="Product not found" />;
@@ -30,6 +32,7 @@ export default function ProductDetailsPage() {
         <div className={styles.actions}>
           <Button
             size="lg"
+            disabled={!user}
             onClick={() => {
               add({ kind: "PRODUCT", refId: data.id, quantity: 1 });
               show("Added to cart.", "success");

@@ -105,6 +105,7 @@ export function PackCard({
                   <path d="M14 3v5M11.5 5.5h5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
                 </svg>
               }
+              disabled={!user}
               onClick={() => {
                 add({ kind: "PACK", refId: pack.id, quantity: 1 });
                 show(`Added ${pack.name} to cart.`, "success");

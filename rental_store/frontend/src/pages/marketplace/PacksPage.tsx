@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { usePacks, useProducts } from "../../hooks/useMarketplace";
-import { PageHeader } from "../../components/layout/PageHeader";
 import { SearchBar } from "../../components/common/SearchBar";
 import { Button } from "../../components/common/Button";
 import { PackCard } from "../../components/marketplace/PackCard";
@@ -17,21 +16,25 @@ export default function PacksPage() {
   const productsById = Object.fromEntries(products.map((p) => [p.id, p]));
 
   return (
-    <div className={styles.wrap}>
-      <PageHeader
-        title="Packs"
-        subtitle="Bundles of essentials at a discount."
-        actions={
-          <Link to="/marketplace/products">
-            <Button variant="secondary">Browse products</Button>
-          </Link>
-        }
-      />
-      <div style={{ maxWidth: 420 }}>
-        <SearchBar value={q} onChange={setQ} placeholder="Search packs" />
+    <div className={`${styles.wrap} ${styles.listingPage}`}>
+      <header className={styles.listingHero}>
+        <div>
+          <p className={styles.eyebrow}>Hostelix marketplace</p>
+          <h1>Packs</h1>
+          <p>Ready-made bundles that make move-in simple.</p>
+        </div>
+        <Link to="/marketplace/products">
+          <Button variant="secondary">Browse products</Button>
+        </Link>
+      </header>
+      <div className={styles.listingToolbar}>
+        <div className={styles.listingSearch}>
+          <SearchBar value={q} onChange={setQ} placeholder="Search packs" />
+        </div>
+        <span className={styles.listingCount}>{loading ? "Loading packs…" : `${data.length} pack${data.length === 1 ? "" : "s"}`}</span>
       </div>
       {loading ? (
-        <div className={styles.grid}>
+        <div className={styles.gridPacks}>
           {Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} height={320} radius="var(--radius-lg)" />
           ))}
@@ -39,7 +42,7 @@ export default function PacksPage() {
       ) : data.length === 0 ? (
         <EmptyState title="No packs found" />
       ) : (
-        <div className={styles.grid}>
+        <div className={styles.gridPacks}>
           {data.map((p) => (
             <PackCard key={p.id} pack={p} productsById={productsById} />
           ))}

@@ -4,6 +4,7 @@ import { HostelCard } from "../../components/hostel/HostelCard";
 import { Skeleton } from "../../components/common/Skeleton";
 import { ErrorState } from "../../components/common/ErrorState";
 import { useHostels } from "../../hooks/useHostels";
+import { useMediaQuery } from "../../hooks/useMediaQuery";
 import type { HostelFilters } from "../../services/hostelService";
 import styles from "./HostelDiscoveryPage.module.css";
 
@@ -34,7 +35,8 @@ export default function HostelDiscoveryPage() {
   const [minRating, setMinRating] = useState("0");
   const [sortBy, setSortBy] = useState<HostelFilters["sortBy"]>("rating-desc");
   const [vacantOnly, setVacantOnly] = useState(false);
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const isMobile = useMediaQuery("(max-width: 800px)");
+  const [filtersOpen, setFiltersOpen] = useState(!isMobile);
   const filters = useMemo<HostelFilters>(
     () => ({
       query: query || undefined,
@@ -142,14 +144,16 @@ export default function HostelDiscoveryPage() {
         </div>
       </header>
 
-      <button className={styles.mobileFilterButton} type="button" onClick={() => setFiltersOpen((open) => !open)} aria-expanded={filtersOpen}>
-        <span><SearchIcon /> Filters</span>
-        <span aria-hidden="true">{filtersOpen ? "−" : "+"}</span>
-      </button>
-      <section className={`${styles.filters} ${filtersOpen ? styles.filtersOpen : ""}`} aria-label="Hostel filters">
-        {filterControls}
-        <button type="button" className={styles.clearLink} onClick={clearFilters}>Clear filters</button>
-      </section>
+      <div className={styles.filterDock}>
+        <button className={styles.mobileFilterButton} type="button" onClick={() => setFiltersOpen((open) => !open)} aria-expanded={filtersOpen}>
+          <span><SearchIcon /> {filtersOpen ? "Hide filters" : "Show filters"}</span>
+          <span aria-hidden="true">{filtersOpen ? "−" : "+"}</span>
+        </button>
+        <section className={`${styles.filters} ${filtersOpen ? styles.filtersOpen : ""}`} aria-label="Hostel filters">
+          {filterControls}
+          <button type="button" className={styles.clearLink} onClick={clearFilters}>Clear filters</button>
+        </section>
+      </div>
 
       <main className={styles.results}>
         <div className={styles.resultsHeader}>

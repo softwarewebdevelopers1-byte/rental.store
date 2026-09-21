@@ -4,6 +4,47 @@
   margin: 0 auto;
   padding: var(--space-8) var(--space-6) var(--space-20);
 }
+.listingPage {
+  min-height: calc(100vh - 72px);
+}
+.listingHero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+  padding: var(--space-8) clamp(var(--space-5), 5vw, var(--space-10));
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-warm);
+}
+.listingHero h1 {
+  margin: var(--space-2) 0 var(--space-2);
+  font-size: clamp(var(--text-2xl), 4vw, var(--text-3xl));
+  font-weight: 800;
+  letter-spacing: -.04em;
+}
+.listingHero p:last-child {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+.listingToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-5) 0 var(--space-6);
+}
+.listingSearch {
+  width: min(100%, 480px);
+}
+.listingSearch :global(input) {
+  min-height: 44px;
+  border-radius: var(--radius-full);
+}
+.listingCount {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+}
 .hero {
   display: flex;
   align-items: center;
@@ -202,6 +243,23 @@
   }
   .heroMark {
     display: none;
+  }
+  .listingHero {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: var(--space-6) var(--space-5);
+  }
+  .listingHero > a,
+  .listingHero > a > button {
+    width: 100%;
+  }
+  .listingToolbar {
+    align-items: stretch;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .listingSearch {
+    width: 100%;
   }
   .promiseRow {
     grid-template-columns: 1fr;

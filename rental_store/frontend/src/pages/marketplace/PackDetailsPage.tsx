@@ -2,6 +2,7 @@ import { Link, useParams } from "react-router-dom";
 import { usePack, useProducts } from "../../hooks/useMarketplace";
 import { useCart } from "../../hooks/useCart";
 import { useToast } from "../../hooks/useToast";
+import { useAuth } from "../../hooks/useAuth";
 import { Button } from "../../components/common/Button";
 import { PriceDisplay } from "../../components/common/PriceDisplay";
 import { Skeleton } from "../../components/common/Skeleton";
@@ -14,6 +15,7 @@ export default function PackDetailsPage() {
   const { data: products } = useProducts();
   const { add } = useCart();
   const { show } = useToast();
+  const { user } = useAuth();
 
   const productsById = Object.fromEntries(products.map((p) => [p.id, p]));
 
@@ -57,6 +59,7 @@ export default function PackDetailsPage() {
         <div className={styles.actions}>
           <Button
             size="lg"
+            disabled={!user}
             onClick={() => {
               add({ kind: "PACK", refId: data.id, quantity: 1 });
               show("Added pack to cart.", "success");
