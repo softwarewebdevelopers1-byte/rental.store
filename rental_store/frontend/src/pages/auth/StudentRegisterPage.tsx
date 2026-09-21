@@ -1,5 +1,6 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { TermsCheckbox } from "../../components/auth/TermsCheckbox";
 import { Button } from "../../components/common/Button";
 import { Input } from "../../components/common/Input";
 import { PhoneInput } from "../../components/common/PhoneInput";
@@ -31,8 +32,11 @@ export default function StudentRegisterPage() {
   const [hostelCode, setHostelCode] = useState("");
   const [phone, setPhone] = useState("");
   const [codeState, setCodeState] = useState<CodeState>("idle");
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [termsError, setTermsError] = useState<string | undefined>();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const termsRef = useRef<HTMLInputElement | null>(null);
   const redirectTarget = searchParams.get("redirect");
 
   // Validate hostel code (debounced inside effect).
@@ -52,6 +56,7 @@ export default function StudentRegisterPage() {
     isStrongEnough(password) &&
     isPhoneE164(phone) &&
     (hostelCode.trim() === "" || codeState === "valid");
+  const submitDisabled = !formValid || !agreedToTerms;
 
   const phoneError = validatePhone(phone, true);
   const tPhoneError = (key: string | null) => {
@@ -73,7 +78,13 @@ export default function StudentRegisterPage() {
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    if (!agreedToTerms) {
+      setTermsError("You must agree to the Terms & Conditions to continue.");
+      termsRef.current?.focus();
+      return;
+    }
     if (!formValid) return;
+    setTermsError(undefined);
     setSubmitting(true);
     setError(null);
     try {
@@ -185,13 +196,26 @@ export default function StudentRegisterPage() {
           error={codeError}
         />
 
+        <TermsCheckbox
+          ref={termsRef}
+          policyKey="student"
+          checked={agreedToTerms}
+          onChange={(nextValue) => {
+            setAgreedToTerms(nextValue);
+            if (nextValue) {
+              setTermsError(undefined);
+            }
+          }}
+          error={termsError}
+        />
+
         {error && <p className={styles.formError}>{error}</p>}
 
         <Button
           type="submit"
           size="lg"
           fullWidth
-          disabled={!formValid}
+          disabled={submitDisabled}
           loading={submitting}
         >
           Create Account

@@ -12,6 +12,7 @@ import { RoleRoute } from "./RoleRoute";
 import LandingPage from "../pages/public/LandingPage";
 import HostelDiscoveryPage from "../pages/public/HostelDiscoveryPage";
 import HostelDetailsPage from "../pages/public/HostelDetailsPage";
+import PolicyPage from "../pages/public/PolicyPage";
 
 import MarketplaceHome from "../pages/marketplace/MarketplaceHome";
 import ProductsPage from "../pages/marketplace/ProductsPage";
@@ -91,6 +92,7 @@ export function AppRoutes() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/hostels" element={<HostelDiscoveryPage />} />
         <Route path="/hostels/:hostelId" element={<HostelDetailsPage />} />
+        <Route path="/policies/:policyKey" element={<PolicyPage />} />
         <Route path="/marketplace" element={<MarketplaceHome />} />
         <Route path="/marketplace/products" element={<ProductsPage />} />
         <Route path="/marketplace/products/:productId" element={<ProductDetailsPage />} />
