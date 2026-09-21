@@ -18,5 +18,7 @@ public record PaymentSummaryResponse(
         PaymentStatus status,
         LocalDate dueDate,
         Instant paidAt,
-        PaymentMethod method) {
+        PaymentMethod method,
+        String periodLabel,
+        String recordedByName) {
 }

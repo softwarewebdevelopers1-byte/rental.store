@@ -10,6 +10,8 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrimaryKeyJoinColumn;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -35,6 +37,7 @@ public class Landlord extends User {
     private String verificationNotes;
 
     @OneToMany(mappedBy = "landlord", fetch = FetchType.LAZY)
+    @Fetch(FetchMode.SUBSELECT)
     private List<Hostel> hostels = new ArrayList<>();
 
     public Landlord() {

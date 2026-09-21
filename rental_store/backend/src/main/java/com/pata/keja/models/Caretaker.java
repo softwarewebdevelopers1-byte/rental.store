@@ -2,6 +2,8 @@ package com.pata.keja.models;
 
 import com.pata.keja.enums.UserRoles;
 import jakarta.persistence.*;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 
 import java.util.HashSet;
 import java.util.Objects;
@@ -15,12 +17,13 @@ public class Caretaker extends User {
     /**
      * Hostels this caretaker is assigned to. Many-to-many because a caretaker
      * may cover more than one hostel, and a hostel may have more than one
-     * caretaker.
+     * caretaker. Use SUBSELECT to load all hostels in a single subselect query.
      */
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "caretaker_hostels", joinColumns = @JoinColumn(name = "caretaker_id"), inverseJoinColumns = @JoinColumn(name = "hostel_id"), indexes = {
             @Index(name = "idx_caretaker_hostels_hostel", columnList = "hostel_id")
     })
+    @Fetch(FetchMode.SUBSELECT)
     private Set<Hostel> assignedHostels = new HashSet<>();
 
     public Caretaker() {

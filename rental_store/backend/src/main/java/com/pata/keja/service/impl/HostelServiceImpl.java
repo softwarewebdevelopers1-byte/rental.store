@@ -185,6 +185,13 @@ public class HostelServiceImpl implements HostelService {
         }
         var room = roomRepository.findByHostelAndStatusOrderByNumber(hostelId, RoomStatus.VACANT).stream()
                 .findFirst().orElseThrow(() -> new ConflictException("No vacant rooms"));
+        var previousRoom = student.getRoom();
+        if (previousRoom != null && previousRoom != room) {
+            previousRoom.setTenant(null);
+            previousRoom.setStatus(RoomStatus.VACANT);
+            student.setRoom(null);
+            roomRepository.saveAndFlush(previousRoom);
+        }
         student.setHostel(hostel);
         student.setRoom(room);
         student.setRequestedHostel(null);

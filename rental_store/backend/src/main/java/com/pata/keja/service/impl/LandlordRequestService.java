@@ -46,6 +46,13 @@ public class LandlordRequestService {
                 .findFirst()
                 .orElseThrow(() -> new ConflictException("No vacant rooms"));
 
+        Room previousRoom = s.getRoom();
+        if (previousRoom != null && previousRoom != vacant) {
+            previousRoom.setTenant(null);
+            previousRoom.setStatus(RoomStatus.VACANT);
+            s.setRoom(null);
+            roomRepo.saveAndFlush(previousRoom);
+        }
         s.setHostel(s.getRequestedHostel());
         s.setRoom(vacant);
         s.setRequestedHostel(null);

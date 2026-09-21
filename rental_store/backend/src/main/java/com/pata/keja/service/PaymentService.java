@@ -5,6 +5,12 @@ import org.springframework.data.domain.Pageable;
 
 import com.pata.keja.dto.payment.LandlordPaymentStatsResponse;
 import com.pata.keja.dto.payment.PaymentCreateRequest;
+import com.pata.keja.dto.payment.PaymentBatchRecordRequest;
+import com.pata.keja.dto.payment.PaymentHistoryFilter;
+import com.pata.keja.dto.payment.PaymentRecordRequest;
+import com.pata.keja.dto.payment.LandlordPaymentSummaryResponse;
+import com.pata.keja.dto.hostel.CaretakerPaymentPermissionRequest;
+import com.pata.keja.dto.hostel.HostelPaymentRecorderResponse;
 import com.pata.keja.dto.payment.PaymentReminderRequest;
 import com.pata.keja.dto.payment.PaymentResponse;
 import com.pata.keja.dto.payment.PaymentSummaryResponse;
@@ -30,6 +36,28 @@ public interface PaymentService {
     void sendReminders(String landlordId, PaymentCreateRequest req);
 
     void sendReminders(String landlordId, PaymentReminderRequest req);
+
+    PaymentResponse recordForLandlord(String landlordId, PaymentRecordRequest request);
+
+    PaymentResponse recordForCaretaker(String caretakerId, PaymentRecordRequest request);
+
+    java.util.List<com.pata.keja.dto.payment.PaymentSummaryResponse> recordBatch(
+            String landlordId, PaymentBatchRecordRequest request);
+
+    Page<PaymentSummaryResponse> searchForLandlord(
+            String landlordId, PaymentHistoryFilter filter, Pageable pageable);
+
+    Page<PaymentSummaryResponse> searchForCaretaker(
+            String caretakerId, PaymentHistoryFilter filter, Pageable pageable);
+
+    LandlordPaymentSummaryResponse summaryForLandlord(String landlordId);
+
+    LandlordPaymentSummaryResponse summaryForCaretaker(String caretakerId);
+
+    HostelPaymentRecorderResponse listPaymentRecorders(String landlordId, String hostelId);
+
+    HostelPaymentRecorderResponse setPaymentRecorder(
+            String landlordId, String hostelId, CaretakerPaymentPermissionRequest request);
 
     /** Enum used only by the service-layer filter. */
     enum PaymentStatusFilter {

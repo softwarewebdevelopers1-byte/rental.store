@@ -30,7 +30,9 @@ public class PaymentMapper {
                 p.getStatus(),
                 p.getDueDate(),
                 p.getPaidAt(),
-                p.getMethod());
+                p.getMethod(),
+                p.getPeriodLabel(),
+                p.getRecordedBy() != null ? p.getRecordedBy().getName() : null);
     }
 
     public PaymentResponse toResponse(Payment p) {
@@ -58,7 +60,9 @@ public class PaymentMapper {
                 p.getNotes(),
 
                 p.getCreatedAt(),
-                p.getUpdatedAt());
+                p.getUpdatedAt(),
+                p.getRecordedBy() != null ? p.getRecordedBy().getId() : null,
+                p.getRecordedBy() != null ? p.getRecordedBy().getName() : null);
     }
 
     /**

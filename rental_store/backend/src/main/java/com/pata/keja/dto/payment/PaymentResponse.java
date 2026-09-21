@@ -28,5 +28,7 @@ public record PaymentResponse(
         String notes,
 
         Instant createdAt,
-        Instant updatedAt) {
+        Instant updatedAt,
+        String recordedById,
+        String recordedByName) {
 }

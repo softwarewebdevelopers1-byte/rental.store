@@ -57,6 +57,7 @@ import CaretakerDashboard from "../pages/caretaker/CaretakerDashboard";
 import CaretakerMaintenancePage from "../pages/caretaker/CaretakerMaintenancePage";
 import CaretakerMessagesPage from "../pages/caretaker/CaretakerMessagesPage";
 import CaretakerTenantsPage from "../pages/caretaker/CaretakerTenantsPage";
+import CaretakerPaymentsPage from "../pages/caretaker/CaretakerPaymentsPage";
 
 import AgentDashboard from "../pages/agent/AgentDashboard";
 import AgentProductsPage from "../pages/agent/AgentProductsPage";
@@ -145,6 +146,7 @@ export function AppRoutes() {
         <Route path="/caretaker/maintenance" element={<CaretakerMaintenancePage />} />
         <Route path="/caretaker/messages" element={<CaretakerMessagesPage />} />
         <Route path="/caretaker/tenants" element={<CaretakerTenantsPage />} />
+        <Route path="/caretaker/payments" element={<CaretakerPaymentsPage />} />
       </Route>
 
       <Route element={<RoleRoute allow={["MARKET_AGENT"]}><AgentLayout /></RoleRoute>}>

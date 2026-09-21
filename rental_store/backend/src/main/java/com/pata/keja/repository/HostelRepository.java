@@ -10,6 +10,8 @@ import org.springframework.data.repository.query.Param;
 import com.pata.keja.models.Hostel;
 
 import java.util.Optional;
+import java.util.List;
+import java.util.Collection;
 
 public interface HostelRepository extends JpaRepository<Hostel, String> {
 
@@ -22,26 +24,34 @@ public interface HostelRepository extends JpaRepository<Hostel, String> {
     /**
      * Full hostel with everything the HostelResponse mapper needs.
      * Do not use this in list endpoints — use the summary query below.
+     * Note: Only fetch single-valued associations to avoid MultipleBagFetchException.
+     * Collections (rooms, caretakers, images) are loaded via lazy loading or separate queries.
      */
-    @EntityGraph(attributePaths = {
-            "landlord",
-            "rooms",
-            "images",
-            "caretakers"
-    })
+    @EntityGraph(attributePaths = { "landlord" }, type = EntityGraph.EntityGraphType.LOAD)
     @Query("select h from Hostel h where h.id = :id")
     Optional<Hostel> findByIdWithDetails(@Param("id") String id);
+
+    @EntityGraph(attributePaths = { "landlord", "caretakers", "paymentRecorderCaretakerIds" })
+    @Query("select h from Hostel h where h.id = :id")
+    Optional<Hostel> findByIdWithPaymentRecorderDetails(@Param("id") String id);
+
+    @Query("select h.id from Hostel h where h.landlord.id = :landlordId and h.active = true")
+    List<String> findActiveIdsByLandlordId(@Param("landlordId") String landlordId);
+
+    @EntityGraph(attributePaths = { "landlord" })
+    List<Hostel> findAllByIdIn(Collection<String> ids);
 
     /**
      * Landlord's own hostels — paginated, with only the collections the
      * HostelSummaryResponse needs. This keeps the query cheap.
+     * Note: Only fetch landlord (single-valued); collections loaded via lazy loading.
      */
-    @EntityGraph(attributePaths = { "rooms", "images", "landlord" })
+    @EntityGraph(attributePaths = { "landlord" }, type = EntityGraph.EntityGraphType.LOAD)
     Page<Hostel> findAllByLandlordIdAndActiveTrue(String landlordId, Pageable pageable);
 
     long countByActiveTrue();
 
-    @EntityGraph(attributePaths = { "rooms", "images", "landlord" })
+    @EntityGraph(attributePaths = { "landlord" }, type = EntityGraph.EntityGraphType.LOAD)
     @Query("select h from Hostel h")
     Page<Hostel> findAllForAdmin(Pageable pageable);
 
@@ -66,7 +76,7 @@ public interface HostelRepository extends JpaRepository<Hostel, String> {
             @Param("minRating") Double minRating,
             Pageable pageable);
 
-    @EntityGraph(attributePaths = { "landlord", "rooms", "images" })
+    @EntityGraph(attributePaths = { "landlord" }, type = EntityGraph.EntityGraphType.LOAD)
     @Query("""
                 select h from Hostel h
                 where h.active = true

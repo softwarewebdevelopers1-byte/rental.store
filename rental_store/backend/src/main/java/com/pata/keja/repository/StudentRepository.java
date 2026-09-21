@@ -24,6 +24,9 @@ public interface StudentRepository extends JpaRepository<Student, String> {
     Optional<Student> findWithAssociationsById(String id);
 
     @EntityGraph(attributePaths = { "hostel", "room" })
+    List<Student> findAllByIdIn(Collection<String> ids);
+
+    @EntityGraph(attributePaths = { "hostel", "room" })
     List<Student> findAllByHostelId(String hostelId);
 
     @EntityGraph(attributePaths = { "room", "hostel" })

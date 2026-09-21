@@ -34,6 +34,7 @@ export const landlordNav: NavItem[] = [
 ];
 export const caretakerNav: NavItem[] = [
   { label: "Dashboard", to: "/caretaker/dashboard" },
+  { label: "Payments", to: "/caretaker/payments" },
   { label: "Maintenance", to: "/caretaker/maintenance" },
   { label: "Messages", to: "/caretaker/messages" },
   { label: "Tenants", to: "/caretaker/tenants" },

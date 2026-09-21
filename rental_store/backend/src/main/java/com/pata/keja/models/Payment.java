@@ -15,7 +15,9 @@ import com.pata.keja.enums.PaymentStatus;
         @Index(name = "idx_payments_hostel", columnList = "hostel_id"),
         @Index(name = "idx_payments_status", columnList = "status"),
         @Index(name = "idx_payments_due_date", columnList = "due_date"),
-        @Index(name = "idx_payments_student_due", columnList = "student_id, due_date")
+        @Index(name = "idx_payments_student_due", columnList = "student_id, due_date"),
+        @Index(name = "idx_payments_recorded_by", columnList = "recorded_by"),
+        @Index(name = "idx_payments_period_label", columnList = "period_label")
 })
 public class Payment {
 
@@ -66,6 +68,17 @@ public class Payment {
 
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
+
+    /**
+     * The landlord or caretaker who recorded this payment.
+     * Nullable for legacy rows seeded before this feature existed.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "recorded_by")
+    private User recordedBy;
+
+    @Column(name = "period_label", length = 64)
+    private String periodLabel;
 
     @PrePersist
     void onCreate() {
@@ -174,6 +187,22 @@ public class Payment {
 
     public Instant getUpdatedAt() {
         return updatedAt;
+    }
+
+    public User getRecordedBy() {
+        return recordedBy;
+    }
+
+    public void setRecordedBy(User recordedBy) {
+        this.recordedBy = recordedBy;
+    }
+
+    public String getPeriodLabel() {
+        return periodLabel;
+    }
+
+    public void setPeriodLabel(String periodLabel) {
+        this.periodLabel = periodLabel;
     }
 
     @Override

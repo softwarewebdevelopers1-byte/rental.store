@@ -8,6 +8,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
+
 @Entity
 @Table(name = "hostels", indexes = {
         @Index(name = "idx_hostels_code", columnList = "code", unique = true),
@@ -55,15 +58,29 @@ public class Hostel {
 
     /**
      * Inverse side of Caretaker.assignedHostels.
+     * Use SUBSELECT to load all caretakers in a single subselect query.
      * No cascade — a hostel does not own its caretakers.
      */
     @ManyToMany(mappedBy = "assignedHostels", fetch = FetchType.LAZY)
+    @Fetch(FetchMode.SUBSELECT)
     private Set<Caretaker> caretakers = new HashSet<>();
+
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(
+            name = "hostel_payment_recorders",
+            joinColumns = @JoinColumn(name = "hostel_id"),
+            uniqueConstraints = @UniqueConstraint(
+                    name = "uk_hostel_payment_recorder",
+                    columnNames = { "hostel_id", "caretaker_id" }))
+    @Column(name = "caretaker_id", length = 36)
+    private Set<String> paymentRecorderCaretakerIds = new HashSet<>();
 
     /**
      * Rooms in this hostel. Owned side is Room.hostel.
+     * Use SUBSELECT to load all rooms in a single subselect query, avoiding N+1.
      */
     @OneToMany(mappedBy = "hostel", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Fetch(FetchMode.SUBSELECT)
     private List<Room> rooms = new ArrayList<>();
 
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -182,6 +199,18 @@ public class Hostel {
 
     public void setCaretakers(Set<Caretaker> caretakers) {
         this.caretakers = caretakers;
+    }
+
+    public Set<String> getPaymentRecorderCaretakerIds() {
+        return paymentRecorderCaretakerIds;
+    }
+
+    public void setPaymentRecorderCaretakerIds(Set<String> paymentRecorderCaretakerIds) {
+        this.paymentRecorderCaretakerIds = paymentRecorderCaretakerIds;
+    }
+
+    public boolean canRecordPayments(String caretakerId) {
+        return paymentRecorderCaretakerIds.contains(caretakerId);
     }
 
     public List<Room> getRooms() {

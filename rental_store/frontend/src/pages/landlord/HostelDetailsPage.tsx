@@ -20,6 +20,7 @@ import { RoomTable } from "../../components/hostel/RoomTable";
 import { RoomFormModal } from "../../components/hostel/RoomFormModal";
 import { TenantCard } from "../../components/hostel/TenantCard";
 import { roomService } from "../../services/roomService";
+import { paymentService } from "../../services/paymentService";
 import { useToast } from "../../hooks/useToast";
 import type { Room } from "../../types/room";
 import styles from "./HostelDetailsPage.module.css";
@@ -43,6 +44,10 @@ export default function LandlordHostelDetailsPage() {
   const [tab, setTab] = useState<TabId>("overview");
   const [photoDraft, setPhotoDraft] = useState<string[]>([]);
   const [savingPhotos, setSavingPhotos] = useState(false);
+  const [paymentRecorders, setPaymentRecorders] = useState<{
+    permitted: Array<{ caretakerId: string; name: string; email: string }>;
+    notPermitted: Array<{ caretakerId: string; name: string; email: string }>;
+  }>({ permitted: [], notPermitted: [] });
 
   const [roomModalOpen, setRoomModalOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
@@ -58,6 +63,14 @@ export default function LandlordHostelDetailsPage() {
         setHostel(h);
         setPhotoDraft(h?.images ?? []);
         setLoading(false);
+      }
+      if (h) {
+        try {
+          const recorders = await paymentService.listHostelPaymentRecorders(hostelId);
+          if (!cancelled) setPaymentRecorders(recorders);
+        } catch {
+          if (!cancelled) setPaymentRecorders({ permitted: [], notPermitted: [] });
+        }
       }
     })();
     return () => {
@@ -139,6 +152,27 @@ export default function LandlordHostelDetailsPage() {
       show(e instanceof Error ? e.message : "Failed to update photos", "error");
     } finally {
       setSavingPhotos(false);
+    }
+
+  }
+
+  async function handlePaymentRecorderToggle(caretakerId: string, allowed: boolean) {
+    const previous = paymentRecorders;
+    const permitted = [...previous.permitted];
+    const notPermitted = [...previous.notPermitted];
+    const source = allowed ? notPermitted : permitted;
+    const selected = source.find((item) => item.caretakerId === caretakerId);
+    if (!selected) return;
+    const next = allowed
+      ? { permitted: [...permitted, selected], notPermitted: notPermitted.filter((item) => item.caretakerId !== caretakerId) }
+      : { permitted: permitted.filter((item) => item.caretakerId !== caretakerId), notPermitted: [...notPermitted, selected] };
+    setPaymentRecorders(next);
+    try {
+      setPaymentRecorders(await paymentService.setHostelPaymentRecorder(hostelId, caretakerId, allowed));
+      show(allowed ? "Caretaker can now record payments." : "Payment recording permission revoked.", "success");
+    } catch (error) {
+      setPaymentRecorders(previous);
+      show(error instanceof Error ? error.message : "Failed to update permission", "error");
     }
   }
 
@@ -285,11 +319,18 @@ export default function LandlordHostelDetailsPage() {
           />
         ) : (
           <div className={styles.tenantGrid}>
-            {caretakers.map((c) => (
-              <Card key={c.id} title={c.name} subtitle={c.email}>
-                <Badge tone="info">CARETAKER</Badge>
-              </Card>
-            ))}
+            {caretakers.map((c) => {
+              const allowed = paymentRecorders.permitted.some((item) => item.caretakerId === c.id);
+              return <Card key={c.id} title={c.name} subtitle={c.email}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <Badge tone="info">CARETAKER</Badge>
+                  <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <span>Can record payments</span>
+                    <input type="checkbox" checked={allowed} onChange={(event) => void handlePaymentRecorderToggle(c.id, event.target.checked)} />
+                  </label>
+                </div>
+              </Card>;
+            })}
           </div>
         ))}
 
