@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "../../components/common/Button";
 import { Input } from "../../components/common/Input";
 import { useAuth } from "../../hooks/useAuth";
@@ -17,6 +17,7 @@ type CodeState = "idle" | "checking" | "valid" | "invalid";
 
 export default function StudentRegisterPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { registerStudent } = useAuth();
   const { show } = useToast();
 
@@ -28,6 +29,7 @@ export default function StudentRegisterPage() {
   const [codeState, setCodeState] = useState<CodeState>("idle");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const redirectTarget = searchParams.get("redirect");
 
   // Validate hostel code (debounced inside effect).
   useEffect(() => {
@@ -67,7 +69,13 @@ export default function StudentRegisterPage() {
           : "Account created. You can link a hostel whenever you're ready.",
         "success",
       );
-      navigate(hasHostelCode ? "/pending-approval" : "/student/dashboard", {
+      const destination =
+        redirectTarget?.startsWith("/student/change-hostel?")
+          ? redirectTarget
+          : hasHostelCode
+            ? "/pending-approval"
+            : "/student/dashboard";
+      navigate(destination, {
         replace: true,
       });
     } catch (err) {
@@ -159,7 +167,16 @@ export default function StudentRegisterPage() {
       </form>
 
       <p className={styles.footer}>
-        Already have an account? <Link to="/login">Sign in</Link>
+        Already have an account?{" "}
+        <Link
+          to={
+            redirectTarget
+              ? `/login?redirect=${encodeURIComponent(redirectTarget)}`
+              : "/login"
+          }
+        >
+          Sign in
+        </Link>
       </p>
     </div>
   );

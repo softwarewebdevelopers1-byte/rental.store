@@ -1,6 +1,6 @@
 import { http } from "./apiClient";
 import type { Hostel } from "../types/hostel";
-import type { Room } from "../types/room";
+import type { BillingPeriod, Room } from "../types/room";
 import type { Caretaker, Landlord, Student } from "../types/user";
 
 export interface HostelFilters {
@@ -16,6 +16,7 @@ export interface HostelFilters {
 export interface HostelSummary extends Hostel {
   vacantRooms: number;
   priceRange: [number, number] | null;
+  billingPeriod: BillingPeriod | null;
   landlordVerified: boolean;
   landlordName?: string;
   caretakers?: Caretaker[];
@@ -46,6 +47,7 @@ interface RoomSummary {
   hostelId: string;
   number: string;
   price: number;
+  billingPeriod: BillingPeriod;
   status: Room["status"];
   tenantId: string | null;
   tenantName: string | null;
@@ -63,6 +65,7 @@ interface HostelSummaryResponse {
   totalRooms: number;
   minPrice: number | null;
   maxPrice: number | null;
+  billingPeriod: BillingPeriod | null;
   landlordVerified: boolean;
   landlordId: string;
   landlordName: string;
@@ -78,6 +81,7 @@ interface HostelResponse extends HostelSummaryResponse {
     id: string;
     number: string;
     price: number;
+    billingPeriod: BillingPeriod;
     status: Room["status"] | string;
     tenantId: string | null;
     tenantName: string | null;
@@ -135,6 +139,7 @@ function toHostelSummary(raw: HostelSummaryResponse): HostelSummary {
       raw.minPrice != null && raw.maxPrice != null
         ? [raw.minPrice, raw.maxPrice]
         : null,
+    billingPeriod: raw.billingPeriod,
     landlordVerified: raw.landlordVerified,
     landlordName: raw.landlordName,
   };

@@ -8,6 +8,7 @@ import { EmptyState } from "../../components/common/EmptyState";
 import { Badge } from "../../components/common/Badge";
 import { RatingStars } from "../../components/common/RatingStars";
 import { PriceDisplay } from "../../components/common/PriceDisplay";
+import { billingPeriodLabel } from "../../types/room";
 import styles from "./HostelsListPage.module.css";
 
 export default function HostelsListPage() {
@@ -69,7 +70,14 @@ export default function HostelsListPage() {
                   <span className={styles.vacant}>{h.vacantRooms} vacant</span>
                 </div>
                 {h.priceRange && (
-                  <PriceDisplay amount={h.priceRange[0]} suffix="/mo" />
+                  <PriceDisplay
+                    amount={h.priceRange[0]}
+                    suffix={
+                      h.billingPeriod
+                        ? `/${billingPeriodLabel[h.billingPeriod].replace("per ", "")}`
+                        : "/period varies"
+                    }
+                  />
                 )}
               </div>
             </Link>

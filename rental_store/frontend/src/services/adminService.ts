@@ -10,6 +10,7 @@ import type {
 } from "../types/user";
 import type { Hostel } from "../types/hostel";
 import type { Room } from "../types/room";
+import type { BillingPeriod } from "../types/room";
 import type { Order, OrderStatus } from "../types/order";
 import type { Conflict } from "../types/conflict";
 import type { Invitation, InvitationKind } from "../types/invitation";
@@ -97,6 +98,7 @@ interface RoomResponse {
   hostelId: string;
   number: string;
   price: number;
+  billingPeriod: BillingPeriod;
   status: Room["status"];
   tenantId: string | null;
   tenantName: string | null;

@@ -3,6 +3,7 @@ package com.pata.keja.dto.room;
 import java.time.Instant;
 
 import com.pata.keja.enums.RoomStatus;
+import com.pata.keja.enums.BillingPeriod;
 
 public record RoomResponse(
         String id,
@@ -13,6 +14,7 @@ public record RoomResponse(
 
         String number,
         long price,
+        BillingPeriod billingPeriod,
         RoomStatus status,
 
         String tenantId,

@@ -1,4 +1,4 @@
-import type { Room } from "../../types/room";
+import { billingPeriodLabel, type Room } from "../../types/room";
 import { StatusBadge } from "../common/StatusBadge";
 import { PriceDisplay } from "../common/PriceDisplay";
 import styles from "./RoomTable.module.css";
@@ -42,7 +42,11 @@ export function RoomTable({
             <tr key={r.id}>
               <td className={styles.roomNumber}>{r.number}</td>
               <td>
-                <PriceDisplay amount={r.price} size="sm" />
+                <PriceDisplay
+                  amount={r.price}
+                  suffix={`/${billingPeriodLabel[r.billingPeriod ?? "MONTHLY"].replace("per ", "")}`}
+                  size="sm"
+                />
               </td>
               <td>
                 <StatusBadge status={r.status} />

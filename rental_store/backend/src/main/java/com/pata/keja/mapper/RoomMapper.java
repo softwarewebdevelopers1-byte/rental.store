@@ -17,6 +17,7 @@ public class RoomMapper {
                 r.getHostel().getId(),
                 r.getNumber(),
                 r.getPrice(),
+                r.getBillingPeriod(),
                 r.getStatus(),
                 tenant != null ? tenant.getId() : null,
                 tenant != null ? tenant.getName() : null);
@@ -33,6 +34,7 @@ public class RoomMapper {
 
                 r.getNumber(),
                 r.getPrice(),
+                r.getBillingPeriod(),
                 r.getStatus(),
 
                 tenant != null ? tenant.getId() : null,

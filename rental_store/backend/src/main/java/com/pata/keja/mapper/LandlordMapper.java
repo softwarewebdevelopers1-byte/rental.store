@@ -6,6 +6,7 @@ import com.pata.keja.dto.hostel.HostelSummaryResponse;
 import com.pata.keja.dto.landlord.LandlordResponse;
 import com.pata.keja.dto.landlord.LandlordSummaryResponse;
 import com.pata.keja.enums.RoomStatus;
+import com.pata.keja.enums.BillingPeriod;
 import com.pata.keja.enums.VerificationStatus;
 import com.pata.keja.models.Hostel;
 import com.pata.keja.models.Landlord;
@@ -59,6 +60,9 @@ public class LandlordMapper {
         long vacant = rooms.stream().filter(r -> r.getStatus() == RoomStatus.VACANT).count();
         Long min = rooms.stream().map(Room::getPrice).min(Long::compareTo).orElse(null);
         Long max = rooms.stream().map(Room::getPrice).max(Long::compareTo).orElse(null);
+        BillingPeriod billingPeriod = rooms.stream().map(Room::getBillingPeriod).distinct().count() == 1
+                ? rooms.get(0).getBillingPeriod()
+                : null;
         String mainImage = h.getImages().isEmpty() ? null : h.getImages().get(0);
 
         return new HostelSummaryResponse(
@@ -73,6 +77,7 @@ public class LandlordMapper {
                 rooms.size(),
                 min,
                 max,
+                billingPeriod,
                 h.getLandlord()
                         .getVerificationStatus() == VerificationStatus.APPROVED,
                 h.getLandlord().getId(),

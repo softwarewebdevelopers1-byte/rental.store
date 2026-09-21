@@ -3,6 +3,7 @@ import type { HostelSummary } from "../../services/hostelService";
 import { Badge } from "../common/Badge";
 import { RatingStars } from "../common/RatingStars";
 import { PriceDisplay } from "../common/PriceDisplay";
+import { billingPeriodLabel } from "../../types/room";
 import styles from "./HostelCard.module.css";
 
 interface HostelCardProps {
@@ -44,7 +45,14 @@ export function HostelCard({ hostel }: HostelCardProps) {
             {hostel.priceRange ? (
               <>
                 <span className={styles.from}>from</span>{" "}
-                <PriceDisplay amount={minPrice} suffix="/mo" />
+                <PriceDisplay
+                  amount={minPrice}
+                  suffix={
+                    hostel.billingPeriod
+                      ? `/${billingPeriodLabel[hostel.billingPeriod].replace("per ", "")}`
+                      : "/period varies"
+                  }
+                />
               </>
             ) : (
               <span className={styles.from}>Price on request</span>

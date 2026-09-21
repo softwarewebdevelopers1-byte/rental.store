@@ -2,14 +2,19 @@ import { useEffect, useState } from "react";
 import { Modal } from "../common/Modal";
 import { Button } from "../common/Button";
 import { Input } from "../common/Input";
-import type { Room } from "../../types/room";
+import { Select } from "../common/Select";
+import type { BillingPeriod, Room } from "../../types/room";
 
 interface RoomFormModalProps {
   open: boolean;
   mode: "create" | "edit";
   initial?: Room | null;
   onCancel: () => void;
-  onSubmit: (values: { number: string; price: number }) => void;
+  onSubmit: (values: {
+    number: string;
+    price: number;
+    billingPeriod: BillingPeriod;
+  }) => void;
   submitting?: boolean;
 }
 
@@ -23,11 +28,13 @@ export function RoomFormModal({
 }: RoomFormModalProps) {
   const [number, setNumber] = useState("");
   const [price, setPrice] = useState<string>("");
+  const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("MONTHLY");
 
   useEffect(() => {
     if (open) {
       setNumber(initial?.number ?? "");
       setPrice(initial ? String(initial.price) : "");
+      setBillingPeriod(initial?.billingPeriod ?? "MONTHLY");
     }
   }, [open, initial]);
 
@@ -48,7 +55,12 @@ export function RoomFormModal({
           </Button>
           <Button
             onClick={() =>
-              valid && onSubmit({ number: number.trim(), price: Number(price) })
+              valid &&
+              onSubmit({
+                number: number.trim(),
+                price: Number(price),
+                billingPeriod,
+              })
             }
             disabled={!valid}
             loading={submitting}
@@ -73,12 +85,22 @@ export function RoomFormModal({
           required
         />
         <Input
-          label="Price (KES per month)"
+          label="Price (KES)"
           type="number"
           min={0}
           value={price}
           onChange={(e) => setPrice(e.target.value)}
           required
+        />
+        <Select
+          label="Billing period"
+          value={billingPeriod}
+          onChange={(e) => setBillingPeriod(e.target.value as BillingPeriod)}
+          options={[
+            { value: "MONTHLY", label: "Per month" },
+            { value: "SEMESTER", label: "Per semester" },
+            { value: "TRISEMESTER", label: "Per trisemester" },
+          ]}
         />
       </div>
     </Modal>

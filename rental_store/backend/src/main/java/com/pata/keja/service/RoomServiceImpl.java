@@ -75,6 +75,7 @@ public class RoomServiceImpl implements RoomService {
         room.setHostel(hostel);
         room.setNumber(req.number());
         room.setPrice(req.price());
+        room.setBillingPeriod(req.billingPeriod());
         room.setStatus(RoomStatus.VACANT);
 
         roomRepo.save(room);
@@ -95,6 +96,9 @@ public class RoomServiceImpl implements RoomService {
         }
         if (req.price() != null) {
             room.setPrice(req.price());
+        }
+        if (req.billingPeriod() != null) {
+            room.setBillingPeriod(req.billingPeriod());
         }
         return roomMapper.toResponse(room);
     }

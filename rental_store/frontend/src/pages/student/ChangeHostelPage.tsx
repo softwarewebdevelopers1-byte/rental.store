@@ -15,6 +15,7 @@ export default function ChangeHostelPage() {
   const { show } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const prefilledCode = searchParams.get("code")?.toUpperCase() ?? "";
   const [student, setStudent] = useState<Student | null>(null);
 
   useEffect(() => {
@@ -30,11 +31,41 @@ export default function ChangeHostelPage() {
   }, []);
 
   const isLinking = !student?.hostelId;
-  const [code, setCode] = useState(() => searchParams.get("code")?.toUpperCase() ?? "");
+  const [code, setCode] = useState(prefilledCode);
   const [hostelName, setHostelName] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+
+  useEffect(() => {
+    if (!prefilledCode) return;
+    let cancelled = false;
+    void hostelService
+      .findByCode(prefilledCode)
+      .then((hostel) => {
+        if (cancelled) return;
+        if (hostel) {
+          setHostelName(hostel.name);
+          show(`Selected hostel: ${hostel.name}.`, "success");
+        } else {
+          show("That hostel code is not valid.", "error");
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          show(
+            error instanceof Error ? error.message : "Unable to check the hostel code.",
+            "error",
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setChecking(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [prefilledCode, show]);
 
   async function findHostel() {
     setChecking(true);

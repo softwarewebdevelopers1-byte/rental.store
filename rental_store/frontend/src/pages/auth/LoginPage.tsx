@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "../../components/common/Button";
 import { Input } from "../../components/common/Input";
 import { useAuth } from "../../hooks/useAuth";
@@ -20,6 +20,7 @@ export default function LoginPage() {
   const { login, loginAsRole } = useAuth();
   const { show } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const location = useLocation() as { state?: { from?: { pathname: string } } };
 
   const [email, setEmail] = useState("");
@@ -29,17 +30,26 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
 
   const redirectFor = (role: UserRole): string => {
-    const from = location.state?.from?.pathname;
+    const requested = searchParams.get("redirect");
+    const from = requested?.startsWith("/") ? requested : location.state?.from?.pathname;
     if (!from) return ROLE_HOME[role];
 
     // A login may have been triggered by a protected URL. Only restore it
     // when it belongs to the newly authenticated user's role; otherwise the
     // role guard would correctly show 403 instead of the user's dashboard.
     const roleRoot = ROLE_HOME[role].slice(0, ROLE_HOME[role].lastIndexOf("/"));
-    return from === roleRoot || from.startsWith(`${roleRoot}/`)
+    return from === "/student/change-hostel" || from.startsWith("/student/change-hostel?")
+      ? role === "STUDENT"
+        ? from
+        : ROLE_HOME[role]
+      : from === roleRoot || from.startsWith(`${roleRoot}/`)
       ? from
       : ROLE_HOME[role];
   };
+
+  const signUpPath = searchParams.get("redirect")
+    ? `/register/student?redirect=${encodeURIComponent(searchParams.get("redirect") ?? "")}`
+    : "/register/student";
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -113,7 +123,7 @@ export default function LoginPage() {
 
       <div className={styles.links}>
         <Link to="/forgot-password">Forgot password?</Link>
-        <Link to="/register/student">Create account</Link>
+        <Link to={signUpPath}>Create account</Link>
       </div>
 
       <div className={styles.demo}>

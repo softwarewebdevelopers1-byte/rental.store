@@ -1,11 +1,12 @@
 import { http } from "./apiClient";
-import type { Room, RoomStatus } from "../types/room";
+import type { BillingPeriod, Room, RoomStatus } from "../types/room";
 
 interface RoomResponse {
   id: string;
   hostelId: string;
   number: string;
   price: number;
+  billingPeriod: BillingPeriod;
   status: RoomStatus;
   tenantId: string | null;
   tenantName: string | null;
@@ -29,10 +30,12 @@ export const roomService = {
     hostelId: string;
     number: string;
     price: number;
+    billingPeriod: BillingPeriod;
   }): Promise<Room> {
     const room = await http.post<RoomResponse>(`/rooms/hostel/${input.hostelId}`, {
       number: input.number,
       price: input.price,
+      billingPeriod: input.billingPeriod,
     });
     return toRoom(room);
   },

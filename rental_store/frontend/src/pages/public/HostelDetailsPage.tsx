@@ -16,7 +16,7 @@ import { ErrorState } from "../../components/common/ErrorState";
 import { MpesaPaymentModal } from "../../components/payments/MpesaPaymentModal";
 import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../../hooks/useToast";
-import type { Room } from "../../types/room";
+import { billingPeriodLabel, type Room } from "../../types/room";
 import styles from "./HostelDetailsPage.module.css";
 
 export default function HostelDetailsPage() {
@@ -143,6 +143,11 @@ export default function HostelDetailsPage() {
       navigate(`/student/change-hostel?code=${encodeURIComponent(hostel.code)}`);
       return;
     }
+    if (!user) {
+      const destination = `/student/change-hostel?code=${encodeURIComponent(hostel.code)}`;
+      navigate(`/login?redirect=${encodeURIComponent(destination)}`);
+      return;
+    }
     navigate("/register/student");
   };
 
@@ -204,8 +209,25 @@ export default function HostelDetailsPage() {
             <strong>
               {hostel.priceRange ? (
                 <>
-                  <PriceDisplay amount={hostel.priceRange[0]} size="sm" /> –{" "}
-                  <PriceDisplay amount={hostel.priceRange[1]} size="sm" />
+                  <PriceDisplay
+                    amount={hostel.priceRange[0]}
+                    suffix={
+                      hostel.billingPeriod
+                        ? `/${billingPeriodLabel[hostel.billingPeriod].replace("per ", "")}`
+                        : "/period varies"
+                    }
+                    size="sm"
+                  />{" "}
+                  –{" "}
+                  <PriceDisplay
+                    amount={hostel.priceRange[1]}
+                    suffix={
+                      hostel.billingPeriod
+                        ? `/${billingPeriodLabel[hostel.billingPeriod].replace("per ", "")}`
+                        : "/period varies"
+                    }
+                    size="sm"
+                  />
                 </>
               ) : (
                 "—"
@@ -240,7 +262,10 @@ export default function HostelDetailsPage() {
                       {r.status}
                     </Badge>
                   </div>
-                  <PriceDisplay amount={r.price} suffix="/mo" />
+                  <PriceDisplay
+                    amount={r.price}
+                    suffix={`/${billingPeriodLabel[r.billingPeriod ?? "MONTHLY"].replace("per ", "")}`}
+                  />
                   <Button
                     size="sm"
                     variant={bookable ? "primary" : "secondary"}

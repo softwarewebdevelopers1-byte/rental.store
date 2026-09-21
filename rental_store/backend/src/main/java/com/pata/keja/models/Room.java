@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.util.Objects;
 
 import com.pata.keja.enums.RoomStatus;
+import com.pata.keja.enums.BillingPeriod;
 
 @Entity
 @Table(name = "rooms", uniqueConstraints = @UniqueConstraint(name = "uk_rooms_hostel_number", columnNames = {
@@ -34,6 +35,10 @@ public class Room {
      */
     @Column(name = "price", nullable = false)
     private long price;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "billing_period", nullable = false, length = 16)
+    private BillingPeriod billingPeriod = BillingPeriod.MONTHLY;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 16)
@@ -96,6 +101,14 @@ public class Room {
 
     public void setPrice(long price) {
         this.price = price;
+    }
+
+    public BillingPeriod getBillingPeriod() {
+        return billingPeriod;
+    }
+
+    public void setBillingPeriod(BillingPeriod billingPeriod) {
+        this.billingPeriod = billingPeriod;
     }
 
     public RoomStatus getStatus() {

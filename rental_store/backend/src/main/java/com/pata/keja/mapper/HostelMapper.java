@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component;
 import com.pata.keja.dto.hostel.HostelResponse;
 import com.pata.keja.dto.hostel.HostelSummaryResponse;
 import com.pata.keja.enums.RoomStatus;
+import com.pata.keja.enums.BillingPeriod;
 import com.pata.keja.enums.VerificationStatus;
 import com.pata.keja.models.Caretaker;
 import com.pata.keja.models.Hostel;
@@ -20,6 +21,9 @@ public class HostelMapper {
         long vacant = rooms.stream().filter(r -> r.getStatus() == RoomStatus.VACANT).count();
         Long min = rooms.stream().map(Room::getPrice).min(Long::compareTo).orElse(null);
         Long max = rooms.stream().map(Room::getPrice).max(Long::compareTo).orElse(null);
+        BillingPeriod billingPeriod = rooms.stream().map(Room::getBillingPeriod).distinct().count() == 1
+                ? rooms.get(0).getBillingPeriod()
+                : null;
         String mainImage = h.getImages().isEmpty() ? null : h.getImages().get(0);
 
         return new HostelSummaryResponse(
@@ -34,6 +38,7 @@ public class HostelMapper {
                 rooms.size(),
                 min,
                 max,
+                billingPeriod,
                 h.getLandlord().getVerificationStatus() == VerificationStatus.APPROVED,
                 h.getLandlord().getId(),
                 h.getLandlord().getName(),
@@ -47,6 +52,9 @@ public class HostelMapper {
         long booked = rooms.stream().filter(r -> r.getStatus() == RoomStatus.BOOKED).count();
         Long min = rooms.stream().map(Room::getPrice).min(Long::compareTo).orElse(null);
         Long max = rooms.stream().map(Room::getPrice).max(Long::compareTo).orElse(null);
+        BillingPeriod billingPeriod = rooms.stream().map(Room::getBillingPeriod).distinct().count() == 1
+                ? rooms.get(0).getBillingPeriod()
+                : null;
 
         List<HostelResponse.RoomSummary> roomSummaries = rooms.stream()
                 .sorted(Comparator.comparing(com.pata.keja.models.Room::getNumber))
@@ -54,6 +62,7 @@ public class HostelMapper {
                         r.getId(),
                         r.getNumber(),
                         r.getPrice(),
+                        r.getBillingPeriod(),
                         r.getStatus().name(),
                         null, // tenantId — filled by service when needed
                         null // tenantName
@@ -88,6 +97,7 @@ public class HostelMapper {
                 (int) booked,
                 min,
                 max,
+                billingPeriod,
 
                 roomSummaries,
                 caretakerSummaries,

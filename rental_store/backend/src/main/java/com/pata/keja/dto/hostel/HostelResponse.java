@@ -2,6 +2,7 @@ package com.pata.keja.dto.hostel;
 
 import java.time.Instant;
 import java.util.List;
+import com.pata.keja.enums.BillingPeriod;
 
 public record HostelResponse(
         String id,
@@ -23,6 +24,7 @@ public record HostelResponse(
         int bookedRooms,
         Long minPrice,
         Long maxPrice,
+        BillingPeriod billingPeriod,
 
         List<RoomSummary> rooms,
 
@@ -35,6 +37,7 @@ public record HostelResponse(
             String id,
             String number,
             long price,
+            BillingPeriod billingPeriod,
             String status,
             String tenantId,
             String tenantName) {

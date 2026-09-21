@@ -4,10 +4,13 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import com.pata.keja.enums.BillingPeriod;
 
 public record RoomCreateRequest(
 
         @NotBlank @Size(max = 16) String number,
 
-        @NotNull @Min(0) Long price) {
+        @NotNull @Min(0) Long price,
+
+        @NotNull BillingPeriod billingPeriod) {
 }

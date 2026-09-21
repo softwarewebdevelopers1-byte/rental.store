@@ -92,7 +92,11 @@ export default function LandlordHostelDetailsPage() {
     { id: "photos", label: "Photos" },
   ];
 
-  async function handleRoomSubmit(values: { number: string; price: number }) {
+  async function handleRoomSubmit(values: {
+    number: string;
+    price: number;
+    billingPeriod: import("../../types/room").BillingPeriod;
+  }) {
     setRoomSubmitting(true);
     try {
       if (editingRoom) {
