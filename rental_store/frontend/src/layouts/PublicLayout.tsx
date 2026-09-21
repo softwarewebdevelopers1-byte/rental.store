@@ -1,4 +1,4 @@
-import { Link, NavLink, Outlet } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { publicNav } from "../constants/routes";
 import { useAuth } from "../hooks/useAuth";
 import { ROLE_HOME } from "../constants/roles";
@@ -10,6 +10,7 @@ import styles from "./PublicLayout.module.css";
 export function PublicLayout() {
   const { user, isAuthenticated } = useAuth();
   const isMobile = useMediaQuery("(max-width: 768px)");
+  const location = useLocation();
 
   return (
     <div className={styles.shell}>
@@ -88,7 +89,7 @@ export function PublicLayout() {
           </div>
         </nav>
       )}
-      <Footer />
+      {location.pathname === "/" && <Footer />}
     </div>
   );
 }
