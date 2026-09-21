@@ -7,6 +7,7 @@ public record LandlordStatsResponse(
         int bookedRooms,
         int activeTenants,
         int pendingRequests,
+        int pendingBookings,
         int outstandingPayments,
         int unreadMessages) {
 }

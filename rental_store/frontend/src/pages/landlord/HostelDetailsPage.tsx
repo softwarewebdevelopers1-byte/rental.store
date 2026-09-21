@@ -83,13 +83,15 @@ export default function LandlordHostelDetailsPage() {
     loading: loadingRooms,
     reload: reloadRooms,
   } = useHostelRooms(hostelId);
-  const { data: tenants, loading: loadingTenants } = useLandlordTenants(
+  const { data: tenants, loading: loadingTenants, reload: reloadTenants } = useLandlordTenants(
     hostel?.landlordId ?? "",
     hostelId,
   );
   const { data: ratings } = useHostelRatings(hostelId);
 
   const caretakers = useMemo(() => hostel?.caretakers ?? [], [hostel]);
+  const [tenantToRemove, setTenantToRemove] = useState<typeof tenants[number] | null>(null);
+  const [removingTenant, setRemovingTenant] = useState(false);
 
   if (loading) return <Skeleton height={400} radius="var(--radius-lg)" />;
   if (!hostel) return <EmptyState title="Hostel not found" />;
@@ -173,6 +175,22 @@ export default function LandlordHostelDetailsPage() {
     } catch (error) {
       setPaymentRecorders(previous);
       show(error instanceof Error ? error.message : "Failed to update permission", "error");
+    }
+  }
+
+  async function handleRemoveTenant() {
+    if (!tenantToRemove) return;
+    setRemovingTenant(true);
+    try {
+      await hostelService.removeTenant(hostelId, tenantToRemove.id);
+      show(`${tenantToRemove.name} was removed from the hostel.`, "success");
+      setTenantToRemove(null);
+      await reloadTenants();
+      await reloadRooms();
+    } catch (error) {
+      show(error instanceof Error ? error.message : "Unable to remove the student.", "error");
+    } finally {
+      setRemovingTenant(false);
     }
   }
 
@@ -282,7 +300,7 @@ export default function LandlordHostelDetailsPage() {
             {tenants.map((t) => {
               const room = rooms.find((r) => r.id === t.roomId);
               return (
-                <TenantCard key={t.id} student={t} roomNumber={room?.number} />
+                <TenantCard key={t.id} student={t} roomNumber={room?.number} onRemove={() => setTenantToRemove(t)} />
               );
             })}
           </div>
@@ -400,6 +418,17 @@ export default function LandlordHostelDetailsPage() {
         tone="danger"
         onCancel={() => setDeleteRoom(null)}
         onConfirm={handleRoomDelete}
+      />
+
+      <ConfirmDialog
+        open={!!tenantToRemove}
+        title="Remove student?"
+        message={tenantToRemove ? `${tenantToRemove.name} will be removed from this hostel and their room will become vacant.` : ""}
+        confirmLabel="Remove student"
+        tone="danger"
+        loading={removingTenant}
+        onCancel={() => setTenantToRemove(null)}
+        onConfirm={() => void handleRemoveTenant()}
       />
     </div>
   );

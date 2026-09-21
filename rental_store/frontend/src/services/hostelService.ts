@@ -2,6 +2,7 @@ import { http } from "./apiClient";
 import type { Hostel } from "../types/hostel";
 import type { BillingPeriod, Room } from "../types/room";
 import type { Caretaker, Landlord, Student } from "../types/user";
+import type { Invitation } from "../types/invitation";
 
 export interface HostelFilters {
   query?: string;
@@ -29,6 +30,7 @@ export interface LandlordStats {
   bookedRooms: number;
   activeTenants: number;
   pendingRequests: number;
+  pendingBookings: number;
   outstandingPayments: number;
   unreadMessages: number;
 }
@@ -226,14 +228,32 @@ export const hostelService = {
   async bookRoom(
     roomId: string,
     hostelId: string,
-    tenantId: string,
-    tenantName: string,
+    initiation: "PAY_NOW" | "CONTACT",
+    paymentReference?: string,
+    billingPeriod: BillingPeriod = "MONTHLY",
   ): Promise<Room | null> {
-    void roomId;
-    void hostelId;
-    void tenantId;
-    void tenantName;
-    throw new Error("Room booking is not exposed by the backend service layer");
+    const body = {
+      roomId,
+      moveInDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+      initiation,
+      message: "I'd like to request this room.",
+      ...(paymentReference ? { paymentReference } : {}),
+    };
+    const booking = await http.post<{
+      roomId: string;
+      roomNumber?: string;
+      roomPrice?: number;
+    }>("/bookings", body);
+    return booking?.roomId
+      ? {
+          id: booking.roomId,
+          hostelId,
+          number: booking.roomNumber ?? "",
+          price: booking.roomPrice ?? 0,
+          billingPeriod,
+          status: "HELD",
+        }
+      : null;
   },
 
   async findByCode(code: string): Promise<Hostel | null> {
@@ -294,13 +314,14 @@ export const hostelService = {
     }));
   },
 
-  async acceptRequest(studentId: string): Promise<Student | null> {
+  async acceptRequest(studentId: string, roomId: string): Promise<Student | null> {
     const request = (await this.listPendingRequests("")).find(
       (item) => item.student.id === studentId,
     );
     if (!request?.student.requestedHostelId) return null;
     await http.post<void>(
       `/hostels/${request.student.requestedHostelId}/requests/${studentId}/accept`,
+      { roomId },
     );
     return {
       ...request.student,
@@ -319,6 +340,41 @@ export const hostelService = {
       `/hostels/${request.student.requestedHostelId}/requests/${studentId}/reject`,
     );
     return { ...request.student, membershipStatus: "REJECTED" };
+  },
+
+  async removeTenant(hostelId: string, studentId: string): Promise<void> {
+    await http.delete<void>(`/hostels/${hostelId}/tenants/${studentId}`);
+  },
+
+  async assignCaretaker(hostelId: string, caretakerEmail: string): Promise<void> {
+    await http.post<void>(`/hostels/${hostelId}/caretakers`, {
+      caretakerEmail: caretakerEmail.trim(),
+    });
+  },
+
+  async removeCaretaker(hostelId: string, caretakerId: string): Promise<void> {
+    await http.delete<void>(`/hostels/${hostelId}/caretakers/${caretakerId}`);
+  },
+
+  async createCaretakerInvite(hostelId: string): Promise<Invitation> {
+    const raw = await http.post<{
+      id: string;
+      token: string;
+      kind: Invitation["kind"];
+      email: string | null;
+      status: Invitation["status"];
+      createdAt: string;
+      expiresAt: string;
+    }>(`/invitations/landlords/me/hostels/${hostelId}/caretaker`);
+    return {
+      id: raw.id,
+      token: raw.token,
+      kind: raw.kind,
+      ...(raw.email ? { email: raw.email } : {}),
+      status: raw.status,
+      createdAt: raw.createdAt,
+      expiresAt: raw.expiresAt,
+    };
   },
 
   async updateVerification(

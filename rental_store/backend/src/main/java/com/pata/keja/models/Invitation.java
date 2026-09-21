@@ -42,10 +42,15 @@ public class Invitation {
     @Column(name = "status", nullable = false, length = 16)
     private InvitationStatus status = InvitationStatus.ACTIVE;
 
-    /** The admin who issued the invitation. */
+    /** The admin or landlord who issued the invitation. */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "created_by", nullable = false)
-    private Admin createdBy;
+    private User createdBy;
+
+    /** Optional hostel that a landlord's caretaker invitation belongs to. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "hostel_id")
+    private Hostel invitedHostel;
 
     /** Set when the invitation is redeemed. */
     @ManyToOne(fetch = FetchType.LAZY)
@@ -135,12 +140,20 @@ public class Invitation {
         this.status = status;
     }
 
-    public Admin getCreatedBy() {
+    public User getCreatedBy() {
         return createdBy;
     }
 
-    public void setCreatedBy(Admin createdBy) {
+    public void setCreatedBy(User createdBy) {
         this.createdBy = createdBy;
+    }
+
+    public Hostel getInvitedHostel() {
+        return invitedHostel;
+    }
+
+    public void setInvitedHostel(Hostel invitedHostel) {
+        this.invitedHostel = invitedHostel;
     }
 
     public User getUsedBy() {

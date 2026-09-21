@@ -31,7 +31,7 @@ public interface HostelRepository extends JpaRepository<Hostel, String> {
     @Query("select h from Hostel h where h.id = :id")
     Optional<Hostel> findByIdWithDetails(@Param("id") String id);
 
-    @EntityGraph(attributePaths = { "landlord", "caretakers", "paymentRecorderCaretakerIds" })
+    @EntityGraph(attributePaths = { "landlord" }, type = EntityGraph.EntityGraphType.LOAD)
     @Query("select h from Hostel h where h.id = :id")
     Optional<Hostel> findByIdWithPaymentRecorderDetails(@Param("id") String id);
 

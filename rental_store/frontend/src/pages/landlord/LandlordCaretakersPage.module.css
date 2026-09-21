@@ -1,0 +1,61 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.assignedList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.assignedRow,
+.controls,
+.inviteRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+.assignedRow {
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+.assignedRow div,
+.inviteRow div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.assignedRow span,
+.muted {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+.muted {
+  margin: 0;
+}
+.controls {
+  align-items: flex-end;
+  margin-top: var(--space-3);
+}
+.controls > :first-child {
+  flex: 1;
+}
+.inviteRow {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+@media (max-width: 600px) {
+  .controls,
+  .inviteRow {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

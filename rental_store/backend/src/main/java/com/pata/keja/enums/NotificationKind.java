@@ -6,6 +6,7 @@ public enum NotificationKind {
     MESSAGE,
     MAINTENANCE,
     ORDER,
+    BOOKING,
     VERIFICATION,
     SYSTEM
 }

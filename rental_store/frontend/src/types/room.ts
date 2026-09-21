@@ -1,4 +1,4 @@
-export type RoomStatus = "VACANT" | "BOOKED";
+export type RoomStatus = "VACANT" | "HELD" | "BOOKED";
 export type BillingPeriod = "MONTHLY" | "SEMESTER" | "TRISEMESTER";
 
 export const billingPeriodLabel: Record<BillingPeriod, string> = {

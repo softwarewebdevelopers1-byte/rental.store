@@ -32,8 +32,9 @@ public class InvitationServiceImpl implements InvitationService {
 
     private final InvitationRepository invitationRepo;
     private final AdminRepository adminRepo;
-    private final UserRepository userRepo;
     private final LandlordRepository landlordRepo;
+    private final UserRepository userRepo;
+    private final HostelRepository hostelRepo;
     private final MarketAgentRepository agentRepo;
     private final CaretakerRepository caretakerRepo;
     private final PasswordEncoder passwordEncoder;
@@ -41,16 +42,18 @@ public class InvitationServiceImpl implements InvitationService {
 
     public InvitationServiceImpl(InvitationRepository invitationRepo,
             AdminRepository adminRepo,
-            UserRepository userRepo,
             LandlordRepository landlordRepo,
+            UserRepository userRepo,
+            HostelRepository hostelRepo,
             MarketAgentRepository agentRepo,
             CaretakerRepository caretakerRepo,
             PasswordEncoder passwordEncoder,
             InvitationMapper invitationMapper) {
         this.invitationRepo = invitationRepo;
         this.adminRepo = adminRepo;
-        this.userRepo = userRepo;
         this.landlordRepo = landlordRepo;
+        this.userRepo = userRepo;
+        this.hostelRepo = hostelRepo;
         this.agentRepo = agentRepo;
         this.caretakerRepo = caretakerRepo;
         this.passwordEncoder = passwordEncoder;
@@ -111,6 +114,32 @@ public class InvitationServiceImpl implements InvitationService {
     }
 
     @Override
+    public InvitationResponse createForLandlord(String landlordId, String hostelId) {
+        Hostel hostel = hostelRepo.findByIdWithDetails(hostelId)
+                .orElseThrow(() -> new NotFoundException("Hostel not found"));
+        if (!hostel.getLandlord().getId().equals(landlordId)) {
+            throw new ConflictException("You do not own this hostel");
+        }
+
+        var existing = invitationRepo.findFirstByKindAndInvitedHostelIdAndStatusOrderByCreatedAtDesc(
+                InvitationKind.CARETAKER, hostelId, InvitationStatus.ACTIVE);
+        if (existing.isPresent() && existing.get().isRedeemable(Instant.now())) {
+            return invitationMapper.toResponse(existing.get());
+        }
+        existing.ifPresent(inv -> inv.setStatus(InvitationStatus.EXPIRED));
+
+        Invitation inv = new Invitation();
+        inv.setToken(generateToken());
+        inv.setKind(InvitationKind.CARETAKER);
+        inv.setStatus(InvitationStatus.ACTIVE);
+        inv.setCreatedBy(hostel.getLandlord());
+        inv.setInvitedHostel(hostel);
+        inv.setExpiresAt(Instant.now().plus(7, ChronoUnit.DAYS));
+        invitationRepo.save(inv);
+        return invitationMapper.toResponse(inv);
+    }
+
+    @Override
     public InvitationResponse revoke(String invitationId, String adminId) {
         Invitation inv = invitationRepo.findByIdWithDetails(invitationId)
                 .orElseThrow(() -> new NotFoundException("Invitation not found"));
@@ -125,7 +154,7 @@ public class InvitationServiceImpl implements InvitationService {
 
     @Override
     public String redeem(String token, String name, String email, String password, String businessName) {
-        Invitation inv = invitationRepo.findByToken(token)
+        Invitation inv = invitationRepo.findByTokenForUpdate(token)
                 .orElseThrow(() -> new NotFoundException("Invitation not found"));
 
         if (!inv.isRedeemable(Instant.now())) {
@@ -168,7 +197,13 @@ public class InvitationServiceImpl implements InvitationService {
         switch (inv.getKind()) {
             case LANDLORD -> landlordRepo.save((Landlord) created);
             case MARKET_AGENT -> agentRepo.save((MarketAgent) created);
-            case CARETAKER -> caretakerRepo.save((Caretaker) created);
+            case CARETAKER -> {
+                Caretaker caretaker = (Caretaker) created;
+                if (inv.getInvitedHostel() != null) {
+                    caretaker.assign(inv.getInvitedHostel());
+                }
+                caretakerRepo.save(caretaker);
+            }
         }
 
         inv.markUsed(created);

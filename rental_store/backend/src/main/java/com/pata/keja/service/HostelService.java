@@ -3,6 +3,7 @@ package com.pata.keja.service;
 import java.util.List;
 
 import com.pata.keja.dto.hostel.CaretakerAssignmentRequest;
+import com.pata.keja.dto.hostel.AcceptStudentRequest;
 import com.pata.keja.dto.hostel.HostelCreateRequest;
 import com.pata.keja.dto.hostel.HostelFilter;
 import com.pata.keja.dto.hostel.HostelResponse;
@@ -37,9 +38,13 @@ public interface HostelService {
 
     List<PendingStudentRequestResponse> listPendingRequests(String hostelId);
 
-    void acceptRequest(String hostelId, String studentId);
+    void acceptRequest(String hostelId, String studentId, AcceptStudentRequest request);
 
     void rejectRequest(String hostelId, String studentId);
+
+    void removeTenant(String hostelId, String studentId);
+
+    void removeCaretaker(String hostelId, String caretakerId);
 
     void assignCaretaker(String hostelId, CaretakerAssignmentRequest req);
 }

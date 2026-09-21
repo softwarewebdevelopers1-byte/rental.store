@@ -178,6 +178,26 @@
 .rooms {
   margin-top: var(--space-12);
 }
+.requestOptions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.requestRoomSummary {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-alt);
+}
+.requestPrompt {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
 .roomList {
   display: flex;
   flex-direction: column;

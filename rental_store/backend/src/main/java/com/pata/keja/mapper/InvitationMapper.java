@@ -2,7 +2,6 @@ package com.pata.keja.mapper;
 
 import com.pata.keja.dto.invitation.InvitationResponse;
 import com.pata.keja.dto.invitation.InvitationSummaryResponse;
-import com.pata.keja.models.Admin;
 import com.pata.keja.models.Invitation;
 import com.pata.keja.models.User;
 import org.springframework.stereotype.Component;
@@ -22,7 +21,7 @@ public class InvitationMapper {
     }
 
     public InvitationResponse toResponse(Invitation i) {
-        Admin createdBy = i.getCreatedBy();
+        User createdBy = i.getCreatedBy();
         User usedBy = i.getUsedBy();
         return new InvitationResponse(
                 i.getId(),

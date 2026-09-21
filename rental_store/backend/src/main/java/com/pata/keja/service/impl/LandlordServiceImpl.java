@@ -14,6 +14,7 @@ import com.pata.keja.exception.NotFoundException;
 import com.pata.keja.mapper.LandlordMapper;
 import com.pata.keja.models.Hostel;
 import com.pata.keja.models.Landlord;
+import com.pata.keja.repository.BookingRequestRepository;
 import com.pata.keja.repository.LandlordRepository;
 import com.pata.keja.repository.PaymentRepository;
 import com.pata.keja.repository.RoomRepository;
@@ -35,6 +36,7 @@ public class LandlordServiceImpl implements LandlordService {
     private final StudentRepository studentRepository;
     private final RoomRepository roomRepository;
     private final PaymentRepository paymentRepository;
+    private final BookingRequestRepository bookingRequestRepository;
     private final LandlordMapper landlordMapper;
     private final MessageService messageService;
 
@@ -42,12 +44,14 @@ public class LandlordServiceImpl implements LandlordService {
             StudentRepository studentRepository,
             RoomRepository roomRepository,
             PaymentRepository paymentRepository,
+            BookingRequestRepository bookingRequestRepository,
             LandlordMapper landlordMapper,
             MessageService messageService) {
         this.landlordRepository = landlordRepository;
         this.studentRepository = studentRepository;
         this.roomRepository = roomRepository;
         this.paymentRepository = paymentRepository;
+        this.bookingRequestRepository = bookingRequestRepository;
         this.landlordMapper = landlordMapper;
         this.messageService = messageService;
     }
@@ -101,6 +105,7 @@ public class LandlordServiceImpl implements LandlordService {
         int bookedRooms = 0;
         int activeTenants = 0;
         int pendingRequests = 0;
+        int pendingBookings = 0;
         int outstandingPayments = 0;
 
         for (Hostel hostel : landlord.getHostels()) {
@@ -111,6 +116,8 @@ public class LandlordServiceImpl implements LandlordService {
                     .filter(room -> room.getStatus() == RoomStatus.BOOKED).count();
             activeTenants += studentRepository.findActiveTenantsForHostel(hostel.getId()).size();
             pendingRequests += studentRepository.findPendingRequestsForHostel(hostel.getId()).size();
+            pendingBookings += bookingRequestRepository.countByHostelIdInAndStatus(
+                    java.util.List.of(hostel.getId()), com.pata.keja.enums.BookingRequestStatus.PENDING);
             outstandingPayments += (int) hostel.getRooms().stream()
                     .map(room -> room.getTenant())
                     .filter(java.util.Objects::nonNull)
@@ -125,6 +132,7 @@ public class LandlordServiceImpl implements LandlordService {
                 bookedRooms,
                 activeTenants,
                 pendingRequests,
+                pendingBookings,
                 outstandingPayments,
                 (int) messageService.unreadCountForUser(landlord.getId()));
     }

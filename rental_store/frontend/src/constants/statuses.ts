@@ -10,6 +10,7 @@ type Tone = "neutral" | "info" | "success" | "warning" | "danger";
 
 export const ROOM_STATUS_TONE: Record<RoomStatus, Tone> = {
   VACANT: "success",
+  HELD: "warning",
   BOOKED: "info",
 };
 

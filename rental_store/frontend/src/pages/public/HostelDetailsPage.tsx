@@ -4,7 +4,6 @@ import {
   hostelService,
   type HostelSummary,
 } from "../../services/hostelService";
-import { paymentService } from "../../services/paymentService";
 import { RatingStars } from "../../components/common/RatingStars";
 import { PriceDisplay } from "../../components/common/PriceDisplay";
 import { Button } from "../../components/common/Button";
@@ -13,9 +12,11 @@ import { EmptyState } from "../../components/common/EmptyState";
 import { ErrorState } from "../../components/common/ErrorState";
 import { MpesaPaymentModal } from "../../components/payments/MpesaPaymentModal";
 import { LandlordContactButtons } from "../../components/hostel/LandlordContactButtons";
+import { Modal } from "../../components/common/Modal";
 import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../../hooks/useToast";
 import { billingPeriodLabel, type Room } from "../../types/room";
+import { openLandlordWhatsApp } from "../../utils/whatsapp";
 import styles from "./HostelDetailsPage.module.css";
 
 export default function HostelDetailsPage() {
@@ -29,6 +30,7 @@ export default function HostelDetailsPage() {
   const [error, setError] = useState<string | null>(null);
   const [activeImage, setActiveImage] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [requestOptionsOpen, setRequestOptionsOpen] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -51,17 +53,35 @@ export default function HostelDetailsPage() {
     }
   }
 
-  async function openRoomPayment(room: Room) {
+  function openRoomRequest(room: Room) {
     if (!user || user.role !== "STUDENT") {
       show("Sign in as a student to request a room.", "error");
       return;
     }
     setSelectedRoom(room);
-    setPaymentOpen(true);
+    setRequestOptionsOpen(true);
+  }
+
+  function chatAboutRoom() {
+    if (!hostel || !selectedRoom) return;
+    const opened = openLandlordWhatsApp({
+      landlordName: hostel.landlordName ?? "the landlord",
+      landlordPhone: hostel.landlordPhone ?? "",
+      hostelName: hostel.name,
+      hostelLocation: hostel.location,
+      roomNumber: selectedRoom.number,
+      roomPrice: selectedRoom.price,
+      billingPeriod: billingPeriodLabel[selectedRoom.billingPeriod].replace("per ", ""),
+      studentName: user?.role === "STUDENT" ? user.name : undefined,
+    });
+    if (!opened) {
+      show("This landlord has not provided a WhatsApp number.", "error");
+      return;
+    }
+    setRequestOptionsOpen(false);
   }
 
   async function handleMpesaConfirm({
-    phone,
     mpesaCode,
   }: {
     phone: string;
@@ -71,24 +91,12 @@ export default function HostelDetailsPage() {
 
     setSubmitting(true);
     try {
-      await paymentService.createPayment({
-        studentId: user.id,
-        hostelId: hostel.id,
-        roomId: selectedRoom.id,
-        amount: selectedRoom.price,
-        status: "PAID",
-        dueDate: new Date(
-          Date.now() + 30 * 24 * 60 * 60 * 1000,
-        ).toISOString(),
-        method: "MPESA",
-        mpesaPhone: phone,
-        mpesaCode,
-      });
       const bookedRoom = await hostelService.bookRoom(
         selectedRoom.id,
         hostel.id,
-        user.id,
-        user.name,
+        "PAY_NOW",
+        mpesaCode,
+        selectedRoom.billingPeriod,
       );
       if (!bookedRoom) throw new Error("This room is no longer available.");
 
@@ -239,7 +247,7 @@ export default function HostelDetailsPage() {
                         size="sm"
                         variant={bookable ? "primary" : "secondary"}
                         disabled={!bookable || submitting}
-                        onClick={() => void openRoomPayment(r)}
+                        onClick={() => openRoomRequest(r)}
                       >
                         {bookable ? "Request room" : "Occupied"}
                       </Button>
@@ -313,6 +321,45 @@ export default function HostelDetailsPage() {
         }}
         onConfirm={handleMpesaConfirm}
       />
+
+      <Modal
+        open={requestOptionsOpen}
+        title="Request this room"
+        onClose={() => {
+          if (!submitting) {
+            setRequestOptionsOpen(false);
+            setSelectedRoom(null);
+          }
+        }}
+        size="sm"
+      >
+        {selectedRoom && (
+          <div className={styles.requestOptions}>
+            <div className={styles.requestRoomSummary}>
+              <strong>Room {selectedRoom.number}</strong>
+              <PriceDisplay
+                amount={selectedRoom.price}
+                suffix={`/${billingPeriodLabel[selectedRoom.billingPeriod].replace("per ", "")}`}
+              />
+            </div>
+            <p className={styles.requestPrompt}>
+              Choose how you want to contact the landlord about this room.
+            </p>
+            <Button
+              fullWidth
+              onClick={() => {
+                setRequestOptionsOpen(false);
+                setPaymentOpen(true);
+              }}
+            >
+              Pay now
+            </Button>
+            <Button fullWidth variant="secondary" onClick={chatAboutRoom}>
+              Chat landlord on WhatsApp
+            </Button>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

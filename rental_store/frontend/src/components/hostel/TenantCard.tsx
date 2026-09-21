@@ -8,6 +8,7 @@ interface TenantCardProps {
   roomNumber?: string;
   onMessage?: () => void;
   onView?: () => void;
+  onRemove?: () => void;
 }
 
 export function TenantCard({
@@ -15,6 +16,7 @@ export function TenantCard({
   roomNumber,
   onMessage,
   onView,
+  onRemove,
 }: TenantCardProps) {
   return (
     <article className={styles.card}>
@@ -41,6 +43,11 @@ export function TenantCard({
         {onView && (
           <Button size="sm" variant="ghost" onClick={onView}>
             View details
+          </Button>
+        )}
+        {onRemove && (
+          <Button size="sm" variant="danger" onClick={onRemove}>
+            Remove student
           </Button>
         )}
       </footer>

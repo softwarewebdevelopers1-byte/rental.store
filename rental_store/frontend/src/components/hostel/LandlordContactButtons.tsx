@@ -8,6 +8,7 @@ export interface LandlordContactButtonsProps {
   size?: "sm" | "md";
 }
 
+
 function WhatsAppIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" className={styles.icon}>

@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.List;
 
 import com.pata.keja.dto.hostel.CaretakerAssignmentRequest;
+import com.pata.keja.dto.hostel.AcceptStudentRequest;
 import com.pata.keja.dto.hostel.HostelCreateRequest;
 import com.pata.keja.dto.hostel.HostelFilter;
 import com.pata.keja.dto.hostel.HostelResponse;
@@ -176,15 +177,18 @@ public class HostelServiceImpl implements HostelService {
     }
 
     @Override
-    public void acceptRequest(String hostelId, String studentId) {
+    public void acceptRequest(String hostelId, String studentId, AcceptStudentRequest request) {
         Hostel hostel = requireOwnedOrAdmin(hostelId);
         Student student = studentRepository.findWithAssociationsById(studentId)
                 .orElseThrow(() -> new NotFoundException("Student not found"));
         if (student.getRequestedHostel() == null || !hostelId.equals(student.getRequestedHostel().getId())) {
             throw new ConflictException("Student has no pending request for this hostel");
         }
-        var room = roomRepository.findByHostelAndStatusOrderByNumber(hostelId, RoomStatus.VACANT).stream()
-                .findFirst().orElseThrow(() -> new ConflictException("No vacant rooms"));
+        var room = roomRepository.findByIdForUpdate(request.roomId())
+                .orElseThrow(() -> new NotFoundException("Room not found"));
+        if (!hostelId.equals(room.getHostel().getId()) || room.getStatus() != RoomStatus.VACANT) {
+            throw new ConflictException("Select a vacant room in this hostel");
+        }
         var previousRoom = student.getRoom();
         if (previousRoom != null && previousRoom != room) {
             previousRoom.setTenant(null);
@@ -195,6 +199,7 @@ public class HostelServiceImpl implements HostelService {
         student.setHostel(hostel);
         student.setRoom(room);
         student.setRequestedHostel(null);
+        student.setRequestedAt(null);
         student.setMembershipStatus(MembershipStatus.ACTIVE);
         student.setActivatedAt(Instant.now());
         room.setTenant(student);
@@ -210,7 +215,9 @@ public class HostelServiceImpl implements HostelService {
             throw new ConflictException("Student has no pending request for this hostel");
         }
         student.setRequestedHostel(null);
-        student.setMembershipStatus(MembershipStatus.REJECTED);
+        student.setRequestedAt(null);
+        student.setMembershipStatus(
+                student.getHostel() == null ? MembershipStatus.REJECTED : MembershipStatus.ACTIVE);
     }
 
     @Override
@@ -220,6 +227,39 @@ public class HostelServiceImpl implements HostelService {
                 .orElseThrow(() -> new NotFoundException("Caretaker not found"));
         caretaker.assign(hostel);
         caretakerRepository.save(caretaker);
+    }
+
+    @Override
+    public void removeCaretaker(String hostelId, String caretakerId) {
+        Hostel hostel = requireOwnedOrAdmin(hostelId);
+        Caretaker caretaker = caretakerRepository.findByIdWithHostels(caretakerId)
+                .orElseThrow(() -> new NotFoundException("Caretaker not found"));
+        if (!caretaker.getAssignedHostels().contains(hostel)) {
+            throw new ConflictException("Caretaker is not assigned to this hostel");
+        }
+        caretaker.unassign(hostel);
+        hostel.getPaymentRecorderCaretakerIds().remove(caretakerId);
+        caretakerRepository.save(caretaker);
+    }
+
+    @Override
+    public void removeTenant(String hostelId, String studentId) {
+        Hostel hostel = requireOwnedOrAdmin(hostelId);
+        Student student = studentRepository.findWithAssociationsById(studentId)
+                .orElseThrow(() -> new NotFoundException("Student not found"));
+        if (student.getHostel() == null || !hostelId.equals(student.getHostel().getId())
+                || student.getMembershipStatus() != MembershipStatus.ACTIVE) {
+            throw new ConflictException("Student is not an active tenant of this hostel");
+        }
+        if (student.getRoom() != null && hostelId.equals(student.getRoom().getHostel().getId())) {
+            student.getRoom().setTenant(null);
+            student.getRoom().setStatus(RoomStatus.VACANT);
+        }
+        student.setHostel(null);
+        student.setRoom(null);
+        student.setRequestedHostel(null);
+        student.setRequestedAt(null);
+        student.setMembershipStatus(MembershipStatus.INACTIVE);
     }
 
     private Hostel requireHostel(String id) {

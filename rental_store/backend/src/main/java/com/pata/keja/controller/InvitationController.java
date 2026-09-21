@@ -70,6 +70,14 @@ public class InvitationController {
         return ResponseEntity.created(URI.create("/api/invitations/" + response.id())).body(response);
     }
 
+    @PostMapping("/landlords/me/hostels/{hostelId}/caretaker")
+    @PreAuthorize("hasRole('LANDLORD')")
+    public InvitationResponse createCaretakerInvite(
+            @PathVariable String hostelId,
+            @AuthenticationPrincipal AppUserPrincipal principal) {
+        return invitationService.createForLandlord(principal.id(), hostelId);
+    }
+
     @PostMapping("/{id}/revoke")
     @PreAuthorize("hasRole('ADMIN')")
     public InvitationResponse revoke(

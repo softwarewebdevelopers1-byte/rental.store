@@ -5,6 +5,7 @@ import java.util.List;
 import jakarta.validation.Valid;
 
 import com.pata.keja.dto.hostel.CaretakerAssignmentRequest;
+import com.pata.keja.dto.hostel.AcceptStudentRequest;
 import com.pata.keja.dto.hostel.HostelCreateRequest;
 import com.pata.keja.dto.hostel.HostelFilter;
 import com.pata.keja.dto.hostel.HostelResponse;
@@ -111,8 +112,9 @@ public class HostelController {
     @PreAuthorize("hasRole('LANDLORD') or hasRole('ADMIN')")
     public ResponseEntity<Void> acceptRequest(
             @PathVariable String id,
-            @PathVariable String studentId) {
-        hostelService.acceptRequest(id, studentId);
+            @PathVariable String studentId,
+            @Valid @RequestBody AcceptStudentRequest request) {
+        hostelService.acceptRequest(id, studentId, request);
         return ResponseEntity.noContent().build();
     }
 
@@ -131,6 +133,24 @@ public class HostelController {
             @PathVariable String id,
             @Valid @RequestBody CaretakerAssignmentRequest request) {
         hostelService.assignCaretaker(id, request);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{id}/caretakers/{caretakerId}")
+    @PreAuthorize("hasRole('LANDLORD') or hasRole('ADMIN')")
+    public ResponseEntity<Void> removeCaretaker(
+            @PathVariable String id,
+            @PathVariable String caretakerId) {
+        hostelService.removeCaretaker(id, caretakerId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{id}/tenants/{studentId}")
+    @PreAuthorize("hasRole('LANDLORD') or hasRole('ADMIN')")
+    public ResponseEntity<Void> removeTenant(
+            @PathVariable String id,
+            @PathVariable String studentId) {
+        hostelService.removeTenant(id, studentId);
         return ResponseEntity.noContent().build();
     }
 }

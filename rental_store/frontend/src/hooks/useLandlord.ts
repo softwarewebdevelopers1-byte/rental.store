@@ -128,8 +128,8 @@ export function usePendingRequests(landlordId: string) {
   }, [reload]);
 
   const accept = useCallback(
-    async (studentId: string) => {
-      await hostelService.acceptRequest(studentId);
+    async (studentId: string, roomId: string) => {
+      await hostelService.acceptRequest(studentId, roomId);
       await reload();
     },
     [reload],

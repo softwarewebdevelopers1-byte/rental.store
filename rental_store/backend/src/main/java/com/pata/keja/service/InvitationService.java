@@ -21,6 +21,9 @@ public interface InvitationService {
 
     InvitationResponse create(String adminId, InvitationCreateRequest req);
 
+    /** Return the active caretaker link for this hostel, or create one. */
+    InvitationResponse createForLandlord(String landlordId, String hostelId);
+
     InvitationResponse revoke(String invitationId, String adminId);
 
     /**
