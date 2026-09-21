@@ -26,7 +26,6 @@ export function AuthLayout() {
         <div className={styles.card}>
           <Outlet />
         </div>
-        <p className={styles.note}>Frontend prototype — mock data only.</p>
       </div>
     </div>
   );

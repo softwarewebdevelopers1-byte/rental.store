@@ -59,7 +59,7 @@ export const marketAgentPolicy: PolicyDocument = {
     {
       heading: "Contact",
       paragraphs: [
-        "Questions about this policy? Contact legal@hostelix.example.",
+        "Questions about this policy? Contact 0757475316 or softwarewebdevelopers1@gmail.com.",
       ],
     },
   ],

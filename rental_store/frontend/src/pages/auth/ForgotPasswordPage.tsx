@@ -22,8 +22,7 @@ export default function ForgotPasswordPage() {
     <div className={styles.wrap}>
       <h1 className={styles.title}>Forgot password</h1>
       <p className={styles.subtitle}>
-        Enter your email and we'll send a reset link. (Prototype: no email is
-        actually sent.)
+        Enter your email and we'll send a reset link.
       </p>
       {sent ? (
         <p className={styles.subtitle}>

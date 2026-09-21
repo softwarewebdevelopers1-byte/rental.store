@@ -4,6 +4,7 @@ import { useAuth } from "../hooks/useAuth";
 import { ROLE_HOME } from "../constants/roles";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { APP_LOGO, APP_NAME } from "../constants/config";
+import { Footer } from "../components/layout/Footer";
 import styles from "./PublicLayout.module.css";
 
 export function PublicLayout() {
@@ -87,9 +88,7 @@ export function PublicLayout() {
           </div>
         </nav>
       )}
-      <footer className={styles.footer}>
-        <span>© {new Date().getFullYear()} {APP_NAME}. Frontend prototype.</span>
-      </footer>
+      <Footer />
     </div>
   );
 }

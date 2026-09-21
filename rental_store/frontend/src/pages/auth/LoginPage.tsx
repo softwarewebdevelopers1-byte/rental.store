@@ -8,16 +8,8 @@ import { ROLE_HOME } from "../../constants/roles";
 import type { UserRole } from "../../types/user";
 import styles from "./LoginPage.module.css";
 
-const DEMO_ROLES: { role: UserRole; label: string }[] = [
-  { role: "STUDENT", label: "Student Demo" },
-  { role: "LANDLORD", label: "Landlord Demo" },
-  { role: "CARETAKER", label: "Caretaker Demo" },
-  { role: "MARKET_AGENT", label: "Market Agent Demo" },
-  { role: "ADMIN", label: "Admin Demo" },
-];
-
 export default function LoginPage() {
-  const { login, loginAsRole } = useAuth();
+  const { login } = useAuth();
   const { show } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -68,19 +60,6 @@ export default function LoginPage() {
     }
   }
 
-  async function onDemo(role: UserRole) {
-    setLoading(true);
-    try {
-      await loginAsRole(role);
-      show(`Signed in as ${role}`, "success");
-      navigate(ROLE_HOME[role], { replace: true });
-    } catch (err) {
-      show(err instanceof Error ? err.message : "Demo sign-in failed", "error");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   return (
     <div className={styles.wrap}>
       <h1 className={styles.title}>Welcome back</h1>
@@ -124,26 +103,6 @@ export default function LoginPage() {
       <div className={styles.links}>
         <Link to="/forgot-password">Forgot password?</Link>
         <Link to={signUpPath}>Create account</Link>
-      </div>
-
-      <div className={styles.demo}>
-        <p className={styles.demoTitle}>Or use a demo account</p>
-        <div className={styles.demoGrid}>
-          {DEMO_ROLES.map((d) => (
-            <Button
-              key={d.role}
-              variant="secondary"
-              size="sm"
-              onClick={() => void onDemo(d.role)}
-              disabled={loading}
-            >
-              {d.label}
-            </Button>
-          ))}
-        </div>
-        <p className={styles.hint}>
-          All demo passwords are <code>password</code>.
-        </p>
       </div>
     </div>
   );
