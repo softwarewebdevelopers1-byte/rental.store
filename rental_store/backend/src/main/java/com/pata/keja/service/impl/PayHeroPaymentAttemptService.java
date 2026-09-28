@@ -9,6 +9,7 @@ import com.pata.keja.dto.payment.PayHeroInitiateRequest;
 import com.pata.keja.dto.payment.PayHeroInitiateResponse;
 import com.pata.keja.enums.BookingInitiation;
 import com.pata.keja.enums.BookingRequestStatus;
+import com.pata.keja.enums.MembershipStatus;
 import com.pata.keja.enums.NotificationKind;
 import com.pata.keja.enums.PaymentMethod;
 import com.pata.keja.enums.PaymentStatus;
@@ -137,12 +138,7 @@ public class PayHeroPaymentAttemptService {
             booking.setStatus(BookingRequestStatus.CANCELLED);
             booking.setDecidedAt(Instant.now());
 
-            Room room = roomRepository.findByIdForUpdate(booking.getRoom().getId())
-                    .orElseThrow(() -> new NotFoundException("Room not found"));
-            if (room.getStatus() == RoomStatus.HELD) {
-                room.setStatus(RoomStatus.VACANT);
-                room.setTenant(null);
-            }
+            releaseRoomAfterFailedPayment(booking);
             notificationService.emit(
                     booking.getStudent().getId(),
                     NotificationKind.BOOKING,
@@ -225,12 +221,7 @@ public class PayHeroPaymentAttemptService {
         } else if (callback.status().equalsIgnoreCase("FAILED")) {
             payment.setStatus(PaymentStatus.FAILED);
             booking.setStatus(BookingRequestStatus.CANCELLED);
-            Room room = roomRepository.findByIdForUpdate(booking.getRoom().getId())
-                    .orElseThrow(() -> new NotFoundException("Room not found"));
-            if (room.getStatus() == RoomStatus.HELD) {
-                room.setStatus(RoomStatus.VACANT);
-                room.setTenant(null);
-            }
+            releaseRoomAfterFailedPayment(booking);
             notificationService.emit(
                     booking.getStudent().getId(),
                     NotificationKind.BOOKING,
@@ -240,6 +231,38 @@ public class PayHeroPaymentAttemptService {
         }
         paymentRepository.save(payment);
         bookingRequestRepository.save(booking);
+    }
+
+    private void releaseRoomAfterFailedPayment(BookingRequest booking) {
+        Room room = roomRepository.findByIdForUpdate(booking.getRoom().getId())
+                .orElseThrow(() -> new NotFoundException("Room not found"));
+        Student student = booking.getStudent();
+        boolean isBookingStudentTenant = room.getTenant() != null
+                && room.getTenant().getId().equals(student.getId());
+
+        boolean roomCanBeReleased = (room.getStatus() == RoomStatus.HELD && !hasDifferentTenant(room, student))
+                || (room.getStatus() == RoomStatus.BOOKED && isBookingStudentTenant);
+        if (roomCanBeReleased) {
+            room.setStatus(RoomStatus.VACANT);
+            if (isBookingStudentTenant) {
+                room.setTenant(null);
+            }
+        }
+
+        boolean studentStillAssignedToBookingRoom = student.getRoom() != null
+                && student.getRoom().getId().equals(room.getId())
+                && student.getHostel() != null
+                && student.getHostel().getId().equals(booking.getHostel().getId());
+        if (studentStillAssignedToBookingRoom) {
+            student.setRoom(null);
+            student.setHostel(null);
+            student.setMembershipStatus(MembershipStatus.INACTIVE);
+            student.setActivatedAt(null);
+        }
+    }
+
+    private static boolean hasDifferentTenant(Room room, Student student) {
+        return room.getTenant() != null && !room.getTenant().getId().equals(student.getId());
     }
 
     private BookingRequest findBookingForUpdate(String bookingId) {
