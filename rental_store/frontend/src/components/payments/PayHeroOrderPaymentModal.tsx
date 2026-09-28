@@ -1,15 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "../common/Button";
+import { Input } from "../common/Input";
 import { Modal } from "../common/Modal";
 import { PriceDisplay } from "../common/PriceDisplay";
 import { StatusBadge } from "../common/StatusBadge";
 import { orderService } from "../../services/orderService";
 import { poll, type PollOptions } from "../../utils/polling";
 import type { Order } from "../../types/order";
+import { parsePhone } from "../../utils/phone";
 import styles from "./PayHeroOrderPaymentModal.module.css";
 
-type Phase = "initiating" | "waiting" | "success" | "failure" | "timeout";
+type Phase = "phone" | "initiating" | "waiting" | "success" | "failure" | "timeout";
 
 interface PayHeroOrderPaymentModalProps {
   open: boolean;
@@ -26,8 +28,9 @@ export function PayHeroOrderPaymentModal({
   onClose,
   onSuccess,
 }: PayHeroOrderPaymentModalProps) {
-  const [phase, setPhase] = useState<Phase>("initiating");
+  const [phase, setPhase] = useState<Phase>("phone");
   const [error, setError] = useState<string | null>(null);
+  const [paymentPhone, setPaymentPhone] = useState(phone ?? "");
   const activePoll = useRef<{ cancel: () => void } | null>(null);
   const openRef = useRef(false);
 
@@ -36,17 +39,12 @@ export function PayHeroOrderPaymentModal({
     if (!open) {
       activePoll.current?.cancel();
       activePoll.current = null;
-      return;
     }
-    if (!order) return;
-    setPhase("initiating");
-    setError(null);
-    void initiate(order);
     return () => {
       openRef.current = false;
       activePoll.current?.cancel();
     };
-  }, [open, order?.id]);
+  }, [open]);
 
   function close() {
     activePoll.current?.cancel();
@@ -92,14 +90,18 @@ export function PayHeroOrderPaymentModal({
     }
   }
 
-  async function initiate(currentOrder: Order) {
-    if (!phone) {
-      setPhase("failure");
-      setError("Add an E.164 phone number to your profile before paying.");
+  async function initiate() {
+    if (!order) return;
+    const parsedPhone = parsePhone(paymentPhone, "KE");
+    if (!parsedPhone.valid) {
+      setPhase("phone");
+      setError("Enter a valid M-Pesa phone number, for example 0757 475 316.");
       return;
     }
+    setPhase("initiating");
+    setError(null);
     try {
-      const response = await orderService.payheroInitiate(currentOrder.id, { phone });
+      const response = await orderService.payheroInitiate(order.id, { phone: parsedPhone.e164 });
       if (!openRef.current) return;
       if (response.status === "PAID") {
         setPhase("success");
@@ -107,7 +109,7 @@ export function PayHeroOrderPaymentModal({
         return;
       }
       setPhase("waiting");
-      void startPolling(currentOrder.id);
+      void startPolling(order.id);
     } catch (initiationError) {
       if (!openRef.current) return;
       setPhase("failure");
@@ -128,7 +130,12 @@ export function PayHeroOrderPaymentModal({
       onClose={close}
       size="sm"
       footer={
-        phase === "failure" || phase === "timeout" ? (
+        phase === "phone" ? (
+          <>
+            <Button variant="secondary" onClick={close}>Close</Button>
+            <Button onClick={() => void initiate()}>Send STK prompt</Button>
+          </>
+        ) : phase === "failure" || phase === "timeout" ? (
           <>
             <Button variant="secondary" onClick={close}>Close</Button>
             <Link to={`/student/orders/${order.id}`} onClick={close}>
@@ -146,12 +153,29 @@ export function PayHeroOrderPaymentModal({
           <PriceDisplay amount={order.total} />
         </div>
 
+        {phase === "phone" && (
+          <>
+            <p className={styles.body}>Choose the M-Pesa number that should receive the STK prompt.</p>
+            <Input
+              label="M-Pesa phone number"
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              placeholder="0757 475 316"
+              value={paymentPhone}
+              onChange={(event) => setPaymentPhone(event.target.value)}
+              hint="You can use any Kenyan M-Pesa number."
+              error={error ?? undefined}
+            />
+          </>
+        )}
+
         {(phase === "initiating" || phase === "waiting") && (
           <div className={styles.state}>
             <div className={styles.spinner} aria-hidden />
             <h3>{phase === "initiating" ? "Starting payment…" : "Waiting for payment…"}</h3>
             <p className={styles.body}>
-              Check {phone} for the M-Pesa prompt and enter your PIN.
+              Check {paymentPhone} for the M-Pesa prompt and enter your PIN.
             </p>
           </div>
         )}

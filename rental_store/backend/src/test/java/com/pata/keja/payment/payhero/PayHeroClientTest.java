@@ -113,4 +113,11 @@ class PayHeroClientTest {
         assertEquals("M-PESA-123", result.providerReference());
         server.verify();
     }
+
+    @Test
+    void normalizesAnyValidKenyanMpesanumber() {
+        assertEquals("+254757475316", PayHeroPhoneNumber.normalize("0757 475 316"));
+        assertEquals("+254757475316", PayHeroPhoneNumber.normalize("254757475316"));
+        assertEquals("+254757475316", PayHeroPhoneNumber.normalize("+254 757 475 316"));
+    }
 }

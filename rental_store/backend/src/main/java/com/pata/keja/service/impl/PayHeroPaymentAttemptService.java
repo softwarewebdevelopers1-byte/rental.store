@@ -21,6 +21,7 @@ import com.pata.keja.models.Room;
 import com.pata.keja.models.Student;
 import com.pata.keja.payment.PaymentStatusResult;
 import com.pata.keja.payment.payhero.PayHeroCallbackPayload;
+import com.pata.keja.payment.payhero.PayHeroPhoneNumber;
 import com.pata.keja.repository.BookingRequestRepository;
 import com.pata.keja.repository.PaymentRepository;
 import com.pata.keja.repository.RoomRepository;
@@ -71,7 +72,7 @@ public class PayHeroPaymentAttemptService {
 
         Student student = studentRepository.findWithAssociationsById(studentId)
                 .orElseThrow(() -> new NotFoundException("Student not found"));
-        String phone = requireOwnedE164Phone(student, request.phone());
+        String phone = PayHeroPhoneNumber.normalize(request.phone());
 
         Payment existing = booking.getPayment();
         if (existing != null) {
@@ -261,34 +262,6 @@ public class PayHeroPaymentAttemptService {
                 payment.getPayheroReference(),
                 payment.getStatus().name(),
                 message);
-    }
-
-    private static String requireOwnedE164Phone(Student student, String requestedPhone) {
-        if (requestedPhone == null || !requestedPhone.matches("\\+254[17]\\d{8}")) {
-            throw new ConflictException("Update your profile with a valid E.164 phone number before paying.");
-        }
-        String stored = canonicalPhone(student.getPhone());
-        if (stored == null || !stored.equals(requestedPhone)) {
-            throw new ConflictException("The payment phone must match the phone number on your profile.");
-        }
-        return requestedPhone;
-    }
-
-    private static String canonicalPhone(String value) {
-        if (value == null || value.isBlank()) {
-            return null;
-        }
-        String trimmed = value.trim();
-        if (trimmed.matches("\\+254[17]\\d{8}")) {
-            return trimmed;
-        }
-        if (trimmed.matches("254[17]\\d{8}")) {
-            return "+" + trimmed;
-        }
-        if (trimmed.matches("0[17]\\d{8}")) {
-            return "+254" + trimmed.substring(1);
-        }
-        return null;
     }
 
     public record Attempt(

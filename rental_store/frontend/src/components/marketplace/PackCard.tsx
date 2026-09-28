@@ -27,10 +27,6 @@ export function PackCard({
 
   async function handleBuyNow() {
     if (!user) return;
-    if (!user.phone) {
-      show("Add your phone number to your profile before paying.", "error");
-      return;
-    }
     setSubmitting(true);
     try {
       const order = await orderService.create({
@@ -120,6 +116,7 @@ export function PackCard({
         </div>
       </div>
       <PayHeroOrderPaymentModal
+        key={`${pendingOrder?.id ?? "new"}-${open ? "open" : "closed"}`}
         open={open}
         order={pendingOrder}
         phone={user?.phone}

@@ -2,12 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "../common/Button";
 import { Modal } from "../common/Modal";
+import { Input } from "../common/Input";
 import { PriceDisplay } from "../common/PriceDisplay";
 import { StatusBadge } from "../common/StatusBadge";
 import { bookingService, type BookingResponse } from "../../services/bookingService";
 import { paymentService } from "../../services/paymentService";
 import { poll, type PollOptions } from "../../utils/polling";
 import type { Room } from "../../types/room";
+import { parsePhone } from "../../utils/phone";
 import styles from "./RequestRoomModal.module.css";
 
 type Phase = "options" | "initiating" | "waiting" | "success" | "failure" | "timeout";
@@ -34,6 +36,7 @@ export function RequestRoomModal({
   const [phase, setPhase] = useState<Phase>("options");
   const [bookingId, setBookingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [paymentPhone, setPaymentPhone] = useState(phone ?? "");
   const activePoll = useRef<{ cancel: () => void } | null>(null);
   const openRef = useRef(false);
 
@@ -96,9 +99,10 @@ export function RequestRoomModal({
 
   async function payNow() {
     if (!room) return;
-    if (!phone) {
-      setError("Add an E.164 phone number to your profile before paying.");
-      setPhase("failure");
+    const parsedPhone = parsePhone(paymentPhone, "KE");
+    if (!parsedPhone.valid) {
+      setError("Enter a valid M-Pesa phone number, for example 0757 475 316.");
+      setPhase("options");
       return;
     }
 
@@ -118,7 +122,10 @@ export function RequestRoomModal({
         id = booking.id;
         setBookingId(id);
       }
-      const payment = await paymentService.payheroInitiate({ bookingRequestId: id, phone });
+      const payment = await paymentService.payheroInitiate({
+        bookingRequestId: id,
+        phone: parsedPhone.e164,
+      });
       if (!openRef.current) return;
       if (payment.status === "PAID") {
         setPhase("success");
@@ -199,9 +206,19 @@ export function RequestRoomModal({
           {phase === "options" && (
             <>
               <p className={styles.prompt}>
-                Pay now to send an M-Pesa STK prompt to the phone number saved on your profile.
+                Enter the number that should receive the M-Pesa STK prompt.
               </p>
-              {error && <p className={styles.body}>{error}</p>}
+              <Input
+                label="M-Pesa phone number"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                placeholder="0757 475 316"
+                value={paymentPhone}
+                onChange={(event) => setPaymentPhone(event.target.value)}
+                hint="You can use any Kenyan M-Pesa number."
+                error={error ?? undefined}
+              />
             </>
           )}
 
@@ -210,7 +227,7 @@ export function RequestRoomModal({
               <div className={styles.spinner} aria-hidden />
               <h3>{phase === "initiating" ? "Starting payment…" : "Waiting for payment…"}</h3>
               <p className={styles.body}>
-                Check {phone} for the M-Pesa prompt and enter your PIN.
+                Check {paymentPhone} for the M-Pesa prompt and enter your PIN.
               </p>
             </div>
           )}

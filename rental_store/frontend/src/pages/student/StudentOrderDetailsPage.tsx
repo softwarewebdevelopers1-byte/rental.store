@@ -131,6 +131,7 @@ export default function StudentOrderDetailsPage() {
       </div>
 
       <PayHeroOrderPaymentModal
+        key={`${order.id}-${payOpen ? "open" : "closed"}`}
         open={payOpen}
         order={order}
         phone={user?.phone}

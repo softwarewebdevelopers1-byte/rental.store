@@ -71,10 +71,6 @@ export default function CheckoutPage() {
     "";
 
   async function handlePlaceOrder() {
-    if (!user?.phone) {
-      show("Add your phone number to your profile before paying.", "error");
-      return;
-    }
     if (pendingOrder) {
       setOpen(true);
       return;
@@ -150,6 +146,7 @@ export default function CheckoutPage() {
         </aside>
       </div>
       <PayHeroOrderPaymentModal
+        key={`${pendingOrder?.id ?? "new"}-${open ? "open" : "closed"}`}
         open={open}
         order={pendingOrder}
         phone={user.phone}

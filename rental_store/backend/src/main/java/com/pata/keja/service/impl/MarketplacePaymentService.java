@@ -13,12 +13,11 @@ import com.pata.keja.exception.ConflictException;
 import com.pata.keja.exception.NotFoundException;
 import com.pata.keja.exception.PaymentProviderException;
 import com.pata.keja.models.Order;
-import com.pata.keja.models.Student;
 import com.pata.keja.payment.PaymentInitiationResult;
 import com.pata.keja.payment.PaymentProvider;
 import com.pata.keja.payment.payhero.PayHeroCallbackPayload;
+import com.pata.keja.payment.payhero.PayHeroPhoneNumber;
 import com.pata.keja.repository.OrderRepository;
-import com.pata.keja.repository.StudentRepository;
 import com.pata.keja.service.NotificationService;
 
 @Service
@@ -26,17 +25,14 @@ import com.pata.keja.service.NotificationService;
 public class MarketplacePaymentService {
 
     private final OrderRepository orderRepository;
-    private final StudentRepository studentRepository;
     private final PaymentProvider paymentProvider;
     private final NotificationService notificationService;
 
     public MarketplacePaymentService(
             OrderRepository orderRepository,
-            StudentRepository studentRepository,
             PaymentProvider paymentProvider,
             NotificationService notificationService) {
         this.orderRepository = orderRepository;
-        this.studentRepository = studentRepository;
         this.paymentProvider = paymentProvider;
         this.notificationService = notificationService;
     }
@@ -58,9 +54,7 @@ public class MarketplacePaymentService {
             throw new ConflictException("This order is no longer awaiting payment.");
         }
 
-        Student student = studentRepository.findById(studentId)
-                .orElseThrow(() -> new NotFoundException("Student not found"));
-        String phone = requireOwnedE164Phone(student, request.phone());
+        String phone = PayHeroPhoneNumber.normalize(request.phone());
 
         if (order.getPayheroReference() != null && !order.getPayheroReference().isBlank()) {
             return new PayHeroOrderInitiateResponse(
@@ -133,31 +127,4 @@ public class MarketplacePaymentService {
         orderRepository.save(order);
     }
 
-    private static String requireOwnedE164Phone(Student student, String requestedPhone) {
-        if (requestedPhone == null || !requestedPhone.matches("\\+254[17]\\d{8}")) {
-            throw new ConflictException("Update your profile with a valid E.164 phone number before paying.");
-        }
-        String stored = canonicalPhone(student.getPhone());
-        if (stored == null || !stored.equals(requestedPhone)) {
-            throw new ConflictException("The payment phone must match the phone number on your profile.");
-        }
-        return requestedPhone;
-    }
-
-    private static String canonicalPhone(String value) {
-        if (value == null || value.isBlank()) {
-            return null;
-        }
-        String trimmed = value.trim();
-        if (trimmed.matches("\\+254[17]\\d{8}")) {
-            return trimmed;
-        }
-        if (trimmed.matches("254[17]\\d{8}")) {
-            return "+" + trimmed;
-        }
-        if (trimmed.matches("0[17]\\d{8}")) {
-            return "+254" + trimmed.substring(1);
-        }
-        return null;
-    }
 }
