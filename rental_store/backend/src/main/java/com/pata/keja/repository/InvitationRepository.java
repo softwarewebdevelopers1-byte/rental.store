@@ -28,6 +28,16 @@ public interface InvitationRepository extends JpaRepository<Invitation, String> 
     Optional<Invitation> findFirstByKindAndInvitedHostelIdAndStatusOrderByCreatedAtDesc(
             InvitationKind kind, String hostelId, InvitationStatus status);
 
+    @EntityGraph(attributePaths = { "invitedHostel" })
+    @Query("""
+            select i from Invitation i
+            where i.createdBy.id = :landlordId
+              and i.kind = com.pata.keja.enums.InvitationKind.CARETAKER
+            order by i.createdAt desc
+            """)
+    Page<Invitation> findCaretakerInvitationsByLandlord(
+            @Param("landlordId") String landlordId, Pageable pageable);
+
     boolean existsByToken(String token);
 
     @EntityGraph(attributePaths = { "createdBy", "usedBy" })
@@ -38,7 +48,7 @@ public interface InvitationRepository extends JpaRepository<Invitation, String> 
 
     Page<Invitation> findAllByKind(InvitationKind kind, Pageable pageable);
 
-    @EntityGraph(attributePaths = { "createdBy", "usedBy" })
+    @EntityGraph(attributePaths = { "createdBy", "usedBy", "invitedHostel" })
     @Query("""
                 select i from Invitation i
                 where (:status is null or i.status = :status)

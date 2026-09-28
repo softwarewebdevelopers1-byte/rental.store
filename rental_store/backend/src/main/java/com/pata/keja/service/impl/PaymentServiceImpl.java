@@ -156,6 +156,7 @@ public class PaymentServiceImpl implements PaymentService {
             case PAID -> PaymentStatus.PAID;
             case PENDING -> PaymentStatus.PENDING;
             case OVERDUE -> PaymentStatus.OVERDUE;
+            case FAILED -> PaymentStatus.FAILED;
             case ALL -> null;
         };
         return paymentRepo.findAllByHostelIdAndStatus(hostelId, status, pageable)
@@ -168,10 +169,11 @@ public class PaymentServiceImpl implements PaymentService {
         long paid = paymentRepo.countByHostelIdAndStatus(hostelId, PaymentStatus.PAID);
         long pending = paymentRepo.countByHostelIdAndStatus(hostelId, PaymentStatus.PENDING);
         long overdue = paymentRepo.countByHostelIdAndStatus(hostelId, PaymentStatus.OVERDUE);
+        long failed = paymentRepo.countByHostelIdAndStatus(hostelId, PaymentStatus.FAILED);
         long collected = paymentRepo.sumByHostelAndStatus(hostelId, PaymentStatus.PAID);
         long outstanding = paymentRepo.sumByHostelAndStatus(hostelId, PaymentStatus.PENDING)
                 + paymentRepo.sumByHostelAndStatus(hostelId, PaymentStatus.OVERDUE);
-        return new LandlordPaymentStatsResponse(paid, pending, overdue, collected, outstanding);
+        return new LandlordPaymentStatsResponse(paid, pending, overdue, failed, collected, outstanding);
     }
 
     @Override
@@ -317,7 +319,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     private LandlordPaymentSummaryResponse buildSummary(Collection<String> hostelIds) {
         if (hostelIds.isEmpty()) {
-            return new LandlordPaymentSummaryResponse(0, 0, 0, 0, 0, List.of());
+            return new LandlordPaymentSummaryResponse(0, 0, 0, 0, 0, 0, List.of());
         }
         YearMonth month = YearMonth.now(ZoneId.of("Africa/Nairobi"));
         Instant start = month.atDay(1).atStartOfDay(ZoneId.of("Africa/Nairobi")).toInstant();
@@ -327,27 +329,34 @@ public class PaymentServiceImpl implements PaymentService {
         for (Object[] row : paymentRepo.aggregateByHostelAndStatus(hostelIds, start, end)) {
             String hostelId = (String) row[0];
             PaymentStatus status = (PaymentStatus) row[1];
-            long[] values = counts.computeIfAbsent(hostelId, ignored -> new long[4]);
-            values[status == PaymentStatus.PAID ? 0 : status == PaymentStatus.PENDING ? 1 : 2] = ((Number) row[2]).longValue();
-            values[3] += ((Number) row[4]).longValue();
+            long[] values = counts.computeIfAbsent(hostelId, ignored -> new long[5]);
+            int statusIndex = switch (status) {
+                case PAID -> 0;
+                case PENDING -> 1;
+                case OVERDUE -> 2;
+                case FAILED -> 3;
+            };
+            values[statusIndex] = ((Number) row[2]).longValue();
+            values[4] += ((Number) row[4]).longValue();
             collected += ((Number) row[4]).longValue();
         }
         Map<String, Hostel> hostels = hostelRepo.findAllByIdIn(hostelIds).stream()
                 .collect(java.util.stream.Collectors.toMap(Hostel::getId, h -> h));
-        long paid = 0, pending = 0, overdue = 0, outstanding = 0;
+        long paid = 0, pending = 0, overdue = 0, failed = 0, outstanding = 0;
         List<HostelPaymentBreakdown> breakdown = new java.util.ArrayList<>();
         for (String id : hostelIds) {
-            long[] values = counts.getOrDefault(id, new long[4]);
+            long[] values = counts.getOrDefault(id, new long[5]);
             paid += values[0];
             pending += values[1];
             overdue += values[2];
+            failed += values[3];
             outstanding += values[1] + values[2];
             Hostel hostel = hostels.get(id);
             if (hostel != null) {
-                breakdown.add(new HostelPaymentBreakdown(id, hostel.getName(), values[0], values[1], values[2], values[3]));
+                breakdown.add(new HostelPaymentBreakdown(id, hostel.getName(), values[0], values[1], values[2], values[3], values[4]));
             }
         }
-        return new LandlordPaymentSummaryResponse(paid, pending, overdue, collected, outstanding, breakdown);
+        return new LandlordPaymentSummaryResponse(paid, pending, overdue, failed, collected, outstanding, breakdown);
     }
 
     @Override

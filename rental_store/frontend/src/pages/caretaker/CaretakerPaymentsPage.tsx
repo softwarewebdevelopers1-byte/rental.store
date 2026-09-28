@@ -7,6 +7,7 @@ import { Select } from "../../components/common/Select";
 import { EmptyState } from "../../components/common/EmptyState";
 import { RecordPaymentModal } from "../../components/payments/RecordPaymentModal";
 import { useRecordedPayments } from "../../hooks/usePayments";
+import type { PaymentHistoryFilter } from "../../types/payment";
 
 export default function CaretakerPaymentsPage() {
   const [open, setOpen] = useState(false);
@@ -22,11 +23,12 @@ export default function CaretakerPaymentsPage() {
       <StatCard label="Paid" value={summary?.totalPaidCount ?? 0} tone="success" />
       <StatCard label="Pending" value={summary?.totalPendingCount ?? 0} tone="warning" />
       <StatCard label="Overdue" value={summary?.totalOverdueCount ?? 0} tone="danger" />
+      <StatCard label="Failed" value={summary?.totalFailedCount ?? 0} tone="danger" />
     </section>
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10, alignItems: "end" }}>
       <Input label="Student" value={payments.filter.studentQuery ?? ""} onChange={(e) => payments.setFilter({ studentQuery: e.target.value })} placeholder="Name or email" />
-      <Select label="Status" value={payments.filter.status ?? ""} onChange={(e) => payments.setFilter({ status: (e.target.value || undefined) as "PAID" | "PENDING" | "OVERDUE" | undefined })}
-        options={[{ value: "", label: "All statuses" }, { value: "PAID", label: "Paid" }, { value: "PENDING", label: "Pending" }, { value: "OVERDUE", label: "Overdue" }]} />
+      <Select label="Status" value={payments.filter.status ?? ""} onChange={(e) => payments.setFilter({ status: (e.target.value || undefined) as PaymentHistoryFilter["status"] })}
+        options={[{ value: "", label: "All statuses" }, { value: "PAID", label: "Paid" }, { value: "PENDING", label: "Pending" }, { value: "OVERDUE", label: "Overdue" }, { value: "FAILED", label: "Failed" }]} />
       <Input label="From" type="date" value={payments.filter.fromDate ?? ""} onChange={(e) => payments.setFilter({ fromDate: e.target.value || undefined })} />
       <Input label="To" type="date" value={payments.filter.toDate ?? ""} onChange={(e) => payments.setFilter({ toDate: e.target.value || undefined })} />
       <Button variant="secondary" onClick={() => payments.setFilter({ studentQuery: undefined, status: undefined, fromDate: undefined, toDate: undefined })}>Clear filters</Button>

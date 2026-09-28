@@ -11,6 +11,8 @@ public record InvitationSummaryResponse(
         InvitationKind kind,
         String email,
         InvitationStatus status,
+        String hostelId,
+        String hostelName,
         Instant createdAt,
         Instant expiresAt) {
 }

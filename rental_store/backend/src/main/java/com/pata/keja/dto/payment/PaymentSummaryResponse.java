@@ -20,5 +20,6 @@ public record PaymentSummaryResponse(
         Instant paidAt,
         PaymentMethod method,
         String periodLabel,
-        String recordedByName) {
+        String recordedByName,
+        String payheroReference) {
 }

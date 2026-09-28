@@ -14,6 +14,8 @@ public interface InvitationService {
             InvitationKind kind,
             Pageable pageable);
 
+    Page<InvitationSummaryResponse> listForLandlord(String landlordId, Pageable pageable);
+
     InvitationResponse getById(String invitationId);
 
     /** Look up by token — used by the public "redeem invitation" page. */
@@ -25,6 +27,8 @@ public interface InvitationService {
     InvitationResponse createForLandlord(String landlordId, String hostelId);
 
     InvitationResponse revoke(String invitationId, String adminId);
+
+    InvitationResponse revokeForLandlord(String invitationId, String landlordId);
 
     /**
      * Redeem an invitation. Called after the invitee submits their details

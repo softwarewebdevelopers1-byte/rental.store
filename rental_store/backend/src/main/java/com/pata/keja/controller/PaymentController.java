@@ -6,12 +6,15 @@ import jakarta.validation.Valid;
 
 import com.pata.keja.dto.payment.LandlordPaymentStatsResponse;
 import com.pata.keja.dto.payment.PaymentCreateRequest;
+import com.pata.keja.dto.payment.PayHeroInitiateRequest;
+import com.pata.keja.dto.payment.PayHeroInitiateResponse;
 import com.pata.keja.dto.payment.PaymentReminderRequest;
 import com.pata.keja.dto.payment.PaymentResponse;
 import com.pata.keja.dto.payment.PaymentSummaryResponse;
 import com.pata.keja.dto.payment.StudentPaymentSummaryResponse;
 import com.pata.keja.security.AppUserPrincipal;
 import com.pata.keja.service.PaymentService;
+import com.pata.keja.service.impl.PayHeroPaymentService;
 import com.pata.keja.service.PaymentService.PaymentStatusFilter;
 
 import org.springframework.data.domain.Page;
@@ -37,9 +40,11 @@ import static org.springframework.data.domain.Sort.Direction.DESC;
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final PayHeroPaymentService payHeroPaymentService;
 
-    public PaymentController(PaymentService paymentService) {
+    public PaymentController(PaymentService paymentService, PayHeroPaymentService payHeroPaymentService) {
         this.paymentService = paymentService;
+        this.payHeroPaymentService = payHeroPaymentService;
     }
 
     @GetMapping("/me/summary")
@@ -56,6 +61,14 @@ public class PaymentController {
             @Valid @RequestBody PaymentCreateRequest request) {
         PaymentResponse response = paymentService.recordPayment(principal.id(), request);
         return ResponseEntity.created(URI.create("/api/payments/" + response.id())).body(response);
+    }
+
+    @PostMapping("/payhero/initiate")
+    @PreAuthorize("hasRole('STUDENT')")
+    public PayHeroInitiateResponse initiatePayHero(
+            @AuthenticationPrincipal AppUserPrincipal principal,
+            @Valid @RequestBody PayHeroInitiateRequest request) {
+        return payHeroPaymentService.initiateStkPush(principal.id(), request);
     }
 
     @GetMapping("/students/{studentId}")

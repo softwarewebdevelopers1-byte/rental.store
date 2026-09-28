@@ -5,6 +5,7 @@ import com.pata.keja.models.Order;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,6 +17,11 @@ public interface OrderRepository extends JpaRepository<Order, String> {
     @EntityGraph(attributePaths = { "student", "agent", "items", "timeline" })
     @Query("select o from Order o where o.id = :id")
     Optional<Order> findByIdWithDetails(@Param("id") String id);
+
+    @Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @EntityGraph(attributePaths = { "student", "agent", "items", "timeline" })
+    @Query("select o from Order o where o.id = :id")
+    Optional<Order> findByIdWithDetailsForUpdate(@Param("id") String id);
 
     @EntityGraph(attributePaths = { "agent", "items" })
     Page<Order> findAllByStudentId(String studentId, Pageable pageable);

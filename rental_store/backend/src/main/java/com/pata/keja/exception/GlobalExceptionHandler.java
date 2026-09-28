@@ -30,6 +30,11 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.CONFLICT, ex.getMessage());
     }
 
+    @ExceptionHandler(PaymentProviderException.class)
+    public ResponseEntity<Map<String, Object>> handlePaymentProvider(PaymentProviderException ex) {
+        return error(HttpStatus.BAD_GATEWAY, ex.getMessage());
+    }
+
     @ExceptionHandler({ AccessDeniedException.class, com.pata.keja.exception.AccessDeniedException.class })
     public ResponseEntity<Map<String, Object>> handleAccessDenied(Exception ex) {
         return error(HttpStatus.FORBIDDEN, ex.getMessage());

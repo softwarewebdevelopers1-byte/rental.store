@@ -10,9 +10,8 @@ import { Button } from "../../components/common/Button";
 import { Skeleton } from "../../components/common/Skeleton";
 import { EmptyState } from "../../components/common/EmptyState";
 import { ErrorState } from "../../components/common/ErrorState";
-import { MpesaPaymentModal } from "../../components/payments/MpesaPaymentModal";
+import { RequestRoomModal } from "../../components/hostel/RequestRoomModal";
 import { LandlordContactButtons } from "../../components/hostel/LandlordContactButtons";
-import { Modal } from "../../components/common/Modal";
 import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../../hooks/useToast";
 import { billingPeriodLabel, type Room } from "../../types/room";
@@ -31,9 +30,8 @@ export default function HostelDetailsPage() {
   const [activeImage, setActiveImage] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [requestOptionsOpen, setRequestOptionsOpen] = useState(false);
-  const [paymentOpen, setPaymentOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const [requestSession, setRequestSession] = useState(0);
 
   async function load() {
     setLoading(true);
@@ -59,6 +57,7 @@ export default function HostelDetailsPage() {
       return;
     }
     setSelectedRoom(room);
+    setRequestSession((session) => session + 1);
     setRequestOptionsOpen(true);
   }
 
@@ -81,42 +80,15 @@ export default function HostelDetailsPage() {
     setRequestOptionsOpen(false);
   }
 
-  async function handleMpesaConfirm({
-    mpesaCode,
-  }: {
-    phone: string;
-    mpesaCode: string;
-  }) {
-    if (!user || user.role !== "STUDENT" || !hostel || !selectedRoom) return;
-
-    setSubmitting(true);
-    try {
-      const bookedRoom = await hostelService.bookRoom(
-        selectedRoom.id,
-        hostel.id,
-        "PAY_NOW",
-        mpesaCode,
-        selectedRoom.billingPeriod,
-      );
-      if (!bookedRoom) throw new Error("This room is no longer available.");
-
-      setRooms((current) =>
-        current.map((room) => (room.id === bookedRoom.id ? bookedRoom : room)),
-      );
-      show(`M-Pesa payment confirmed — ${mpesaCode}`, "success");
-      setPaymentOpen(false);
-    } catch (e) {
-      show(
-        e instanceof Error ? e.message : "Room request payment failed",
-        "error",
-      );
-    } finally {
-      setSubmitting(false);
-    }
+  function handleBookingSuccess() {
+    show("Payment received — awaiting landlord approval.", "success");
+    void load();
   }
 
   useEffect(() => {
-    void load();
+    void Promise.resolve().then(() => load());
+    // The loader also serves the retry action; refresh when the route id changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hostelId]);
 
   useEffect(() => {
@@ -246,7 +218,7 @@ export default function HostelDetailsPage() {
                       <Button
                         size="sm"
                         variant={bookable ? "primary" : "secondary"}
-                        disabled={!bookable || submitting}
+                        disabled={!bookable}
                         onClick={() => openRoomRequest(r)}
                       >
                         {bookable ? "Request room" : "Occupied"}
@@ -309,57 +281,19 @@ export default function HostelDetailsPage() {
         </div>
       )}
 
-      <MpesaPaymentModal
-        open={paymentOpen}
-        amount={selectedRoom?.price ?? 0}
-        phone={user?.role === "STUDENT" ? user.phone : undefined}
-        onClose={() => {
-          if (!submitting) {
-            setPaymentOpen(false);
-            setSelectedRoom(null);
-          }
-        }}
-        onConfirm={handleMpesaConfirm}
-      />
-
-      <Modal
+      <RequestRoomModal
+        key={requestSession}
         open={requestOptionsOpen}
-        title="Request this room"
         onClose={() => {
-          if (!submitting) {
-            setRequestOptionsOpen(false);
-            setSelectedRoom(null);
-          }
+          setRequestOptionsOpen(false);
+          setSelectedRoom(null);
         }}
-        size="sm"
-      >
-        {selectedRoom && (
-          <div className={styles.requestOptions}>
-            <div className={styles.requestRoomSummary}>
-              <strong>Room {selectedRoom.number}</strong>
-              <PriceDisplay
-                amount={selectedRoom.price}
-                suffix={`/${billingPeriodLabel[selectedRoom.billingPeriod].replace("per ", "")}`}
-              />
-            </div>
-            <p className={styles.requestPrompt}>
-              Choose how you want to contact the landlord about this room.
-            </p>
-            <Button
-              fullWidth
-              onClick={() => {
-                setRequestOptionsOpen(false);
-                setPaymentOpen(true);
-              }}
-            >
-              Pay now
-            </Button>
-            <Button fullWidth variant="secondary" onClick={chatAboutRoom}>
-              Chat landlord on WhatsApp
-            </Button>
-          </div>
-        )}
-      </Modal>
+        room={selectedRoom}
+        phone={user?.role === "STUDENT" ? user.phone : undefined}
+        onChat={chatAboutRoom}
+        onSuccess={handleBookingSuccess}
+        onUpdated={() => void load()}
+      />
     </div>
   );
 }

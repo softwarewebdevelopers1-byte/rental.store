@@ -9,6 +9,8 @@ import type {
   PaymentResponse,
   PaymentSummaryResponse,
   HostelPaymentRecorderResponse,
+  PayHeroInitiateRequest,
+  PayHeroInitiateResponse,
 } from "../types/payment";
 
 export interface StudentPaymentSummary {
@@ -54,6 +56,7 @@ interface RawPayment {
   recordedByName?: string | null;
   createdAt?: string;
   updatedAt?: string;
+  payheroReference?: string | null;
 }
 
 interface StudentSummaryRaw {
@@ -83,6 +86,7 @@ function toPayment(raw: RawPayment): Payment {
     recordedById: raw.recordedById,
     recordedByName: raw.recordedByName,
     notes: raw.notes,
+    payheroReference: raw.payheroReference,
     createdAt: raw.createdAt,
     updatedAt: raw.updatedAt,
   };
@@ -147,6 +151,12 @@ export const paymentService = {
   async stkPush(input: StkPushInput): Promise<StkPushResult> {
     void input;
     throw new Error("STK push is not exposed by the backend service layer");
+  },
+
+  async payheroInitiate(
+    payload: PayHeroInitiateRequest,
+  ): Promise<PayHeroInitiateResponse> {
+    return http.post<PayHeroInitiateResponse>("/payments/payhero/initiate", payload);
   },
 
   async recordLandlordPayment(payload: PaymentRecordRequest): Promise<PaymentResponse> {

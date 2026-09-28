@@ -60,6 +60,9 @@ public class Payment {
     @Column(name = "reference", length = 64)
     private String reference;
 
+    @Column(name = "payhero_reference", length = 128)
+    private String payheroReference;
+
     @Column(name = "notes", length = 500)
     private String notes;
 
@@ -171,6 +174,14 @@ public class Payment {
 
     public void setReference(String reference) {
         this.reference = reference;
+    }
+
+    public String getPayheroReference() {
+        return payheroReference;
+    }
+
+    public void setPayheroReference(String payheroReference) {
+        this.payheroReference = payheroReference;
     }
 
     public String getNotes() {

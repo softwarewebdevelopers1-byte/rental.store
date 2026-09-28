@@ -70,6 +70,13 @@ public class InvitationServiceImpl implements InvitationService {
 
     @Override
     @Transactional(readOnly = true)
+    public Page<InvitationSummaryResponse> listForLandlord(String landlordId, Pageable pageable) {
+        return invitationRepo.findCaretakerInvitationsByLandlord(landlordId, pageable)
+                .map(invitationMapper::toSummary);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public InvitationResponse getById(String invitationId) {
         Invitation inv = invitationRepo.findByIdWithDetails(invitationId)
                 .orElseThrow(() -> new NotFoundException("Invitation not found"));
@@ -147,6 +154,19 @@ public class InvitationServiceImpl implements InvitationService {
         if (!inv.getCreatedBy().getId().equals(adminId)) {
             // Only the issuing admin (or any admin if you relax this) can revoke.
             throw new ConflictException("You can only revoke invitations you issued");
+        }
+        inv.revoke();
+        return invitationMapper.toResponse(inv);
+    }
+
+    @Override
+    public InvitationResponse revokeForLandlord(String invitationId, String landlordId) {
+        Invitation inv = invitationRepo.findByIdWithDetails(invitationId)
+                .orElseThrow(() -> new NotFoundException("Invitation not found"));
+
+        if (!inv.getCreatedBy().getId().equals(landlordId)
+                || inv.getKind() != InvitationKind.CARETAKER) {
+            throw new ConflictException("You can only revoke caretaker invitations you created");
         }
         inv.revoke();
         return invitationMapper.toResponse(inv);

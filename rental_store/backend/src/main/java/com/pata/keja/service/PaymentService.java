@@ -61,7 +61,7 @@ public interface PaymentService {
 
     /** Enum used only by the service-layer filter. */
     enum PaymentStatusFilter {
-        ALL, PAID, PENDING, OVERDUE
+        ALL, PAID, PENDING, OVERDUE, FAILED
     }
 
     /** Tiny input record so the interface doesn't leak the enums package. */

@@ -44,7 +44,8 @@ public class Invitation {
 
     /** The admin or landlord who issued the invitation. */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "created_by", nullable = false)
+    @JoinColumn(name = "created_by", nullable = false,
+            foreignKey = @ForeignKey(name = "fk_invitations_created_by_users"))
     private User createdBy;
 
     /** Optional hostel that a landlord's caretaker invitation belongs to. */

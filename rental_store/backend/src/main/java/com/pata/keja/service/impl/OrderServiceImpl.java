@@ -94,17 +94,9 @@ public class OrderServiceImpl implements OrderService {
         order.setAgent(agent);
         order.setItems(items);
         order.setTotal(total);
-        order.setStatus(OrderStatus.PAID); // prototype: assume paid at checkout
+        order.setStatus(OrderStatus.PENDING_PAYMENT);
         order.addTimelineEntry(OrderStatus.PENDING_PAYMENT, "Order placed");
-        order.addTimelineEntry(OrderStatus.PAID, "Payment confirmed");
         orderRepo.save(order);
-
-        notificationService.emit(
-                agent.getId(),
-                NotificationKind.ORDER,
-                "New order received",
-                items.size() + " item(s) · KES " + total,
-                "/agent/orders/" + order.getId());
         return orderMapper.toResponse(order);
     }
 
@@ -145,6 +137,9 @@ public class OrderServiceImpl implements OrderService {
 
         if (!order.getAgent().getId().equals(requesterId)) {
             throw new AccessDeniedException("Only the selling agent can update order status");
+        }
+        if (order.getStatus() == OrderStatus.PENDING_PAYMENT && req.status() == OrderStatus.PAID) {
+            throw new ConflictException("Payment must be confirmed before this order can be marked paid.");
         }
         guardTransition(order.getStatus(), req.status());
         order.setStatus(req.status());

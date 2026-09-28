@@ -25,6 +25,7 @@ export const PAYMENT_TONE: Record<PaymentStatus, Tone> = {
   PAID: "success",
   PENDING: "warning",
   OVERDUE: "danger",
+  FAILED: "danger",
 };
 
 export const MAINTENANCE_TONE: Record<MaintenanceStatus, Tone> = {

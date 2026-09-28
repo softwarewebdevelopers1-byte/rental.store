@@ -52,10 +52,72 @@
   padding-top: var(--space-4);
   border-top: 1px solid var(--color-border);
 }
+.linksSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+.linksHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.linksList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.linkRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-alt);
+}
+.linkInfo {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.link {
+  overflow-wrap: anywhere;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-primary);
+}
+.inactiveLink {
+  color: var(--color-text-muted);
+}
+.linkMeta,
+.linkActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.linkMeta {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
 @media (max-width: 600px) {
   .controls,
-  .inviteRow {
+  .inviteRow,
+  .linkRow {
     align-items: stretch;
     flex-direction: column;
+  }
+  .linkActions {
+    width: 100%;
+  }
+  .linkActions > button {
+    flex: 1;
   }
 }

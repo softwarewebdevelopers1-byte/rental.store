@@ -16,6 +16,8 @@ public class InvitationMapper {
                 i.getKind(),
                 i.getEmail(),
                 i.getStatus(),
+                i.getInvitedHostel() != null ? i.getInvitedHostel().getId() : null,
+                i.getInvitedHostel() != null ? i.getInvitedHostel().getName() : null,
                 i.getCreatedAt(),
                 i.getExpiresAt());
     }

@@ -1,4 +1,4 @@
-export type PaymentStatus = "PAID" | "PENDING" | "OVERDUE";
+export type PaymentStatus = "PAID" | "PENDING" | "OVERDUE" | "FAILED";
 export type PaymentMethod = "MPESA" | "CASH" | "BANK" | "CARD";
 
 export interface Payment {
@@ -13,6 +13,7 @@ export interface Payment {
   method?: PaymentMethod;
   mpesaPhone?: string;
   mpesaCode?: string;
+  payheroReference?: string | null;
   periodLabel?: string | null;
   recordedById?: string | null;
   recordedByName?: string | null;
@@ -32,6 +33,19 @@ export interface PaymentResponse extends Payment {
 export interface PaymentSummaryResponse extends Payment {
   periodLabel?: string | null;
   recordedByName?: string | null;
+}
+
+export interface PayHeroInitiateRequest {
+  bookingRequestId: string;
+  phone: string;
+}
+
+export interface PayHeroInitiateResponse {
+  bookingRequestId: string;
+  paymentId: string;
+  providerReference: string | null;
+  status: "PENDING" | "PAID" | "FAILED";
+  message: string;
 }
 
 export interface PaymentHistoryFilter {
@@ -65,6 +79,7 @@ export interface HostelPaymentBreakdown {
   paidCount: number;
   pendingCount: number;
   overdueCount: number;
+  failedCount: number;
   collectedThisMonth: number;
 }
 
@@ -72,6 +87,7 @@ export interface LandlordPaymentSummaryResponse {
   totalPaidCount: number;
   totalPendingCount: number;
   totalOverdueCount: number;
+  totalFailedCount: number;
   totalCollectedThisMonth: number;
   totalOutstanding: number;
   byHostel: HostelPaymentBreakdown[];

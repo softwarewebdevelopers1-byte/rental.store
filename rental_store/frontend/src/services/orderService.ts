@@ -13,6 +13,17 @@ export interface PayOrderInput {
   mpesaCode: string;
 }
 
+export interface PayHeroOrderInitiateRequest {
+  phone: string;
+}
+
+export interface PayHeroOrderInitiateResponse {
+  orderId: string;
+  providerReference: string;
+  status: string;
+  message: string;
+}
+
 interface Page<T> {
   content: T[];
 }
@@ -35,6 +46,8 @@ interface OrderResponse {
   timeline: Array<{ status: OrderStatus; at: string }>;
   createdAt: string;
   updatedAt: string;
+  payheroReference?: string | null;
+  paidAt?: string | null;
 }
 
 interface OrderSummaryResponse {
@@ -45,6 +58,8 @@ interface OrderSummaryResponse {
   agentId: string;
   createdAt: string;
   updatedAt: string;
+  payheroReference?: string | null;
+  paidAt?: string | null;
 }
 
 function toOrder(raw: OrderResponse): Order {
@@ -58,6 +73,8 @@ function toOrder(raw: OrderResponse): Order {
     createdAt: raw.createdAt,
     updatedAt: raw.updatedAt,
     timeline: raw.timeline.map(({ status, at }) => ({ status, at })),
+    payheroReference: raw.payheroReference ?? undefined,
+    paidAt: raw.paidAt ?? undefined,
   };
 }
 
@@ -72,6 +89,8 @@ function toSummary(raw: OrderSummaryResponse): Order {
     createdAt: raw.createdAt,
     updatedAt: raw.updatedAt,
     timeline: [],
+    payheroReference: raw.payheroReference ?? undefined,
+    paidAt: raw.paidAt ?? undefined,
   };
 }
 
@@ -107,6 +126,16 @@ export const orderService = {
     void orderId;
     void input;
     throw new Error("Order payment is not exposed by the backend service layer");
+  },
+
+  async payheroInitiate(
+    orderId: string,
+    payload: PayHeroOrderInitiateRequest,
+  ): Promise<PayHeroOrderInitiateResponse> {
+    return http.post<PayHeroOrderInitiateResponse>(
+      `/orders/me/${orderId}/payhero/initiate`,
+      payload,
+    );
   },
 
   async advanceStatus(id: string, status: OrderStatus): Promise<Order | null> {

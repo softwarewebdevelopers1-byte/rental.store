@@ -16,6 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -33,6 +34,7 @@ public class BookingServiceImpl implements BookingService {
     private final CaretakerRepository caretakerRepository;
     private final PaymentRepository paymentRepository;
     private final NotificationService notificationService;
+    private final PayHeroPaymentService payHeroPaymentService;
 
     @Value("${app.booking.hold-days:3}")
     private int holdDays;
@@ -44,7 +46,8 @@ public class BookingServiceImpl implements BookingService {
             LandlordRepository landlordRepository,
             CaretakerRepository caretakerRepository,
             PaymentRepository paymentRepository,
-            NotificationService notificationService) {
+            NotificationService notificationService,
+            PayHeroPaymentService payHeroPaymentService) {
         this.bookingRequestRepository = bookingRequestRepository;
         this.roomRepository = roomRepository;
         this.studentRepository = studentRepository;
@@ -53,6 +56,7 @@ public class BookingServiceImpl implements BookingService {
         this.caretakerRepository = caretakerRepository;
         this.paymentRepository = paymentRepository;
         this.notificationService = notificationService;
+        this.payHeroPaymentService = payHeroPaymentService;
     }
 
     @Override
@@ -85,29 +89,8 @@ public class BookingServiceImpl implements BookingService {
         booking.setStatus(BookingRequestStatus.PENDING);
         booking.setExpiresAt(Instant.now().plus(Duration.ofDays(holdDays)));
 
-        if (request.initiation() == BookingInitiation.PAY_NOW) {
-            Payment payment = new Payment();
-            payment.setStudent(student);
-            payment.setHostel(room.getHostel());
-            payment.setRoom(room);
-            payment.setAmount(room.getPrice());
-            payment.setDueDate(request.moveInDate());
-            payment.setStatus(PaymentStatus.PAID);
-            payment.setMethod(PaymentMethod.MPESA);
-            payment.setPaidAt(Instant.now());
-            payment.setRecordedBy(student);
-            payment.setReference(request.paymentReference());
-            payment.setNotes("First month's rent for booking request pending approval");
-            paymentRepository.save(payment);
-            booking.setPayment(payment);
-        }
-
         room.setStatus(RoomStatus.HELD);
         BookingRequest saved = bookingRequestRepository.save(booking);
-        if (saved.getPayment() != null) {
-            saved.getPayment().setNotes("First month's rent for booking request " + saved.getId());
-            paymentRepository.save(saved.getPayment());
-        }
         return toResponse(saved);
     }
 
@@ -120,6 +103,21 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public BookingResponse getById(String bookingId) {
+        String currentUserId = CurrentUserProvider.requireUserId();
+        BookingRequest booking = bookingRequestRepository.findByIdWithDetails(bookingId)
+                .orElseThrow(() -> new NotFoundException("Booking request not found"));
+        if (!booking.getStudent().getId().equals(currentUserId)) {
+            throw new ConflictException("You do not own this booking request.");
+        }
+        payHeroPaymentService.refreshPendingStatus(bookingId, currentUserId);
+        booking = bookingRequestRepository.findByIdWithDetails(bookingId)
+                .orElseThrow(() -> new NotFoundException("Booking request not found"));
+        return toResponse(booking);
+    }
+
+    @Override
     public BookingResponse cancel(String bookingId) {
         String currentUserId = CurrentUserProvider.requireUserId();
         BookingRequest booking = bookingRequestRepository.findByIdWithDetails(bookingId)
@@ -129,6 +127,11 @@ public class BookingServiceImpl implements BookingService {
         }
         if (booking.getStatus() != BookingRequestStatus.PENDING) {
             throw new ConflictException("Approved bookings cannot be cancelled here. Contact your landlord.");
+        }
+        if (booking.getPayment() != null
+                && (booking.getPayment().getStatus() == PaymentStatus.PENDING
+                        || booking.getPayment().getStatus() == PaymentStatus.PAID)) {
+            throw new ConflictException("This booking has an active payment and cannot be cancelled here.");
         }
         booking.setStatus(BookingRequestStatus.CANCELLED);
         Room room = booking.getRoom();
@@ -176,6 +179,11 @@ public class BookingServiceImpl implements BookingService {
         }
         if (booking.getStatus() != BookingRequestStatus.PENDING) {
             throw new ConflictException("This request has already been decided.");
+        }
+        if (booking.getInitiation() == BookingInitiation.PAY_NOW
+                && (booking.getPayment() == null
+                        || booking.getPayment().getStatus() != PaymentStatus.PAID)) {
+            throw new ConflictException("Payment must be completed before this booking can be approved.");
         }
 
         Room room = roomRepository.findByIdForUpdate(booking.getRoom().getId())

@@ -25,6 +25,7 @@ public record PaymentResponse(
         Instant paidAt,
         PaymentMethod method,
         String reference,
+        String payheroReference,
         String notes,
 
         Instant createdAt,

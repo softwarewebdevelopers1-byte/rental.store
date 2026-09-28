@@ -2,22 +2,14 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "../common/Button";
 import { PriceDisplay } from "../common/PriceDisplay";
-import { MpesaPaymentModal } from "../payments/MpesaPaymentModal";
+import { PayHeroOrderPaymentModal } from "../payments/PayHeroOrderPaymentModal";
 import { useCart } from "../../hooks/useCart";
 import { useToast } from "../../hooks/useToast";
 import { useAuth } from "../../hooks/useAuth";
 import { orderService } from "../../services/orderService";
 import type { Pack, Product } from "../../types/marketplace";
+import type { Order } from "../../types/order";
 import styles from "./PackCard.module.css";
-
-function generateMpesaCode(): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let out = "";
-  for (let i = 0; i < 8; i++) {
-    out += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return out;
-}
 
 export function PackCard({
   pack,
@@ -31,12 +23,16 @@ export function PackCard({
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [pendingOrder, setPendingOrder] = useState<Order | null>(null);
 
-  async function handleBuyNow(phone: string) {
+  async function handleBuyNow() {
     if (!user) return;
+    if (!user.phone) {
+      show("Add your phone number to your profile before paying.", "error");
+      return;
+    }
     setSubmitting(true);
     try {
-      const code = generateMpesaCode();
       const order = await orderService.create({
         studentId: user.id,
         agentId: pack.agentId,
@@ -51,9 +47,8 @@ export function PackCard({
         ],
         total: pack.price,
       });
-      await orderService.payOrder(order.id, { phone, mpesaCode: code });
-      show(`M-Pesa payment confirmed — ${code}`, "success");
-      setOpen(false);
+      setPendingOrder(order);
+      setOpen(true);
     } catch (e) {
       show(
         e instanceof Error ? e.message : "Purchase failed",
@@ -115,7 +110,8 @@ export function PackCard({
             </Button>
             <Button
               size="sm"
-              onClick={() => setOpen(true)}
+              onClick={() => void handleBuyNow()}
+              loading={submitting}
               disabled={!user}
             >
               Buy now
@@ -123,15 +119,14 @@ export function PackCard({
           </div>
         </div>
       </div>
-      <MpesaPaymentModal
+      <PayHeroOrderPaymentModal
         open={open}
-        amount={pack.price}
+        order={pendingOrder}
         phone={user?.phone}
-        onClose={() => {
-          if (!submitting) setOpen(false);
-        }}
-        onConfirm={async ({ phone }) => {
-          await handleBuyNow(phone);
+        onClose={() => setOpen(false)}
+        onSuccess={() => {
+          show("Payment confirmed. Your order has been sent to the seller.", "success");
+          setOpen(false);
         }}
       />
     </article>

@@ -20,6 +20,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -50,6 +51,14 @@ public class InvitationController {
         return invitationService.list(status, kind, pageable);
     }
 
+    @GetMapping("/landlords/me")
+    @PreAuthorize("hasRole('LANDLORD')")
+    public Page<InvitationSummaryResponse> listLandlordInvitations(
+            @AuthenticationPrincipal AppUserPrincipal principal,
+            @PageableDefault(size = 100, sort = "createdAt", direction = DESC) Pageable pageable) {
+        return invitationService.listForLandlord(principal.id(), pageable);
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public InvitationResponse getById(@PathVariable String id) {
@@ -76,6 +85,16 @@ public class InvitationController {
             @PathVariable String hostelId,
             @AuthenticationPrincipal AppUserPrincipal principal) {
         return invitationService.createForLandlord(principal.id(), hostelId);
+    }
+
+    /** Revoke a landlord's own caretaker link while retaining its history. */
+    @DeleteMapping("/landlords/me/{id}")
+    @PreAuthorize("hasRole('LANDLORD')")
+    public ResponseEntity<Void> revokeLandlordInvitation(
+            @PathVariable String id,
+            @AuthenticationPrincipal AppUserPrincipal principal) {
+        invitationService.revokeForLandlord(id, principal.id());
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/revoke")

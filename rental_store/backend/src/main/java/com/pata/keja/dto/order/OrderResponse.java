@@ -21,5 +21,7 @@ public record OrderResponse(
         List<OrderTimelineEntryResponse> timeline,
 
         Instant createdAt,
-        Instant updatedAt) {
+        Instant updatedAt,
+        String payheroReference,
+        Instant paidAt) {
 }

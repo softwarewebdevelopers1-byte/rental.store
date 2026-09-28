@@ -9,4 +9,6 @@ export interface Invitation {
   createdAt: string;
   expiresAt: string;
   status: InvitationStatus;
+  hostelId?: string;
+  hostelName?: string;
 }

@@ -27,7 +27,7 @@ function pickTone(
     ["PENDING", "OPEN", "PENDING_PAYMENT", "IN_REVIEW", "OVERDUE"].includes(s)
   )
     return "warning";
-  if (["REJECTED", "CONFLICT", "CANCELLED", "REVOKED", "DANGER"].includes(s))
+  if (["REJECTED", "CONFLICT", "CANCELLED", "REVOKED", "FAILED", "DANGER"].includes(s))
     return "danger";
   if (
     [

@@ -27,7 +27,9 @@ public class OrderMapper {
                 o.getAgent().getId(),
                 o.getAgent().getName(),
                 o.getCreatedAt(),
-                o.getUpdatedAt());
+                o.getUpdatedAt(),
+                o.getPayheroReference(),
+                o.getPaidAt());
     }
 
     public OrderResponse toResponse(Order o) {
@@ -60,6 +62,8 @@ public class OrderMapper {
                 items,
                 timeline,
                 o.getCreatedAt(),
-                o.getUpdatedAt());
+                o.getUpdatedAt(),
+                o.getPayheroReference(),
+                o.getPaidAt());
     }
 }

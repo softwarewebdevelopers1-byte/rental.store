@@ -6,5 +6,6 @@ public record HostelPaymentBreakdown(
         long paidCount,
         long pendingCount,
         long overdueCount,
+        long failedCount,
         long collectedThisMonth) {
 }

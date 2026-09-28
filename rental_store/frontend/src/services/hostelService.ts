@@ -377,6 +377,37 @@ export const hostelService = {
     };
   },
 
+  async listCaretakerInvitations(): Promise<Invitation[]> {
+    const page = await http.get<{
+      content: Array<{
+        id: string;
+        token: string;
+        kind: Invitation["kind"];
+        email: string | null;
+        status: Invitation["status"];
+        hostelId: string | null;
+        hostelName: string | null;
+        createdAt: string;
+        expiresAt: string;
+      }>;
+    }>("/invitations/landlords/me");
+    return page.content.map((raw) => ({
+      id: raw.id,
+      token: raw.token,
+      kind: raw.kind,
+      ...(raw.email ? { email: raw.email } : {}),
+      status: raw.status,
+      ...(raw.hostelId ? { hostelId: raw.hostelId } : {}),
+      ...(raw.hostelName ? { hostelName: raw.hostelName } : {}),
+      createdAt: raw.createdAt,
+      expiresAt: raw.expiresAt,
+    }));
+  },
+
+  async revokeCaretakerInvite(invitationId: string): Promise<void> {
+    await http.delete<void>(`/invitations/landlords/me/${invitationId}`);
+  },
+
   async updateVerification(
     landlordId: string,
     status: Landlord["verificationStatus"],

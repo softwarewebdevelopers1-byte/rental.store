@@ -16,5 +16,7 @@ public record OrderSummaryResponse(
         String agentId,
         String agentName,
         Instant createdAt,
-        Instant updatedAt) {
+        Instant updatedAt,
+        String payheroReference,
+        Instant paidAt) {
 }

@@ -4,6 +4,7 @@ public record LandlordPaymentStatsResponse(
         long paidCount,
         long pendingCount,
         long overdueCount,
+        long failedCount,
         long totalCollected,
         long totalOutstanding) {
 }

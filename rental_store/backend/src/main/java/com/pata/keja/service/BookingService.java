@@ -15,6 +15,8 @@ public interface BookingService {
 
     List<BookingResponse> listMyBookings();
 
+    BookingResponse getById(String bookingId);
+
     BookingResponse cancel(String bookingId);
 
     Page<BookingResponse> listForCurrentLandlord(BookingRequestStatus status, Pageable pageable);

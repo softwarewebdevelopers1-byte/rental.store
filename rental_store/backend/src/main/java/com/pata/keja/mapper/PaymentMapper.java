@@ -32,7 +32,8 @@ public class PaymentMapper {
                 p.getPaidAt(),
                 p.getMethod(),
                 p.getPeriodLabel(),
-                p.getRecordedBy() != null ? p.getRecordedBy().getName() : null);
+                p.getRecordedBy() != null ? p.getRecordedBy().getName() : null,
+                p.getPayheroReference());
     }
 
     public PaymentResponse toResponse(Payment p) {
@@ -57,6 +58,7 @@ public class PaymentMapper {
                 p.getPaidAt(),
                 p.getMethod(),
                 p.getReference(),
+                p.getPayheroReference(),
                 p.getNotes(),
 
                 p.getCreatedAt(),

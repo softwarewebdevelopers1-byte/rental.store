@@ -37,6 +37,12 @@ public class BookingController {
         return bookingService.listMyBookings();
     }
 
+    @GetMapping("/bookings/{id}")
+    @PreAuthorize("hasRole('STUDENT')")
+    public BookingResponse getById(@PathVariable String id) {
+        return bookingService.getById(id);
+    }
+
     @PostMapping("/bookings/{id}/cancel")
     @PreAuthorize("hasRole('STUDENT')")
     public BookingResponse cancel(@PathVariable String id) {

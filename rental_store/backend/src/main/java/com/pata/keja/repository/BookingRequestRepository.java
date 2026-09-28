@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -19,6 +20,11 @@ public interface BookingRequestRepository extends JpaRepository<BookingRequest, 
     @EntityGraph(attributePaths = {"student", "hostel", "room", "room.hostel", "payment"})
     @Query("select b from BookingRequest b where b.id = :id")
     Optional<BookingRequest> findByIdWithDetails(@Param("id") String id);
+
+    @Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @EntityGraph(attributePaths = {"student", "hostel", "hostel.landlord", "room", "room.hostel", "payment"})
+    @Query("select b from BookingRequest b where b.id = :id")
+    Optional<BookingRequest> findByIdWithDetailsForUpdate(@Param("id") String id);
 
     @EntityGraph(attributePaths = {"student", "hostel", "room"})
     @Query("""
@@ -40,6 +46,16 @@ public interface BookingRequestRepository extends JpaRepository<BookingRequest, 
             order by b.createdAt desc
             """)
     List<BookingRequest> findAllByStudent(@Param("studentId") String studentId);
+
+    @EntityGraph(attributePaths = {"student", "payment"})
+    @Query("""
+            select b from BookingRequest b
+            where b.status = com.pata.keja.enums.BookingRequestStatus.PENDING
+              and b.payment.status = com.pata.keja.enums.PaymentStatus.PENDING
+              and b.payment.payheroReference is not null
+            order by b.createdAt
+            """)
+    Page<BookingRequest> findPendingPayHeroPayments(Pageable pageable);
 
     @Query("""
             select b from BookingRequest b

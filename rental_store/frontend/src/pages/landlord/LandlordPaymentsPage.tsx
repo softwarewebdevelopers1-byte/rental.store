@@ -26,6 +26,7 @@ export default function LandlordPaymentsPage() {
             <StatCard label="Paid" value={summary?.totalPaidCount ?? 0} tone="success" />
             <StatCard label="Pending" value={summary?.totalPendingCount ?? 0} tone="warning" />
             <StatCard label="Overdue" value={summary?.totalOverdueCount ?? 0} tone="danger" />
+            <StatCard label="Failed" value={summary?.totalFailedCount ?? 0} tone="danger" />
           </section>
           <PaymentFilters filter={payments.filter} hostels={summary?.byHostel ?? []} setFilter={payments.setFilter} />
           {!payments.data?.content.length ? <EmptyState title="No payment records" description="Recorded payments will appear here." /> : (
@@ -71,7 +72,7 @@ function PaymentFilters({
       <Select label="Hostel" value={filter.hostelId ?? ""} onChange={(e) => setFilter({ hostelId: e.target.value || undefined })}
         options={[{ value: "", label: "All hostels" }, ...hostels.map((h) => ({ value: h.hostelId, label: h.hostelName }))]} />
       <Select label="Status" value={filter.status ?? ""} onChange={(e) => setFilter({ status: (e.target.value || undefined) as PaymentHistoryFilter["status"] })}
-        options={[{ value: "", label: "All statuses" }, { value: "PAID", label: "Paid" }, { value: "PENDING", label: "Pending" }, { value: "OVERDUE", label: "Overdue" }]} />
+        options={[{ value: "", label: "All statuses" }, { value: "PAID", label: "Paid" }, { value: "PENDING", label: "Pending" }, { value: "OVERDUE", label: "Overdue" }, { value: "FAILED", label: "Failed" }]} />
       <Select label="Method" value={filter.method ?? ""} onChange={(e) => setFilter({ method: (e.target.value || undefined) as PaymentHistoryFilter["method"] })}
         options={[{ value: "", label: "All methods" }, { value: "MPESA", label: "M-Pesa" }, { value: "CASH", label: "Cash" }, { value: "BANK", label: "Bank" }, { value: "CARD", label: "Card" }]} />
       <Input label="From" type="date" value={filter.fromDate ?? ""} onChange={(e) => setFilter({ fromDate: e.target.value || undefined })} />

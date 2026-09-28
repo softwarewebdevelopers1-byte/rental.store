@@ -8,9 +8,12 @@ import com.pata.keja.dto.order.CreateOrderRequest;
 import com.pata.keja.dto.order.OrderResponse;
 import com.pata.keja.dto.order.OrderStatusUpdateRequest;
 import com.pata.keja.dto.order.OrderSummaryResponse;
+import com.pata.keja.dto.order.PayHeroOrderInitiateRequest;
+import com.pata.keja.dto.order.PayHeroOrderInitiateResponse;
 import com.pata.keja.enums.OrderStatus;
 import com.pata.keja.security.AppUserPrincipal;
 import com.pata.keja.service.OrderService;
+import com.pata.keja.service.impl.MarketplacePaymentService;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -36,9 +39,11 @@ import static org.springframework.data.domain.Sort.Direction.DESC;
 public class OrderController {
 
     private final OrderService orderService;
+    private final MarketplacePaymentService marketplacePaymentService;
 
-    public OrderController(OrderService orderService) {
+    public OrderController(OrderService orderService, MarketplacePaymentService marketplacePaymentService) {
         this.orderService = orderService;
+        this.marketplacePaymentService = marketplacePaymentService;
     }
 
     @PostMapping("/me")
@@ -64,6 +69,15 @@ public class OrderController {
             @PathVariable String id,
             @AuthenticationPrincipal AppUserPrincipal principal) {
         return orderService.getById(id, principal.id());
+    }
+
+    @PostMapping("/me/{id}/payhero/initiate")
+    @PreAuthorize("hasRole('STUDENT')")
+    public PayHeroOrderInitiateResponse initiatePayHero(
+            @PathVariable String id,
+            @AuthenticationPrincipal AppUserPrincipal principal,
+            @Valid @RequestBody PayHeroOrderInitiateRequest request) {
+        return marketplacePaymentService.initiate(principal.id(), id, request);
     }
 
     @PostMapping("/me/{id}/receive")

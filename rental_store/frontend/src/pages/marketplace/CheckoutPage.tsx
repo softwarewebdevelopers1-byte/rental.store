@@ -10,18 +10,9 @@ import { Card } from "../../components/common/Card";
 import { Button } from "../../components/common/Button";
 import { PriceDisplay } from "../../components/common/PriceDisplay";
 import { EmptyState } from "../../components/common/EmptyState";
-import { MpesaPaymentModal } from "../../components/payments/MpesaPaymentModal";
-import type { OrderItem } from "../../types/order";
+import { PayHeroOrderPaymentModal } from "../../components/payments/PayHeroOrderPaymentModal";
+import type { Order, OrderItem } from "../../types/order";
 import styles from "./CartPage.module.css";
-
-function generateMpesaCode(): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let out = "";
-  for (let i = 0; i < 8; i++) {
-    out += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return out;
-}
 
 export default function CheckoutPage() {
   const { user } = useAuth();
@@ -32,6 +23,7 @@ export default function CheckoutPage() {
   const { data: packs } = usePacks();
   const [placing, setPlacing] = useState(false);
   const [open, setOpen] = useState(false);
+  const [pendingOrder, setPendingOrder] = useState<Order | null>(null);
 
   const productsById = Object.fromEntries(products.map((p) => [p.id, p]));
   const packsById = Object.fromEntries(packs.map((p) => [p.id, p]));
@@ -78,20 +70,25 @@ export default function CheckoutPage() {
     packsById[orderItems[0].refId]?.agentId ??
     "";
 
-  async function handleMpesaConfirm({ phone }: { phone: string; mpesaCode: string }) {
+  async function handlePlaceOrder() {
+    if (!user?.phone) {
+      show("Add your phone number to your profile before paying.", "error");
+      return;
+    }
+    if (pendingOrder) {
+      setOpen(true);
+      return;
+    }
     setPlacing(true);
     try {
-      const code = generateMpesaCode();
       const order = await orderService.create({
         studentId: user!.id,
         agentId,
         items: orderItems,
         total,
       });
-      await orderService.payOrder(order.id, { phone, mpesaCode: code });
-      clear();
-      show(`M-Pesa payment confirmed — ${code}`, "success");
-      navigate(`/student/orders/${order.id}`);
+      setPendingOrder(order);
+      setOpen(true);
     } catch (e) {
       show(
         e instanceof Error ? e.message : "Order failed",
@@ -99,7 +96,6 @@ export default function CheckoutPage() {
       );
     } finally {
       setPlacing(false);
-      setOpen(false);
     }
   }
 
@@ -146,21 +142,25 @@ export default function CheckoutPage() {
           <Button
             fullWidth
             size="lg"
-            onClick={() => setOpen(true)}
+            onClick={() => void handlePlaceOrder()}
             loading={placing}
           >
             Place order
           </Button>
         </aside>
       </div>
-      <MpesaPaymentModal
+      <PayHeroOrderPaymentModal
         open={open}
-        amount={total}
+        order={pendingOrder}
         phone={user.phone}
-        onClose={() => {
-          if (!placing) setOpen(false);
+        onClose={() => setOpen(false)}
+        onSuccess={() => {
+          if (!pendingOrder) return;
+          clear();
+          show("Payment confirmed. Your order has been sent to the seller.", "success");
+          setOpen(false);
+          navigate(`/student/orders/${pendingOrder.id}`);
         }}
-        onConfirm={handleMpesaConfirm}
       />
     </div>
   );

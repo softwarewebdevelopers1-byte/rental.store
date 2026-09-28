@@ -55,6 +55,12 @@ public class Order {
     @Column(name = "total", nullable = false)
     private long total;
 
+    @Column(name = "payhero_reference", length = 128)
+    private String payheroReference;
+
+    @Column(name = "paid_at")
+    private Instant paidAt;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 32)
     private OrderStatus status = OrderStatus.PENDING_PAYMENT;
@@ -129,6 +135,22 @@ public class Order {
 
     public void setTotal(long total) {
         this.total = total;
+    }
+
+    public String getPayheroReference() {
+        return payheroReference;
+    }
+
+    public void setPayheroReference(String payheroReference) {
+        this.payheroReference = payheroReference;
+    }
+
+    public Instant getPaidAt() {
+        return paidAt;
+    }
+
+    public void setPaidAt(Instant paidAt) {
+        this.paidAt = paidAt;
     }
 
     public OrderStatus getStatus() {

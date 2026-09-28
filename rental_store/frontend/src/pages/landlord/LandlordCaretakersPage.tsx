@@ -7,7 +7,10 @@ import { Button } from "../../components/common/Button";
 import { Input } from "../../components/common/Input";
 import { Skeleton } from "../../components/common/Skeleton";
 import { EmptyState } from "../../components/common/EmptyState";
+import { StatusBadge } from "../../components/common/StatusBadge";
 import { hostelService, type HostelSummary } from "../../services/hostelService";
+import type { Invitation } from "../../types/invitation";
+import { formatDate } from "../../utils/formatDate";
 import styles from "./LandlordCaretakersPage.module.css";
 
 function invitationUrl(token: string): string {
@@ -23,17 +26,22 @@ export default function LandlordCaretakersPage() {
   const [loading, setLoading] = useState(true);
   const [hostels, setHostels] = useState<HostelSummary[]>([]);
   const [details, setDetails] = useState<Record<string, HostelSummary>>({});
+  const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [emails, setEmails] = useState<Record<string, string>>({});
   const [working, setWorking] = useState<string | null>(null);
 
   async function load() {
     setLoading(true);
     try {
-      const hs = await hostelService.listByLandlord(user?.id ?? "");
+      const [hs, loadedInvitations] = await Promise.all([
+        hostelService.listByLandlord(user?.id ?? ""),
+        hostelService.listCaretakerInvitations(),
+      ]);
       const loaded = await Promise.all(
         hs.map(async (hostel) => [hostel.id, await hostelService.getById(hostel.id)] as const),
       );
       setHostels(hs);
+      setInvitations(loadedInvitations);
       setDetails(
         Object.fromEntries(
           loaded.flatMap(([id, detail]) => (detail ? [[id, detail]] : [])),
@@ -47,7 +55,9 @@ export default function LandlordCaretakersPage() {
   }
 
   useEffect(() => {
-    void load();
+    void Promise.resolve().then(() => load());
+    // load also runs after assign/remove actions; keep the initial fetch tied to the user id.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   async function assign(hostelId: string) {
@@ -87,9 +97,44 @@ export default function LandlordCaretakersPage() {
     try {
       const invitation = await hostelService.createCaretakerInvite(hostelId);
       await navigator.clipboard.writeText(invitationUrl(invitation.token));
+      setInvitations((current) => [
+        {
+          ...invitation,
+          hostelId,
+          hostelName: hostels.find((hostel) => hostel.id === hostelId)?.name,
+        },
+        ...current.filter((item) => item.id !== invitation.id),
+      ]);
       show("Caretaker invitation link copied. It can be used once and expires after seven days.", "success");
     } catch (reason) {
       show(reason instanceof Error ? reason.message : "Unable to generate caretaker link.", "error");
+    } finally {
+      setWorking(null);
+    }
+  }
+
+  async function copyLink(invitation: Invitation) {
+    try {
+      await navigator.clipboard.writeText(invitationUrl(invitation.token));
+      show("Invitation link copied.", "success");
+    } catch {
+      show("Unable to copy the invitation link.", "error");
+    }
+  }
+
+  async function revokeLink(invitation: Invitation) {
+    if (!window.confirm("Revoke this caretaker invitation link? It will no longer be usable.")) {
+      return;
+    }
+    setWorking(`revoke:${invitation.id}`);
+    try {
+      await hostelService.revokeCaretakerInvite(invitation.id);
+      setInvitations((current) => current.map((item) => (
+        item.id === invitation.id ? { ...item, status: "REVOKED" } : item
+      )));
+      show("Invitation link revoked.", "success");
+    } catch (reason) {
+      show(reason instanceof Error ? reason.message : "Unable to revoke invitation link.", "error");
     } finally {
       setWorking(null);
     }
@@ -112,6 +157,7 @@ export default function LandlordCaretakersPage() {
         <div className={styles.list}>
           {hostels.map((hostel) => {
             const caretakers = details[hostel.id]?.caretakers ?? [];
+            const hostelInvitations = invitations.filter((invitation) => invitation.hostelId === hostel.id);
             return (
               <Card key={hostel.id} title={hostel.name} subtitle={hostel.location}>
                 <div className={styles.assignedList}>
@@ -165,6 +211,70 @@ export default function LandlordCaretakersPage() {
                   >
                     Generate link
                   </Button>
+                </div>
+                <div className={styles.linksSection}>
+                  <div className={styles.linksHeader}>
+                    <strong>Invitation links</strong>
+                    <span className={styles.muted}>
+                      {hostelInvitations.length} created
+                    </span>
+                  </div>
+                  {hostelInvitations.length === 0 ? (
+                    <p className={styles.muted}>No caretaker links created yet.</p>
+                  ) : (
+                    <div className={styles.linksList}>
+                      {hostelInvitations.map((invitation) => {
+                        const active = invitation.status === "ACTIVE";
+                        return (
+                          <div key={invitation.id} className={styles.linkRow}>
+                            <div className={styles.linkInfo}>
+                              {active ? (
+                                <a
+                                  className={styles.link}
+                                  href={invitationUrl(invitation.token)}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  {invitationUrl(invitation.token)}
+                                </a>
+                              ) : (
+                                <span className={`${styles.link} ${styles.inactiveLink}`}>
+                                  {invitationUrl(invitation.token)}
+                                </span>
+                              )}
+                              <div className={styles.linkMeta}>
+                                <StatusBadge status={invitation.status} />
+                                <span>Created {formatDate(invitation.createdAt)}</span>
+                                <span>Expires {formatDate(invitation.expiresAt)}</span>
+                              </div>
+                            </div>
+                            <div className={styles.linkActions}>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="secondary"
+                                disabled={working !== null}
+                                onClick={() => void copyLink(invitation)}
+                              >
+                                Copy
+                              </Button>
+                              {active && (
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="danger"
+                                  loading={working === `revoke:${invitation.id}`}
+                                  onClick={() => void revokeLink(invitation)}
+                                >
+                                  Revoke
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </Card>
             );
